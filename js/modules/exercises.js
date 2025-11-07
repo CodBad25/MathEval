@@ -64,7 +64,20 @@ function latexToHtml(latex, exerciceId) {
     html = html.replace(/\\text\{([^}]*)\}/g, '$1');
     html = html.replace(/\\hfill/g, ' ');
     html = html.replace(/\\degres/g, '°');
+    html = html.replace(/\\degree/g, '°');
     html = html.replace(/\\euro/g, '€');
+    html = html.replace(/\\times/g, '×');
+    html = html.replace(/\\dots/g, '...');
+    html = html.replace(/\\ldots/g, '...');
+    html = html.replace(/\\cdots/g, '⋯');
+
+    // Commandes de formatage supplémentaires
+    html = html.replace(/\\underline\{([^}]*)\}/g, '<u>$1</u>');
+    html = html.replace(/\\ul\{([^}]*)\}/g, '<u>$1</u>');
+    html = html.replace(/\\bfseries\s*/g, '<strong>');
+    html = html.replace(/\\mdseries\s*/g, '</strong>');
+    html = html.replace(/\\itshape\s*/g, '<em>');
+    html = html.replace(/\\upshape\s*/g, '</em>');
 
     // Convertir les exposants \up{e} en <sup>e</sup>
     html = html.replace(/\\up\{([^}]*)\}/g, '<sup>$1</sup>');
@@ -90,16 +103,55 @@ function latexToHtml(latex, exerciceId) {
         return `\\[${content}\\]`;
     });
 
+    // === NOUVELLES CONVERSIONS : LISTES ET TABLEAUX ===
+
+    // Convertir les listes enumerate en HTML <ol> AVANT de supprimer l'environnement
+    html = html.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/gi, (match, content) => {
+        const items = content.split(/\\item\s*/).filter(i => i.trim());
+        if (items.length === 0) return '';
+        return '<ol style="margin: 10px 0; padding-left: 25px;">' +
+               items.map(i => `<li style="margin: 5px 0;">${i.trim()}</li>`).join('') +
+               '</ol>';
+    });
+
+    // Convertir les listes itemize en HTML <ul>
+    html = html.replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/gi, (match, content) => {
+        const items = content.split(/\\item\s*/).filter(i => i.trim());
+        if (items.length === 0) return '';
+        return '<ul style="margin: 10px 0; padding-left: 25px;">' +
+               items.map(i => `<li style="margin: 5px 0;">${i.trim()}</li>`).join('') +
+               '</ul>';
+    });
+
+    // Convertir les tableaux simples en HTML
+    html = html.replace(/\\begin\{tabular\}(\[[^\]]*\])?\{([^\}]*)\}([\s\S]*?)\\end\{tabular\}/gi, (match, align, cols, content) => {
+        // Nettoyer le contenu et séparer les lignes
+        const rows = content.split('\\\\').map(r => r.trim()).filter(r => r.length > 0);
+        if (rows.length === 0) return '<span style="color: #999;">Tableau vide</span>';
+
+        let table = '<table style="border-collapse: collapse; margin: 10px 0; border: 1px solid #ddd;">';
+        rows.forEach((row, rowIndex) => {
+            // Séparer les cellules (ignorer les \hline)
+            const cleanRow = row.replace(/\\hline/g, '');
+            const cells = cleanRow.split('&').map(c => c.trim());
+
+            table += '<tr>';
+            cells.forEach(cell => {
+                const style = 'border: 1px solid #ddd; padding: 8px; text-align: center;';
+                table += `<td style="${style}">${cell}</td>`;
+            });
+            table += '</tr>';
+        });
+        table += '</table>';
+        return table;
+    });
+
     // Supprimer les commandes LaTeX résiduelles qui n'ont pas été converties
-    html = html.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?/gi, '');
-    html = html.replace(/\\end\{enumerate\}/gi, '');
-    html = html.replace(/\\begin\{itemize\}/gi, '');
-    html = html.replace(/\\end\{itemize\}/gi, '');
-    html = html.replace(/\\item\s*/g, '');
     html = html.replace(/\\begin\{description\}/gi, '');
     html = html.replace(/\\end\{description\}/gi, '');
     html = html.replace(/\\begin\{minipage\}[\s\S]*?\{[\s\S]*?\}/gi, '');
     html = html.replace(/\\end\{minipage\}/gi, '');
+    html = html.replace(/\\item\s*/g, ''); // Nettoyer les \item orphelins
     // Supprimer les commandes multicols (non supportées par KaTeX)
     html = html.replace(/\\begin\{multicols\}\{[^}]*\}/gi, '');
     html = html.replace(/\\end\{multicols\}/gi, '');
@@ -108,6 +160,7 @@ function latexToHtml(latex, exerciceId) {
     html = html.replace(/\\break/gi, '<br>');
     html = html.replace(/\\vspace\{[^}]*\}/gi, '');
     html = html.replace(/\\hspace\{[^}]*\}/gi, ' ');
+    html = html.replace(/\\hline/gi, ''); // Nettoyer les \hline orphelins
 
     // Nettoyer les caractères invisibles (zero-width space, etc.)
     html = html.replace(/[\u200B-\u200D\uFEFF]/g, '');
@@ -211,7 +264,12 @@ function cleanComplexLatex(latex, exerciceId) {
         return `<pre class="blocks" style="margin: 10px 0;">${scratchCode}</pre>`;
     });
 
-    cleaned = cleaned.replace(/\\begin\{tabular[x]?\}[\s\S]*?\\end\{tabular[x]?\}/gi, badge('📊', 'Tableau'));
+    // Remplacer les tableaux complexes (tabularx, longtable) par un badge
+    // Les tableaux simples seront gérés par latexToHtml()
+    cleaned = cleaned.replace(/\\begin\{tabular[x]\}[\s\S]*?\\end\{tabular[x]\}/gi, badge('📊', 'Tableau'));
+    cleaned = cleaned.replace(/\\begin\{longtable\}[\s\S]*?\\end\{longtable\}/gi, badge('📊', 'Tableau'));
+
+    // Remplacer les environnements graphiques complexes
     cleaned = cleaned.replace(/\\pstree[\s\S]*?(?=\\item|\\end|$)/gi, badge('🌳', 'Arbre'));
     cleaned = cleaned.replace(/\\psset\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\ps[a-z]+(\[[^\]]*\])?(\([^\)]*\))?(\{[^}]*\})?/gi, '');
@@ -219,17 +277,11 @@ function cleanComplexLatex(latex, exerciceId) {
     cleaned = cleaned.replace(/\\rput[\s\S]*?\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\uput[\s\S]*?\{[^}]*\}/gi, '');
 
-    // Supprimer les commandes LaTeX résiduelles (après extraction des items)
-    cleaned = cleaned.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?/gi, '');
-    cleaned = cleaned.replace(/\\end\{enumerate\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{itemize\}/gi, '');
-    cleaned = cleaned.replace(/\\end\{itemize\}/gi, '');
-    cleaned = cleaned.replace(/\\item\s*/g, '');
-    cleaned = cleaned.replace(/\\begin\{description\}/gi, '');
-    cleaned = cleaned.replace(/\\end\{description\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{minipage\}[\s\S]*?\{[\s\S]*?\}/gi, '');
-    cleaned = cleaned.replace(/\\end\{minipage\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/gi, badge('📊', 'Tableau'));
+    // Remplacer les array en mode math par un badge (car complexe avec KaTeX)
+    cleaned = cleaned.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/gi, badge('📊', 'Matrice'));
+
+    // Les listes enumerate/itemize seront converties en HTML par latexToHtml()
+    // Donc on ne les supprime PAS ici (contrairement à avant)
 
     // Supprimer les commentaires LaTeX
     cleaned = cleaned.replace(/%[^\n]*/g, '');
