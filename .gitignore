@@ -1,0 +1,31 @@
+# Dossiers de développement
+alea/
+alea.backup/
+backups/
+
+# Fichiers de documentation de développement
+FICHIERS_CREES.txt
+README_REFACTORING.md
+REFACTORING_*.md
+
+# Fichiers système Mac
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+
+# Node modules si présent
+node_modules/
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python

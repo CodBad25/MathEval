@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correcteur Universel - Application de Correction Professionnelle</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --secondary: #10B981;
+            --accent: #F59E0B;
+            --white: #FFFFFF;
+            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-100px) rotate(180deg); opacity: 0.6; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 400;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .sources-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            animation: slideUp 0.8s ease-out 0.2s both;
+        }
+
+        .source-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--shadow-xl);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .source-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .source-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .source-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .source-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .source-card.disabled:hover {
+            transform: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        .badge.available {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+
+        .badge.coming-soon, .badge.dev {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+        }
+
+        .source-icon {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .source-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 15px;
+        }
+
+        .source-description {
+            color: #6B7280;
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .source-features {
+            list-style: none;
+            margin: 20px 0;
+            padding: 0;
+        }
+
+        .source-features li {
+            color: #374151;
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.95em;
+        }
+
+        .source-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .source-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .source-btn:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #3730A3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .source-btn:active {
+            transform: translateY(0);
+        }
+
+        .source-card.disabled .source-btn {
+            background: #9CA3AF;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .source-card.disabled .source-btn:hover {
+            transform: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .header p {
+                font-size: 1.1em;
+            }
+
+            .sources-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Correcteur Universel</h1>
+            <p>Application professionnelle de correction pour les évaluations de mathématiques</p>
+        </div>
+
+        <div class="sources-container">
+            <!-- DNB - Disponible -->
+            <div class="source-card dnb" onclick="selectSource('dnb')">
+                <span class="badge available">Disponible</span>
+                <div class="source-icon">📚</div>
+                <h3 class="source-title">Exercices DNB</h3>
+                <p class="source-description">
+                    Accédez à la base complète des exercices DNB de mathématiques depuis 2013
+                </p>
+                <ul class="source-features">
+                    <li>Exercices classés par année</li>
+                    <li>Automatismes inclus</li>
+                    <li>Recherche par thème</li>
+                    <li>Corrections détaillées</li>
+                </ul>
+                <button class="source-btn">
+                    <i class="fas fa-arrow-right"></i>
+                    Sélectionner DNB
+                </button>
+            </div>
+
+            <!-- MathALÉA - Disponible -->
+            <div class="source-card mathalea" onclick="selectSource('mathalea')">
+                <span class="badge available">Disponible</span>
+                <div class="source-icon">🎓</div>
+                <h3 class="source-title">Connexion MathALÉA</h3>
+                <p class="source-description">
+                    Importez des exercices depuis MathALÉA via URL ou UUID
+                </p>
+                <ul class="source-features">
+                    <li>Import par URL MathALÉA</li>
+                    <li>Import par UUID d'exercice</li>
+                    <li>Génération automatique du barème</li>
+                    <li>Exercices aléatoires et statiques</li>
+                </ul>
+                <button class="source-btn">
+                    <i class="fas fa-arrow-right"></i>
+                    Sélectionner MathALÉA
+                </button>
+            </div>
+
+            <!-- Import PDF/DOCX - À venir -->
+            <div class="source-card upload disabled" onclick="selectSource('upload')">
+                <span class="badge coming-soon">Prochainement</span>
+                <div class="source-icon">📄</div>
+                <h3 class="source-title">Import PDF / DOCX</h3>
+                <p class="source-description">
+                    Importez vos propres sujets au format PDF ou Word
+                </p>
+                <ul class="source-features">
+                    <li>Upload de fichiers PDF</li>
+                    <li>Upload de fichiers DOCX</li>
+                    <li>Extraction automatique des questions</li>
+                    <li>Configuration du barème manuelle</li>
+                </ul>
+                <button class="source-btn">
+                    <i class="fas fa-clock"></i>
+                    Prochainement
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Créer des particules animées
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 30;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            const size = Math.random() * 100 + 50;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+
+            particlesContainer.appendChild(particle);
+        }
+
+        function selectSource(source) {
+            if (source === 'upload') {
+                alert('🚧 Cette fonctionnalité sera disponible prochainement !');
+                return;
+            }
+
+            // Animation de transition
+            event.currentTarget.style.transform = 'scale(0.95)';
+
+            setTimeout(() => {
+                localStorage.setItem('selectedSource', source);
+
+                // Redirection selon la source
+                if (source === 'mathalea') {
+                    // MathALÉA : page dédiée avec iframe uniquement
+                    window.location.href = 'mathalea.html';
+                } else {
+                    // DNB : page avec automatismes + exercices DNB
+                    window.location.href = 'app.html';
+                }
+            }, 200);
+        }
+    </script>
+</body>
+</html>
