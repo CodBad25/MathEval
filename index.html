@@ -90,6 +90,34 @@
             line-height: 1.6;
         }
 
+        .logos-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .logo-item {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .logo-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-item img {
+            height: 60px;
+            width: auto;
+            display: block;
+        }
+
         .sources-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -287,6 +315,14 @@
         <div class="header">
             <h1>🎯 MathEval</h1>
             <p>Application professionnelle d'évaluation et de correction en mathématiques</p>
+            <div class="logos-container">
+                <div class="logo-item">
+                    <img src="images/mathalea-logo.jpg" alt="Logo MathALÉA">
+                </div>
+                <div class="logo-item">
+                    <img src="images/apmep.png" alt="Logo APMEP">
+                </div>
+            </div>
         </div>
 
         <div class="sources-container">
