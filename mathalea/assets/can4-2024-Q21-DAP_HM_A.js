@@ -1,0 +1,40 @@
+import{D as p,K as m,r as u,p as l,y as r}from"./index-DjA7ROjC.js";import{s as n}from"./scratchblock-BX91tLjs.js";/* empty css                         */import"./vendors/svelte-DYHmJxok.js";import"./vendors/ua-parser-js-IGXSU7q4.js";import"./vendors/instrumenpoche-CSnohZOK.js";import"./vendors/sesajstools-DShOIGrY.js";import"./vendors/ansi-styles-C5UZWym2.js";import"./vendors/decimal.js-16C9rIKp.js";import"./vendors/katex-DRsvfONx.js";import"./vendors/seedrandom-CNNRxp22.js";import"./vendors/crypto-js-jSnn2346.js";import"./vendors/apigeom-w0ofBCni.js";import"./vendors/mathjs-oaIJR0Fd.js";import"./vendors/babel_runtime-91SaXnVV.js";import"./vendors/javascript-natural-sort-CZcnv-xn.js";import"./vendors/escape-latex-D2RmlMiC.js";import"./vendors/complex.js-CUuq6tox.js";import"./vendors/typed-function-DLw9ktPY.js";import"./vendors/fraction.js-CAdrwJ1J.js";import"./vendors/tiny-emitter-DDQe9_b_.js";import"./vendors/xstate-CiXeYAGM.js";import"./vendors/earcut-jJVragJp.js";import"./vendors/roughjs-GtHDBO_d.js";import"./json/referentielStaticCH-BvJ6T55O.js";import"./json/referentielStaticFR-CRF_Hjtf.js";import"./json/uuidsToUrlFR-BAWSFQnt.js";import"./vendors/cortex-js_compute-engine-CK5Y8453.js";import"./vendors/mathlive-DtHmjDB4.js";import"./vendors/bugsnag_js-CkCWaA3t.js";import"./vendors/bugsnag_browser-d00kmNSm.js";import"./vendors/big-integer-Cu-VsFVy.js";import"./json/codeToLevelList-Cc4cPPvZ.js";import"./json/codeToThemeList-xPVrG8Yb.js";import"./vendors/mixer_postmessage-rpc-Knoq2TfA.js";import"./vendors/eventemitter3-6E4L_h32.js";import"./vendors/scratchblocks-BVGw3YSR.js";import"./json/scratchFr-DbCU7OC2.js";import"./json/refToUuidFR-BGtQQjtA.js";import"./json/refToUuidCH-Dm7pY6Rc.js";import"./vendors/loadjs-BzrfRgSk.js";import"./vendors/svelte-gestures-u4km4ICX.js";import"./vendors/tw-elements-Cl8JxGRl.js";import"./json/uuidsRessources-CtbQ0Y2s.js";import"./json/referentielProfs-Cey1_luL.js";import"./json/referentielBibliotheque-BkZtqQRj.js";import"./vendors/jszip-CxmGZ1c2.js";import"./vendors/jszip-utils-D5kR6ObF.js";import"./vendors/file-saver-FyOmtGcA.js";import"./vendors/copy-image-clipboard-Cf9y-QAU.js";import"./vendors/qrcode-SHonoxyK.js";import"./vendors/dijkstrajs-D_NXgYpA.js";import"./vendors/svelte-french-toast-BHXPj9o3.js";import"./vendors/svelte-writable-derived-Cn90q3ND.js";import"./vendors/brace-BiTXuHwf.js";import"./json/referentielAppsTierce-SxU58PZT.js";import"./vendors/sortablejs-C83syoBY.js";import"./json/carouselContent-BScQaKkw.js";import"./json/levelsThemesList-HiwLnYG4.js";import"./json/levelsThemesListCH-CWlgSx1G.js";import"./json/referentiel2022CH-B8vRIdSG.js";import"./json/referentiel2022FR-Bx-nUux7.js";import"./json/referentielGeometrieDynamique-BJ2PHXsv.js";import"./json/referentielRessources-BU2QQoSD.js";import"./json/referentielsActivation-CpD_hoec.js";const Ae="Comprendre un programme scratch",Ce=!0,Le="mathLive",Re="fdd2f";class Te extends p{constructor(){super(),this.typeExercice="simple",this.nbQuestions=1,this.formatChampTexte=m.clavierDeBase,this.canOfficielle=!1}nouvelleVersion(){const c=this.canOfficielle?3:u(2,6),a=this.canOfficielle?50:l([10,20,50,100]);let t=`\\begin{scratch}[print,fill,blocks,scale=0.8]
+`;t+=`\\blockinit{quand \\greenflag est cliqué}
+`,t+=`\\blocklook{Le lutin est placé au centre de l'écran} 
+`,t+=`\\blockrepeat{répéter \\ovalnum{${c}} fois}
+`,t+=`{
+`,t+=`\\blockmove{avancer de \\ovalnum{${a}} pas}
+`,t+=`\\blockmove{attendre \\ovalmove{2} secondes}
+`,t+=`}
+`,t+="\\end{scratch}<br>";let i=`\\begin{scratch}[print,fill,blocks,scale=0.8]
+`;i+=`\\blockinit{quand \\greenflag est cliqué}
+`,i+=`\\blockrepeat{répéter \\ovalnum{4} fois}
+`,i+=`{
+`,i+=`\\blockpen{stylo en position d'écriture} 
+`,i+=`\\blockmove{avancer de \\ovalnum{100} pas}
+`,i+=`\\blockmove{tourner \\turnright{} de \\ovalnum{...} degrés}
+`,i+=`}
+`,i+="\\end{scratch}<br>";let o=`\\begin{scratch}[print,fill,blocks,scale=0.8]
+`;o+=`\\blockinit{quand \\greenflag est cliqué}
+`,o+=`\\blockrepeat{répéter \\ovalnum{3} fois}
+`,o+=`{
+`,o+=`\\blockpen{stylo en position d'écriture} 
+`,o+=`\\blockmove{avancer de \\ovalnum{100} pas}
+`,o+=`\\blockmove{tourner \\turnright{} de \\ovalnum{...} degrés}
+`,o+=`}
+`,o+="\\end{scratch}<br>";let e=`\\begin{scratch}[print,fill,blocks,scale=0.8]
+`;if(e+=`\\blockinit{quand \\greenflag est cliqué}
+`,e+=`\\blockrepeat{répéter \\ovalnum{...} fois}
+`,e+=`{
+`,e+=`\\blockpen{stylo en position d'écriture} 
+`,e+=`\\blockmove{avancer de \\ovalnum{100} pas}
+`,e+=`\\blockmove{tourner \\turnright{} de \\ovalnum{90} degrés}
+`,e+=`\\blockmove{avancer de \\ovalnum{50} pas}
+`,e+=`\\blockmove{tourner \\turnright{} de \\ovalnum{90} degrés}
+`,e+=`}
+`,e+="\\end{scratch}<br>",this.canOfficielle)this.reponse=150,this.question=`${n(t)}`,this.question+="À l'issue de l'exécution de ce programme, de combien de pas le lutin a-t-il avancé ?",this.correction=`Le lutin a avancé de $3\\times 50 =${r("150")}$ pas.`,this.canEnonce=this.question,this.canReponseACompleter="$\\ldots$ pas",this.interactif&&(this.optionsChampTexte={texteApres:"pas "});else{const s=l(["a","b","c","d"]);s==="a"&&(this.reponse=90,this.question=`${n(i)}`,this.question+="Quel nombre doit-on écrire à la place des pointillés pour tracer un carré ?",this.correction=`Un carré a des angles droits, il faut donc écrire  $${r(90)}$.`,this.canEnonce=this.question,this.canReponseACompleter="$\\ldots$"),s==="b"&&(this.reponse=120,this.question=`${n(o)}`,this.question+="Quel nombre doit-on écrire à la place des pointillés pour tracer un triangle équilatéral ?",this.correction=`Un triangle équilatéral a des anlges de $60°$.<br>
+     Le lutin doit tourner de $180-60=120°$ après avoir tracé un côté. <br>
+     Ainsi, à la place des pointillés il faut écrire  $${r(120)}$.`,this.canEnonce=this.question,this.canReponseACompleter="$\\ldots$"),s==="c"&&(this.reponse=2,this.question=`${n(e)}`,this.question+="Quel nombre doit-on écrire à la place des pointillés pour tracer un  rectangle ?",this.correction=`
+      La boucle contient le tracé d'une longueur et d'une largeur du rectangle. <br>
+      Ainsi, à la place des pointillés il faut écrire  $${r(2)}$.`,this.canEnonce=this.question,this.canReponseACompleter="$\\ldots$"),s==="d"&&(this.reponse=c*a,this.question=`${n(t)}`,this.question+="À l'issue de l'exécution de ce programme, de combien de pas le lutin a-t-il avancé ?",this.correction=`Le lutin a avancé de $${c}\\times ${a} =${r(this.reponse)}$ pas.`,this.interactif&&(this.optionsChampTexte={texteApres:"pas "}),this.canEnonce=this.question,this.canReponseACompleter="$\\ldots$ pas")}}}export{Te as default,Ce as interactifReady,Le as interactifType,Ae as titre,Re as uuid};
+//# sourceMappingURL=can4-2024-Q21-DAP_HM_A.js.map
