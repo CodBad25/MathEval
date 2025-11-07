@@ -57,7 +57,7 @@
             z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 20px 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -67,7 +67,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 30px;
             animation: fadeIn 0.8s ease-out;
         }
 
@@ -76,7 +76,7 @@
             font-weight: 800;
             color: white;
             text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             letter-spacing: -1px;
         }
 
@@ -86,7 +86,7 @@
             font-weight: 400;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             max-width: 700px;
-            margin: 0 auto;
+            margin: 0 auto 15px;
             line-height: 1.6;
         }
 
@@ -94,34 +94,46 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 40px;
-            margin-top: 30px;
+            gap: 30px;
+            margin-top: 0;
             flex-wrap: wrap;
         }
 
         .logo-item {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 140px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease-out, background 0.3s ease, border-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            cursor: pointer;
         }
 
         .logo-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
         }
 
         .logo-item img {
-            height: 60px;
-            width: auto;
-            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(1.2) contrast(1.1);
+            mix-blend-mode: normal;
         }
+
 
         .sources-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
+            gap: 20px;
             width: 100%;
             max-width: 1200px;
             animation: slideUp 0.8s ease-out 0.2s both;
@@ -131,7 +143,7 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 35px;
+            padding: 25px;
             box-shadow: var(--shadow-xl);
             transition: all 0.3s ease;
             cursor: pointer;
@@ -293,6 +305,52 @@
             }
         }
 
+        .footer-signature {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .footer-signature .heart {
+            color: #FF6B6B;
+            font-size: 1.2em;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(1.1); }
+            20%, 40% { transform: scale(1); }
+        }
+
+        .footer-signature .creator-name {
+            font-weight: 600;
+            color: white;
+        }
+
+        .footer-signature .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .footer-signature .ai-icon {
+            font-size: 1.1em;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2.5em;
@@ -314,12 +372,12 @@
     <div class="container">
         <div class="header">
             <h1>🎯 MathEval</h1>
-            <p>Application professionnelle d'évaluation et de correction en mathématiques</p>
-            <div class="logos-container">
-                <div class="logo-item">
-                    <img src="images/mathalea-logo.jpg" alt="Logo MathALÉA">
+            <p>Jamais évaluer avec notes et compétences n'avait été aussi facile</p>
+            <div class="logos-container" id="logosContainer">
+                <div class="logo-item" data-logo="coopmaths">
+                    <img src="images/logo-coopmaths.png" alt="Logo CoopMaths">
                 </div>
-                <div class="logo-item">
+                <div class="logo-item" data-logo="apmep">
                     <img src="images/apmep.png" alt="Logo APMEP">
                 </div>
             </div>
@@ -330,19 +388,19 @@
             <div class="source-card dnb" onclick="selectSource('dnb')">
                 <span class="badge available">Disponible</span>
                 <div class="source-icon">📚</div>
-                <h3 class="source-title">Exercices DNB</h3>
+                <h3 class="source-title">Sujets DNB Blanc</h3>
                 <p class="source-description">
-                    Accédez à la base complète des exercices DNB de mathématiques depuis 2013
+                    Concevez et corrigez des sujets de DNB blanc conformes au nouveau brevet
                 </p>
                 <ul class="source-features">
-                    <li>Exercices classés par année</li>
-                    <li>Automatismes inclus</li>
-                    <li>Recherche par thème</li>
+                    <li>Format officiel avec automatismes</li>
+                    <li>Notation sur 20 points</li>
+                    <li>Base complète depuis 2013</li>
                     <li>Corrections détaillées</li>
                 </ul>
                 <button class="source-btn">
                     <i class="fas fa-arrow-right"></i>
-                    Sélectionner DNB
+                    Créer un sujet DNB
                 </button>
             </div>
 
@@ -350,19 +408,19 @@
             <div class="source-card mathalea" onclick="selectSource('mathalea')">
                 <span class="badge available">Disponible</span>
                 <div class="source-icon">🎓</div>
-                <h3 class="source-title">Connexion MathALÉA</h3>
+                <h3 class="source-title">Évaluations MathALÉA</h3>
                 <p class="source-description">
-                    Importez des exercices depuis MathALÉA via URL ou UUID
+                    Créez des évaluations à partir des exercices techniques de MathALÉA
                 </p>
                 <ul class="source-features">
-                    <li>Import par URL MathALÉA</li>
-                    <li>Import par UUID d'exercice</li>
+                    <li>Exercices techniques variés</li>
+                    <li>Import par URL ou UUID</li>
                     <li>Génération automatique du barème</li>
-                    <li>Exercices aléatoires et statiques</li>
+                    <li>Exercices aléatoires personnalisables</li>
                 </ul>
                 <button class="source-btn">
                     <i class="fas fa-arrow-right"></i>
-                    Sélectionner MathALÉA
+                    Créer une évaluation
                 </button>
             </div>
 
@@ -386,6 +444,17 @@
                 </button>
             </div>
         </div>
+
+        <div class="footer-signature">
+            <span>Créé avec</span>
+            <span class="heart">❤️</span>
+            <span>par</span>
+            <span class="creator-name">Badri BELHAJ</span>
+            <span class="ai-badge">
+                <span class="ai-icon">🤖</span>
+                <span>Assisté par IA</span>
+            </span>
+        </div>
     </div>
 
     <script>
@@ -407,6 +476,41 @@
 
             particlesContainer.appendChild(particle);
         }
+
+        // Animation des logos qui suivent la souris
+        const logosContainer = document.getElementById('logosContainer');
+        const logoItems = document.querySelectorAll('.logo-item');
+
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateLogos() {
+            logoItems.forEach((logo, index) => {
+                const rect = logo.getBoundingClientRect();
+                const logoCenterX = rect.left + rect.width / 2;
+                const logoCenterY = rect.top + rect.height / 2;
+
+                // Calculer la distance entre la souris et le logo
+                const deltaX = mouseX - logoCenterX;
+                const deltaY = mouseY - logoCenterY;
+
+                // Mouvement proportionnel à la distance (effet parallaxe inversé et atténué)
+                const moveX = deltaX * 0.03; // 3% de la distance
+                const moveY = deltaY * 0.03;
+
+                // Appliquer la transformation avec une transition douce
+                logo.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
+
+            requestAnimationFrame(animateLogos);
+        }
+
+        animateLogos();
 
         function selectSource(source) {
             if (source === 'upload') {
