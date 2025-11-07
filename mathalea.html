@@ -3,15 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Correcteur Universel - MathALÉA</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script>
-    <!-- Scratchblocks pour rendu des blocs Scratch -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scratchblocks@3.6.4/build/scratchblocks.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/scratchblocks@3.6.4/build/scratchblocks.min.js"></script>
-    <!-- MathALÉA Integration - Version Simple (pas de RPC) -->
-    <link rel="stylesheet" href="css/main.css?v=20251106002">
+    <title>MathEval - Évaluations MathALÉA</title>
     <style>
         body {
             margin: 0;
@@ -29,6 +21,7 @@
             align-items: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             flex-shrink: 0;
+            z-index: 1000;
         }
         .top-bar h1 {
             color: white;
@@ -48,27 +41,26 @@
         .top-bar button:hover {
             background: rgba(255,255,255,0.3);
         }
-        #mathaleaFrame {
+        #extensionFrame {
             width: 100%;
             height: 100%;
             border: none;
+            flex: 1;
         }
     </style>
 </head>
 <body>
     <!-- Barre supérieure compacte -->
     <div class="top-bar">
-        <h1>🎓 MathALÉA - Sélection d'exercices</h1>
+        <h1>🎓 MathEval - Évaluations MathALÉA</h1>
         <button onclick="window.location.href='index.html'">← Retour à l'accueil</button>
     </div>
 
-    <!-- Iframe MathALÉA en plein écran -->
+    <!-- Extension d'évaluation en iframe -->
     <iframe
-        id="mathaleaFrame"
+        id="extensionFrame"
+        src="extension/index.html"
         allow="fullscreen"
     ></iframe>
-
-    <!-- Scripts MathALÉA -->
-    <script src="js/mathalea-app.js?v=20251106003"></script>
 </body>
 </html>
