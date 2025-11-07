@@ -500,8 +500,8 @@
                 const deltaY = mouseY - logoCenterY;
 
                 // Mouvement proportionnel à la distance (effet parallaxe inversé et atténué)
-                const moveX = deltaX * 0.03; // 3% de la distance
-                const moveY = deltaY * 0.03;
+                const moveX = deltaX * 0.08; // 8% de la distance - mouvement plus prononcé
+                const moveY = deltaY * 0.08;
 
                 // Appliquer la transformation avec une transition douce
                 logo.style.transform = `translate(${moveX}px, ${moveY}px)`;
