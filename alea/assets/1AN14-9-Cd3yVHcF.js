@@ -1,0 +1,66 @@
+import{E as T,ae as _,r,p as u,az as g,B as n,y as b,b as d,K as l,n as p,F as A,v as k,cq as L,I as y,j as h,k as M,ay as F,N as w,o as q,M as C}from"./index-Bk_D2JkM.js";import{P as f}from"./Polynome-Ar1ihtUv.js";/* empty css                         */import"./vendors/svelte-DYHmJxok.js";import"./vendors/ua-parser-js-IGXSU7q4.js";import"./vendors/instrumenpoche-BZzrq7Nx.js";import"./vendors/sesajstools-DShOIGrY.js";import"./vendors/ansi-styles-C5UZWym2.js";import"./vendors/decimal.js-16C9rIKp.js";import"./vendors/katex-DoI0QyUo.js";import"./vendors/seedrandom-CNNRxp22.js";import"./vendors/crypto-js-jSnn2346.js";import"./vendors/apigeom-CSdzZNvA.js";import"./vendors/mathjs-oaIJR0Fd.js";import"./vendors/babel_runtime-91SaXnVV.js";import"./vendors/javascript-natural-sort-CZcnv-xn.js";import"./vendors/escape-latex-D2RmlMiC.js";import"./vendors/complex.js-CUuq6tox.js";import"./vendors/typed-function-DLw9ktPY.js";import"./vendors/fraction.js-CAdrwJ1J.js";import"./vendors/tiny-emitter-DDQe9_b_.js";import"./vendors/xstate-CiXeYAGM.js";import"./vendors/earcut-jJVragJp.js";import"./vendors/roughjs-GtHDBO_d.js";import"./json/referentielStaticCH-BvJ6T55O.js";import"./json/referentielStaticFR-CRF_Hjtf.js";import"./json/uuidsToUrlFR-BAWSFQnt.js";import"./vendors/cortex-js_compute-engine-CK5Y8453.js";import"./vendors/mathlive-DtHmjDB4.js";import"./vendors/bugsnag_js-CkCWaA3t.js";import"./vendors/bugsnag_browser-d00kmNSm.js";import"./vendors/big-integer-Cu-VsFVy.js";import"./json/codeToLevelList-Cc4cPPvZ.js";import"./json/codeToThemeList-xPVrG8Yb.js";import"./vendors/mixer_postmessage-rpc-Knoq2TfA.js";import"./vendors/eventemitter3-6E4L_h32.js";import"./vendors/scratchblocks-BVGw3YSR.js";import"./json/scratchFr-DbCU7OC2.js";import"./json/refToUuidFR-BN9okUDO.js";import"./json/refToUuidCH-Bo89B_4U.js";import"./vendors/loadjs-BzrfRgSk.js";import"./vendors/svelte-gestures-u4km4ICX.js";import"./vendors/tw-elements-Cl8JxGRl.js";import"./json/uuidsRessources-CtbQ0Y2s.js";import"./json/referentielProfs-Cey1_luL.js";import"./json/referentielBibliotheque-BkZtqQRj.js";import"./vendors/jszip-CxmGZ1c2.js";import"./vendors/jszip-utils-D5kR6ObF.js";import"./vendors/file-saver-FyOmtGcA.js";import"./vendors/copy-image-clipboard-Cf9y-QAU.js";import"./vendors/qrcode-SHonoxyK.js";import"./vendors/dijkstrajs-D_NXgYpA.js";import"./vendors/svelte-french-toast-BHXPj9o3.js";import"./vendors/svelte-writable-derived-Cn90q3ND.js";import"./vendors/brace-BiTXuHwf.js";import"./json/referentielAppsTierce-SxU58PZT.js";import"./vendors/sortablejs-C83syoBY.js";import"./json/carouselContent-BScQaKkw.js";import"./json/levelsThemesList-HiwLnYG4.js";import"./json/levelsThemesListCH-CWlgSx1G.js";import"./json/referentiel2022CH-BoAqvpTp.js";import"./json/referentiel2022FR-CoYbRrWo.js";import"./json/referentielGeometrieDynamique-BJ2PHXsv.js";import"./json/referentielRessources-BU2QQoSD.js";import"./json/referentielsActivation-CpD_hoec.js";const Ve="Calculer la dérivée d'une fonction avec exponentielle",Ge="06/08/2025",He=!0,Ue="mathLive",We="d2a2d",Xe={"fr-fr":["1AN14-9"],"fr-ch":[""]};class Ye extends T{constructor(){super(),this.nbQuestions=1,this.besoinFormulaireTexte=["Choix des questions",`Nombres séparés par des tirets :
+1 : a*e^x+bx+c
+2 : e^u avec u affine
+3 :  e^u avec u poly second degré
+4 : u*e^x
+5 : (ax+b)*e^mx
+6 : (m*e^x)/(ax+b) ou  (m*e^x)/(ax^2+b) 
+7 : Mélange`],this.sup="7",this.spacing=1.5,this.spacingCorr=1.5}nouvelleVersion(){const P=_({saisie:this.sup,min:1,max:6,melange:7,defaut:7,nbQuestions:this.nbQuestions});for(let i=0,R=0;i<this.nbQuestions&&R<50;){let a="",c="",x="";const v="On considère la fonction $f$ définie sur $\\mathbb{R}$ par :";switch(P[i]){case 1:{const s=r(-10,10,0),e=r(-5,5),t=r(-5,5,e),$=u([!0,!1]);c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme somme de fonctions dérivables sur $\\mathbb{R}$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, `,$===!0?(a=v+` $f(x)=${n(s)}\\text{e}^x${e===0?`${M(t)}`:`${F(e)}${h(w(e),t)}`}$.<br>
+            Calculer $f'(x)$.`,c+=`$f'(x)=${b(`${n(s)}\\text{e}^x${e===0?"":`${M(e)}`}`)}$.`):(a=v+` $f(x)=${h(e,t)}${F(s)}${n(w(s))}\\text{e}^x$.<br>
+            Calculer $f'(x)$.`,c+=`$f'(x)=${b(`${e===0?"":`${e}`}${y(s)}\\text{e}^x`)}$.`),a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`${s}e^x+${e}`}`,p(this,i,{reponse:{value:x}})}break;case 2:{const s=[[r(-10,10,[0,1]),0],[r(-30,30,[0,10])/10,0],[r(-5,5,0),r(-10,10,0)],[r(-30,30,[0,10])/10,r(-30,30,[0,10])/10]],e=u(s),t=new f({rand:!0,coeffs:[e[1],e[0]]}),$=t.derivee();a=v+`$f(x)=\\text{e}^{${t}}$.<br>
+             Calculer $f'(x)$.`,c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme composée de fonctions dérivables sur $\\mathbb{R}$.<br>
+            $f$ est de la forme $\\text{e}^u$ avec $u(x)=${t}$, donc sa fonction dérivée est donnée par $f'=u'\\text{e}^u$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, `,c+=`${$.isMon()?`$f'(x)=${b(`${$}\\text{e}^{${t}}`)}$`:`$f'(x)=${b(`(${$})\\text{e}^{${t}}`)}$`}.`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`${$}e^{${t}}`}`}p(this,i,{reponse:{value:x}});break;case 3:{const s=[[r(-10,10,0),0,0],[r(-2,2,0),r(-2,2,0),0],[r(-2,2,0),0,r(-2,2,0)],[r(-2,2,0),r(-5,5,0),r(-2,2,0)],[r(-30,30,[-20,-10,0,10,20])/10,0,0]],e=u(s),t=new f({rand:!0,coeffs:[e[2],e[1],e[0]]}),$=t.derivee();a=v+`$f(x)=\\text{e}^{${t}}$.<br>
+             Calculer $f'(x)$.`,c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme composée de fonctions dérivables sur $\\mathbb{R}$.<br>
+            $f$ est de la forme $\\text{e}^u$ avec $u(x)=${t}$, donc sa fonction dérivée est donnée par $f'=u'\\text{e}^u$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, `,c+=`${$.isMon()?`$f'(x)=${b(`${$}\\text{e}^{${t}}`)}$`:`$f'(x)=${b(`(${$})\\text{e}^{${t}}`)}$`}.`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`${$}e^{${t}}`}`}p(this,i,{reponse:{value:x}});break;case 4:switch(r(1,2)){case 1:{const s=[[r(-10,10,0),0],[r(-29,29,0)/10,0],[r(-10,10,0),r(-10,10,0)]],e=u(s),t=new f({rand:!0,coeffs:[e[1],e[0]]});c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme produit de fonctions dérivables sur $\\mathbb{R}$.<br>
+            $f$ est de la forme $u\\times v$ avec $u(x)=${t}$ et $v(x)=\\text{e}^x$, donc sa fonction dérivée est donnée par 
+            $f'=u'\\times v+ u\\times v'$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, <br>`,a=v+` $f(x)=${t.isMon()?`${t}\\text{e}^x`:`(${t})\\text{e}^x`}$.<br>
+            Calculer $f'(x)$ et écrire son expression sous forme factorisée.`,c+=` 
+              $\\begin{aligned}
+              f'(x)&=\\underbrace{${t.derivee()}}_{u'(x)}\\times \\underbrace{\\text{e}^x}_{v(x)}+\\underbrace{(${t})}_{u(x)}\\times \\underbrace{\\text{e}^x}_{v'(x)}\\\\
+            ${t.isMon()?"":`&=\\text{e}^x(${t.derivee()}+(${t}))\\\\`}
+              &= ${b(`${e[0]+e[1]===0?`${e[0]}\\text{e}^x`:`\\text{e}^x(${h(e[0],e[0]+e[1])})`}`)}.
+              \\end{aligned}$`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`(${h(e[0],e[0]+e[1])})e^x`}`,p(this,i,{reponse:{value:x,options:{factorisation:!0}}})}break;case 2:default:{const s=[[r(-10,10,0),0,0],[r(-2,2,0),r(-2,2,0),0],[r(-2,2,0),0,r(-2,2,0)],[r(-2,2,0),r(-5,5,0),r(-2,2,0)],[r(-30,30,[-20,-10,0,10,20])/10,0,0]],e=u(s),t=new f({rand:!0,coeffs:[e[2],e[1],e[0]]}),$=t.derivee(),o=new f({rand:!0,coeffs:[e[2]+e[1],2*e[0]+e[1],e[0]]});c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme produit de fonctions dérivables sur $\\mathbb{R}$.<br>
+            $f$ est de la forme $u\\times v$ avec $u(x)=${t}$ et $v(x)=\\text{e}^x$, donc sa fonction dérivée est donnée par 
+            $f'=u'\\times v+ u\\times v'$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, <br>`,a=v+` $f(x)=${t.isMon()?`${t}\\text{e}^x`:`(${t})\\text{e}^x`}$.<br>
+            Calculer $f'(x)$ et écrire son expression sous forme factorisée.`,c+=` 
+              $\\begin{aligned}
+              f'(x)&=\\underbrace{${$.isMon()?`${$}`:`(${$})`}}_{u'(x)}\\times \\underbrace{\\text{e}^x}_{v(x)}+\\underbrace{(${t})}_{u(x)}\\times \\underbrace{\\text{e}^x}_{v'(x)}\\\\
+           &=${$.isMon()?`${b(`\\text{e}^x(${o})`)}.`:`\\text{e}^x(${$}+(${t}))`}\\\\
+              ${$.isMon()?"":`&=${b(`\\text{e}^x(${o})`)}.`}
+              \\end{aligned}$`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`(${o})e^x`}`,p(this,i,{reponse:{value:x,options:{factorisation:!0}}})}break}break;case 5:{const s=[[r(-10,10,[0,1]),0],[r(-29,29,0)/10,0],[r(-10,10,0),r(-10,10,0)]],e=u(s),t=new f({rand:!0,coeffs:[e[1],e[0]]}),$=t.derivee(),o=r(-10,10,[0,1]),m=new f({rand:!0,coeffs:[e[0]+o*e[1],o*e[0]]});c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme produit de fonctions dérivables sur $\\mathbb{R}$.<br>
+            $f$ est de la forme $u\\times v$ avec $u(x)=${t}$ et $v(x)=\\text{e}^{${n(o)}x}$, donc sa fonction dérivée est donnée par 
+            $f'=u'\\times v+ u\\times v'$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, <br>`,a=v+` $f(x)=${t.isMon()?`${t}\\text{e}^{${n(o)}x}`:`(${t})\\text{e}^{${n(o)}x}`}$.<br>
+            Calculer $f'(x)$ et écrire son expression sous forme factorisée.`,c+=` 
+              $\\begin{aligned}
+              f'(x)&=\\underbrace{${$}}_{u'(x)}\\times \\underbrace{\\text{e}^{${n(o)}x}}_{v(x)}+\\underbrace{(${t})}_{u(x)}\\times \\underbrace{${L(o)}\\text{e}^{${n(o)}x}}_{v'(x)}\\\\
+            ${t.isMon()?`&=${n(o)}\\text{e}^{${n(o)}x} ${y(e[0]*o)}x\\text{e}^{${n(o)}x}\\\\`:""}
+            ${t.isMon()?"":`&=\\text{e}^{${n(o)}x}(${$}+${t.isMon()?`(${o}\\times (${t}))`:`(${o}(${t}))`}\\\\`}
+              &= ${b(`\\text{e}^{${n(o)}x}(${m})`)}.
+              \\end{aligned}$`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`(${m})e^{${o}x}`}`,p(this,i,{reponse:{value:x,options:{factorisation:!0}}})}break;case 6:switch(r(1,2)){case 1:{const s=[[r(1,3),0],[r(1,10),r(-4,4,0)]];let e=u(s),t=r(1,5);do e=u(s),t=r(1,7);while(g(t,e[0])!==1);const $=new f({rand:!0,coeffs:[e[1],e[0]]}),o=$.multiply(t).add(-t*e[0]),m=new A(-e[1],e[0]).simplifie();c=`La fonction $f$ est dérivable sur $\\mathbb{R}$ comme quotient de fonctions dérivables sur $\\mathbb{R}\\smallsetminus\\left\\{${m.texFraction}\\right\\}$ dont le dénominateur ne s'annule pas sur $\\mathbb{R}\\smallsetminus\\left\\{${m.texFraction}\\right\\}$.<br>
+            $f$ est de la forme $\\dfrac{u}{v}$ avec $u(x)=${n(t)}\\text{e}^{x}$ et $v(x)=${$}$, donc sa fonction dérivée est donnée par 
+            $f'=\\dfrac{u'\\times v- u\\times v'}{v^2}$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}\\smallsetminus\\left\\{${m.texFraction}\\right\\}$, <br>`,a=` On considère la fonction $f$ définie sur $\\mathbb{R}\\smallsetminus\\left\\{${m.texFraction}\\right\\}$ par : 
+            $f(x)=\\dfrac{${n(t)}\\text{e}^{x}}{${$}}$.<br>
+            Calculer $f'(x)$.`,c+=` 
+              $\\begin{aligned}
+              f'(x)&=\\dfrac{\\overbrace{${n(t)}\\text{e}^{x}}^{u'(x)}\\times \\overbrace{${$.isMon()?`${$}`:`(${$})`}}^{v(x)}-\\overbrace{${n(t)}\\text{e}^{x}}^{u(x)}\\times \\overbrace{${k(e[0])}}^{v'(x)}}{\\underbrace{(${$})^2}_{(v(x))^2}}\\\\
+         &=\\dfrac{  ${$.multiply(t)}\\text{e}^{x}- ${t*e[0]}\\text{e}^{x}}{(${$})^2} \\\\
+        &=${b(`\\dfrac{${o.isMon()?` ${o}`:`(${o})`}\\text{e}^{x}}{${e[0]===1&&e[1]===0?`${$}^2`:`(${$})^2`}}`)}.
+              \\end{aligned}$`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`\\dfrac{(${o})e^{x}}{(${$})^2}`}`,p(this,i,{reponse:{value:x,compare:C}})}break;case 2:default:{const s=[[r(1,10,0),0,0],[r(1,10,0),0,r(1,10)]];let e=u(s),t=r(1,7);do e=u(s),t=r(1,7);while(g(t,e[0])!==1);const $=new f({rand:!0,coeffs:[e[2],e[1],e[0]]}),o=$.derivee(),m=new f({rand:!0,coeffs:[e[2]*t,-2*e[0]*t,t*e[0]]});c=`La fonction $f$ est dérivable sur $${e[2]!==0?"\\mathbb{R}":"\\mathbb{R}^*"}$ comme quotient de fonctions dérivables sur ${e[2]!==0?"$\\mathbb{R}$":"$\\mathbb{R}^*$ dont le dénominateur ne s'annule pas sur $\\mathbb{R}^*$"}.<br>
+            $f$ est de la forme $\\dfrac{u}{v}$ avec $u(x)=${n(t)}\\text{e}^{x}$ et $v(x)=${$}$, donc sa fonction dérivée est donnée par 
+            $f'=\\dfrac{u'\\times v- u\\times v'}{v^2}$.<br><br>
+            Pour tout $x$ de $\\mathbb{R}$, <br>`,a=`
+               On considère la fonction $f$ définie sur $\\mathbb{R}$ par : 
+            $f(x)=\\dfrac{${n(t)}\\text{e}^{x}}{${$}}$.<br>
+            Calculer $f'(x)$.`,c+=` 
+              $\\begin{aligned}
+              f'(x)&=\\dfrac{\\overbrace{${n(t)}\\text{e}^{x}}^{u'(x)}\\times \\overbrace{${$.isMon()?`${$}`:`(${$})`}}^{v(x)}-\\overbrace{${n(t)}\\text{e}^{x}}^{u(x)}\\times \\overbrace{${o}}^{v'(x)}}{\\underbrace{(${$})^2}_{(v(x))^2}}\\\\
+        &=${b(`\\dfrac{${m.isMon()?` ${m}`:`(${m})`}\\text{e}^{x}}{(${$})^2}`)}.
+              \\end{aligned}$`,a+=d(this,i,l.clavierFonctionsTerminales,{texteAvant:"<br>$f'(x)=$"}),x=`${`\\dfrac{(${m})e^{x}}{(${$})^2}`}`,p(this,i,{reponse:{value:x,compare:C}})}break}break}this.questionJamaisPosee(i,a)&&(this.listeQuestions[i]=a,this.listeCorrections[i]=c,i++),R++}q(this)}}export{Ge as dateDePublication,Ye as default,He as interactifReady,Ue as interactifType,Xe as refs,Ve as titre,We as uuid};
+//# sourceMappingURL=1AN14-9-Cd3yVHcF.js.map
