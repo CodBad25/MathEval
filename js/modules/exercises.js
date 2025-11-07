@@ -232,7 +232,12 @@ function cleanComplexLatex(latex, exerciceId) {
 
     // Supprimer TOUS les environnements complexes
     cleaned = cleaned.replace(/\\begin\{center\}[\s\S]*?\\end\{center\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{pspicture\}[\s\S]*?\\end\{pspicture\}/gi, badge('📐', 'Figure'));
+
+    // Gérer les environnements pspicture et pspicture* (graphiques PSTricks)
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]*?\\end\{pspicture\*?\}/gi, badge('📐', 'Figure'));
+
+    // Nettoyer les commandes PST résiduelles qui pourraient rester
+    cleaned = cleaned.replace(/\\pspicture\*?\([^)]*\)\([^)]*\)/gi, '');
 
     // Traiter les blocs Scratch avec scratchblocks
     cleaned = cleaned.replace(/\\begin\{scratch\}([\s\S]*?)\\end\{scratch\}/gi, (match, content) => {
@@ -286,6 +291,17 @@ function cleanComplexLatex(latex, exerciceId) {
     // Supprimer les commentaires LaTeX
     cleaned = cleaned.replace(/%[^\n]*/g, '');
 
+    // Nettoyer les commandes PST avancées (souvent mal fermées)
+    cleaned = cleaned.replace(/\\psplot[\s\S]*?\}/gi, '');
+    cleaned = cleaned.replace(/\\psline[\s\S]*?\}/gi, '');
+    cleaned = cleaned.replace(/\\psaxes[\s\S]*?\}/gi, '');
+    cleaned = cleaned.replace(/\\psgrid[\s\S]*?\}/gi, '');
+    cleaned = cleaned.replace(/\\psdot[\s\S]*?\}/gi, '');
+
+    // Nettoyer les définitions de fonctions PostScript (comme dans ton exemple)
+    cleaned = cleaned.replace(/\{[^}]*mul[^}]*add[^}]*\}/gi, ''); // {x 2 neg mul 4 add}
+    cleaned = cleaned.replace(/_[a-zA-Z]\$/gi, ''); // _f$
+
     // Nettoyer les espaces LaTeX spéciaux
     cleaned = cleaned.replace(/\\,/g, ' ');
     cleaned = cleaned.replace(/~+/g, ' ');
@@ -293,6 +309,12 @@ function cleanComplexLatex(latex, exerciceId) {
 
     // Nettoyer les retours à la ligne multiples
     cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+    // Nettoyer les artefacts résiduels (parenthèses vides, accolades orphelines)
+    cleaned = cleaned.replace(/\(\s*\)/g, '');
+    cleaned = cleaned.replace(/\{\s*\}/g, '');
+    cleaned = cleaned.replace(/\[\s*\]/g, '');
+
     cleaned = cleaned.trim();
 
     return cleaned;
@@ -372,7 +394,28 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
             if (itemContent) {
                 // Nettoyer le LaTeX complexe
                 itemContent = cleanComplexLatex(itemContent, exerciceId);
-                items.push(latexToHtml(itemContent, exerciceId));
+                const htmlContent = latexToHtml(itemContent, exerciceId);
+
+                // Si le contenu converti contient encore beaucoup de commandes LaTeX non résolues
+                // ou est trop court, utiliser l'image PNG comme fallback
+                const hasUnresolvedLatex = (htmlContent.match(/\\[a-zA-Z]+/g) || []).length > 5;
+                const hasBadges = htmlContent.includes('📐') || htmlContent.includes('📊') || htmlContent.includes('🌳');
+                const isTooShort = htmlContent.trim().replace(/<[^>]*>/g, '').length < 30;
+
+                if (hasUnresolvedLatex || (hasBadges && isTooShort)) {
+                    // Fallback: utiliser le PNG de l'exercice complet
+                    const year = appState.dnbData[exerciceId]?.annee;
+                    if (year) {
+                        const pngUrl = `https://coopmaths.fr/alea/static/dnb/${year}/tex/png/${exerciceId}.png`;
+                        items.push(`<div style="padding: 10px; background: #f8f9fa; border-radius: 8px; margin: 5px 0;">
+                            <img src="${pngUrl}" style="max-width: 100%; border-radius: 4px;" alt="Question ${items.length + 1}">
+                        </div>`);
+                    } else {
+                        items.push(htmlContent); // Pas d'année, on garde le HTML même s'il est imparfait
+                    }
+                } else {
+                    items.push(htmlContent);
+                }
             }
         }
 
