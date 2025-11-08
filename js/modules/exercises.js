@@ -315,6 +315,20 @@ function cleanComplexLatex(latex, exerciceId) {
     cleaned = cleaned.replace(/\{\s*\}/g, '');
     cleaned = cleaned.replace(/\[\s*\]/g, '');
 
+    // Nettoyer les $ orphelins (souvent après vspace)
+    cleaned = cleaned.replace(/\$\s*$/gm, ''); // $ en fin de ligne
+    cleaned = cleaned.replace(/^\s*\$/gm, ''); // $ en début de ligne
+
+    // Nettoyer les coordonnées orphelines de type (x,y)(x,y)
+    cleaned = cleaned.replace(/\(-?\d+\.?\d*,-?\d+\.?\d*\)\s*\(-?\d+\.?\d*,-?\d+\.?\d*\)/g, '');
+    cleaned = cleaned.replace(/\(-?\d+\.?\d*,-?\d+\.?\d*\)/g, '');
+
+    // Nettoyer les accolades avec juste des nombres (restes de coordonnées PST)
+    cleaned = cleaned.replace(/\{\d+\.?\d*\}/g, '');
+
+    // Nettoyer les séquences d'accolades multiples
+    cleaned = cleaned.replace(/\}\s*\{/g, ' ');
+
     cleaned = cleaned.trim();
 
     return cleaned;
