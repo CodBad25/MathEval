@@ -7571,7 +7571,7 @@ function initMathaleaPage() {
  */
 function updateMathaleaSource() {
     const source = document.getElementById('mathaleaSourceSelect').value;
-    const origin = source === 'local' ? 'http://localhost:8080' : 'https://coopmaths.fr';
+    const origin = source === 'local' ? 'http://localhost:5173/MathEval' : 'https://coopmaths.fr';
     const iframeUrl = `${origin}/alea/?recorder=correcteur-universel&v=eleve`;
 
     // Créer l'iframe dynamiquement s'il n'existe pas encore
