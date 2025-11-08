@@ -1712,7 +1712,13 @@ function renderBaremeExerciseTabs() {
         
         // Titre différent pour Ex1 (Automatismes)
         const exTitle = exerciseNum === '1' ? 'Ex1 (Automatismes)' : `Exercice ${exerciseNum}`;
-        
+
+        // Vérifier la cohérence des points
+        const consistency = checkExercisePointsConsistency(exerciseNum);
+        const warningBadge = !consistency.isConsistent ?
+            `<span title="⚠️ Incohérence : Somme questions = ${consistency.sumQuestions} pts (total exercice = ${consistency.totalExercise} pts)"
+                   style="margin-left: 4px; cursor: help; font-size: 1.1em;">⚠️</span>` : '';
+
         const tabBtn = document.createElement('button');
         tabBtn.className = `bareme-exercise-tab ${isActive ? 'active' : ''}`;
         tabBtn.onclick = () => showBaremeExercise(index);
@@ -1720,6 +1726,7 @@ function renderBaremeExerciseTabs() {
             <span>${icon}</span>
             <span>${exTitle}</span>
             <span style="margin-left: 8px; font-size: 0.85em; opacity: 0.8;">(${baremeData.totalPoints} pts)</span>
+            ${warningBadge}
         `;
         tabBtn.style.cssText = `
             padding: 10px 16px;
@@ -2651,10 +2658,34 @@ function toggleCompetenceForExercise(exerciseId, competenceName) {
     updateCompetencesSummary();
 }
 
+/**
+ * Vérifie la cohérence entre le total de l'exercice et la somme des points des questions
+ * @param {string} exerciseId - L'ID de l'exercice
+ * @returns {object} {isConsistent, diff, sumQuestions, totalExercise}
+ */
+function checkExercisePointsConsistency(exerciseId) {
+    const baremeData = appState.baremeConfig.exercises[exerciseId];
+    if (!baremeData || !baremeData.questionPoints) {
+        return {isConsistent: true, diff: 0, sumQuestions: 0, totalExercise: baremeData?.totalPoints || 0};
+    }
+
+    const totalExercise = baremeData.totalPoints || 0;
+    const sumQuestions = Object.values(baremeData.questionPoints).reduce((sum, pts) => sum + (parseFloat(pts) || 0), 0);
+    const diff = Math.round((totalExercise - sumQuestions) * 10) / 10;
+    const isConsistent = Math.abs(diff) < 0.01; // Tolérance de 0.01 pour les arrondis
+
+    return {
+        isConsistent,
+        diff,
+        sumQuestions: Math.round(sumQuestions * 10) / 10,
+        totalExercise: Math.round(totalExercise * 10) / 10
+    };
+}
+
 function updateExercisePoints(exerciseId, value) {
     const points = parseFloat(value) || 0;
     appState.baremeConfig.exercises[exerciseId].totalPoints = points;
-    
+
     // Recalculer la répartition si mode B
     if (appState.baremeConfig.mode === 'b') {
         const baremeData = appState.baremeConfig.exercises[exerciseId];
@@ -2666,17 +2697,18 @@ function updateExercisePoints(exerciseId, value) {
             });
         }
     }
-    
+
     calculateTotalPoints();
     updateCompetencesSummary();
-    
+
     // Re-render la section de distribution et l'onglet
     const distDiv = document.getElementById(`pointsDistribution_${exerciseId}`);
     if (distDiv) {
         distDiv.innerHTML = renderPointsDistribution(exerciseId, appState.baremeConfig.exercises[exerciseId]);
     }
-    
-    // Mettre à jour l'onglet avec le nouveau total
+
+    // Mettre à jour l'onglet avec le nouveau total + vérifier incohérence
+    refreshBaremeTabs();
     renderBaremeExerciseTabs();
 }
 
