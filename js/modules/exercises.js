@@ -48,6 +48,17 @@ function latexToHtml(latex, exerciceId) {
     // ⚠️ IMPORTANT : Préserver les formules mathématiques AVANT toute autre conversion
     // MathALÉA préserve les formules pour que KaTeX les traite ensuite
 
+    // Nettoyer les commandes de taille de police LaTeX (à ignorer pour HTML/KaTeX)
+    html = html.replace(/\\Large\s*/g, '');
+    html = html.replace(/\\large\s*/g, '');
+    html = html.replace(/\\small\s*/g, '');
+    html = html.replace(/\\tiny\s*/g, '');
+    html = html.replace(/\\scriptsize\s*/g, '');
+    html = html.replace(/\\footnotesize\s*/g, '');
+    html = html.replace(/\\normalsize\s*/g, '');
+    html = html.replace(/\\huge\s*/g, '');
+    html = html.replace(/\\Huge\s*/g, '');
+
     // Commandes LaTeX simples → HTML (en évitant les formules math)
     html = html.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
     html = html.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
@@ -443,6 +454,12 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
     const correctionItems = latexCorrection ? extractItems(latexCorrection, false) : [];
 
     console.log(`📄 Parser: ${enonceItems.length} question(s) détectée(s) pour ${exerciceId}`);
+    console.log(`📝 Parser: ${correctionItems.length} correction(s) trouvée(s) pour ${exerciceId}`);
+
+    // Avertir si mismatch entre questions et corrections
+    if (correctionItems.length > 0 && enonceItems.length !== correctionItems.length) {
+        console.warn(`⚠️ Mismatch: ${enonceItems.length} questions mais ${correctionItems.length} corrections pour ${exerciceId}`);
+    }
 
     return {
         enonces: enonceItems,
