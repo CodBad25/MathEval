@@ -3285,14 +3285,37 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
         }
         
         const enumerateContent = enumerateMatch[1];
-        
-        // Découper par \item
-        const parts = enumerateContent.split(/\\item[\s\n\r\t]*/);
-        
+
+        // Protéger les enumerates imbriqués en les remplaçant par des marqueurs
+        let protectedContent = enumerateContent;
+        const nestedEnumerates = [];
+        let nestIndex = 0;
+
+        // Remplacer récursivement tous les \begin{enumerate}...\end{enumerate} imbriqués
+        while (protectedContent.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i)) {
+            protectedContent = protectedContent.replace(
+                /\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i,
+                (match) => {
+                    const marker = `___NESTED_ENUM_${nestIndex}___`;
+                    nestedEnumerates[nestIndex] = match;
+                    nestIndex++;
+                    return marker;
+                }
+            );
+        }
+
+        // Découper par \item (maintenant les \item imbriqués sont protégés)
+        const parts = protectedContent.split(/\\item[\s\n\r\t]*/);
+
         // Ignorer le premier élément (avant le premier \item)
         for (let i = 1; i < parts.length; i++) {
             let itemContent = parts[i].trim();
             if (itemContent) {
+                // Restaurer les enumerates imbriqués
+                for (let j = 0; j < nestedEnumerates.length; j++) {
+                    itemContent = itemContent.replace(`___NESTED_ENUM_${j}___`, nestedEnumerates[j]);
+                }
+
                 // Nettoyer le LaTeX complexe
                 itemContent = cleanComplexLatex(itemContent, exerciceId);
                 items.push(latexToHtml(itemContent, exerciceId));
