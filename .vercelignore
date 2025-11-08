@@ -1,0 +1,52 @@
+# Fichiers de développement
+node_modules/
+.git/
+.DS_Store
+
+# Fichiers temporaires et cache
+*.log
+*.tmp
+.cache/
+.vercel/
+
+# Fichiers de configuration locale
+.env.local
+.env*.local
+
+# Documentation et tests
+README.md
+CHANGELOG.md
+docs/
+tests/
+test/
+*.test.js
+*.spec.js
+REFACTORING*.md
+README_REFACTORING.md
+FICHIERS_CREES.txt
+
+# Fichiers sources non nécessaires en production
+src/
+*.map
+
+# Fichiers macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Fichiers Windows
+Thumbs.db
+desktop.ini
+
+# Sauvegardes et backups (391MB!)
+*.bak
+*.backup
+*~
+alea.backup/
+backups/
+
+# Fichiers de développement spécifiques
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+server.py
