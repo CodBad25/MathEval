@@ -7574,7 +7574,18 @@ function updateMathaleaSource() {
     const origin = source === 'local' ? 'http://localhost:8080' : 'https://coopmaths.fr';
     const iframeUrl = `${origin}/alea/?recorder=correcteur-universel&v=eleve`;
 
-    const iframe = document.getElementById('mathaleaFrame');
+    // Créer l'iframe dynamiquement s'il n'existe pas encore
+    let iframe = document.getElementById('mathaleaFrame');
+    if (!iframe) {
+        const container = document.getElementById('mathaleaFrameContainer');
+        iframe = document.createElement('iframe');
+        iframe.id = 'mathaleaFrame';
+        iframe.style.cssText = 'width: 100%; height: 700px; border: none; border-radius: 8px;';
+        iframe.setAttribute('allow', 'fullscreen');
+        container.appendChild(iframe);
+        console.log('✅ Iframe MathALÉA créé dynamiquement');
+    }
+
     iframe.src = iframeUrl;
 
     iframe.onload = () => {

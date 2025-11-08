@@ -260,13 +260,9 @@
                 </div>
             </div>
 
-            <!-- Iframe MathALÉA avec recorder=correcteur-universel -->
-            <div style="background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <iframe
-                    id="mathaleaFrame"
-                    style="width: 100%; height: 700px; border: none; border-radius: 8px;"
-                    allow="fullscreen"
-                ></iframe>
+            <!-- Iframe MathALÉA (créé dynamiquement pour éviter chargement prématuré) -->
+            <div id="mathaleaFrameContainer" style="background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <!-- L'iframe sera inséré ici dynamiquement par initMathaleaPage() -->
             </div>
 
             <!-- Actions -->
