@@ -3028,6 +3028,13 @@ function latexToHtml(latex, exerciceId) {
     html = html.replace(/\\huge\s*/g, '');
     html = html.replace(/\\Huge\s*/g, '');
 
+    // Nettoyer les commandes d'espacement LaTeX
+    html = html.replace(/\\vspace\*?\{[^}]*\}/g, '');
+    html = html.replace(/\\hspace\*?\{[^}]*\}/g, ' ');
+    html = html.replace(/\\vskip[^\n]*/g, '');
+    html = html.replace(/\\quad/g, ' ');
+    html = html.replace(/\\qquad/g, '  ');
+
     // Commandes LaTeX simples → HTML (en évitant les formules math)
     html = html.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
     html = html.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
@@ -3124,8 +3131,18 @@ function latexToHtml(latex, exerciceId) {
     
     // Nettoyer les sauts de ligne
     html = html.replace(/\n\s*\n/g, '<br>');
+
+    // Nettoyage final des artefacts résiduels
+    html = html.replace(/\$\s*\}/g, '');  // $ suivis de }
+    html = html.replace(/\{\s*\$\s*\}/g, '');  // {$}
+    html = html.replace(/_[a-zA-Z]\$\}/g, '');  // _x$}
+    html = html.replace(/\}\s*\$\s*\}/g, '}');  // }$}
+    html = html.replace(/\s{3,}/g, ' ');  // Espaces multiples
+    html = html.replace(/\(\s*\)\s*\(\s*\)/g, '');  // ()() vides
+    html = html.replace(/\{\s*\}\s*\{\s*\}/g, '');  // {}{} vides
+
     html = html.trim();
-    
+
     return html;
 }
 
@@ -3178,7 +3195,23 @@ function cleanComplexLatex(latex, exerciceId) {
 
     // Supprimer TOUS les environnements complexes
     cleaned = cleaned.replace(/\\begin\{center\}[\s\S]*?\\end\{center\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{pspicture\}[\s\S]*?\\end\{pspicture\}/gi, badge('📐', 'Figure'));
+
+    // Gérer les environnements pspicture et pspicture* (graphiques PSTricks)
+    // Utiliser un regex plus robuste qui capture même du contenu mal formaté
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]*?\\end\{pspicture\*?\}/gi, badge('📐', 'Figure'));
+
+    // Nettoyer les fragments de pspicture isolés (cas où le \begin ou \end manque)
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]{0,500}?(?=\\begin|$)/gi, badge('📐', 'Figure'));
+
+    // Nettoyer les commandes PST résiduelles qui pourraient rester
+    cleaned = cleaned.replace(/\\pspicture\*?\([^)]*\)\([^)]*\)/gi, '');
+    cleaned = cleaned.replace(/\\psplot[\s\S]*?\}/gi, '');
+    cleaned = cleaned.replace(/\\ps[a-z]+\{[^}]*\}/gi, '');
+    cleaned = cleaned.replace(/\\ps[a-z]+\[[^\]]*\]/gi, '');
+
+    // Nettoyer les $ isolés ou mal formés qui restent après suppression de graphiques
+    cleaned = cleaned.replace(/\$\s*\}/g, '');
+    cleaned = cleaned.replace(/\{\s*\$\s*\}/g, '');
 
     // Traiter les blocs Scratch avec scratchblocks
     cleaned = cleaned.replace(/\\begin\{scratch\}([\s\S]*?)\\end\{scratch\}/gi, (match, content) => {
