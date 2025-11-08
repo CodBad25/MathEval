@@ -29,3 +29,6 @@ __pycache__/
 *.pyd
 .Python
 .vercel
+
+# Source maps (dev only, not needed in production)
+**/*.map
