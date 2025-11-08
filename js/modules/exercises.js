@@ -258,35 +258,15 @@ function cleanComplexLatex(latex, exerciceId) {
             <span>${label}</span>
         </span>`;
 
-    // Fonction pour insérer l'image PNG de l'exercice au lieu d'un badge
-    const insertExerciseImage = (altText) => {
-        // Récupérer l'année de l'exercice depuis appState
-        const year = appState?.dnbData?.[exerciceId]?.annee;
-        if (!year) {
-            // Si pas d'année disponible, retourner le badge par défaut
-            return badge('📐', altText);
-        }
-
-        const pngUrl = `https://coopmaths.fr/alea/static/dnb/${year}/tex/png/${exerciceId}.png`;
-        return `<div style="margin: 15px 0; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 2px solid #e3f2fd;">
-            <p style="margin-bottom: 10px; font-size: 0.9em; color: #666; font-weight: 600;">📐 ${altText}</p>
-            <img src="${pngUrl}"
-                 style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-                 alt="${altText}"
-                 onerror="this.parentElement.innerHTML='${badge('📐', altText).replace(/'/g, '&apos;')}'">
-        </div>`;
-    };
-
     // Supprimer TOUS les environnements complexes
     cleaned = cleaned.replace(/\\begin\{center\}[\s\S]*?\\end\{center\}/gi, '');
 
     // Gérer les environnements pspicture et pspicture* (graphiques PSTricks)
     // Utiliser un regex plus robuste qui capture même du contenu mal formaté
-    // Remplacer par l'image PNG de l'exercice au lieu d'un simple badge
-    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]*?\\end\{pspicture\*?\}/gi, insertExerciseImage('Figure graphique'));
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]*?\\end\{pspicture\*?\}/gi, badge('📐', 'Figure graphique'));
 
     // Nettoyer les fragments de pspicture isolés (cas où le \begin ou \end manque)
-    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]{0,500}?(?=\\begin|$)/gi, insertExerciseImage('Figure graphique'));
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]{0,500}?(?=\\begin|$)/gi, badge('📐', 'Figure graphique'));
 
     // Nettoyer les commandes PST résiduelles qui pourraient rester
     cleaned = cleaned.replace(/\\pspicture\*?\([^)]*\)\([^)]*\)/gi, '');
@@ -328,21 +308,21 @@ function cleanComplexLatex(latex, exerciceId) {
         return `<pre class="blocks" style="margin: 10px 0;">${scratchCode}</pre>`;
     });
 
-    // Remplacer les tableaux complexes (tabularx, longtable) par l'image de l'exercice
+    // Remplacer les tableaux complexes (tabularx, longtable) par un badge
     // Les tableaux simples seront gérés par latexToHtml()
-    cleaned = cleaned.replace(/\\begin\{tabular[x]\}[\s\S]*?\\end\{tabular[x]\}/gi, insertExerciseImage('Tableau'));
-    cleaned = cleaned.replace(/\\begin\{longtable\}[\s\S]*?\\end\{longtable\}/gi, insertExerciseImage('Tableau'));
+    cleaned = cleaned.replace(/\\begin\{tabular[x]\}[\s\S]*?\\end\{tabular[x]\}/gi, badge('📊', 'Tableau'));
+    cleaned = cleaned.replace(/\\begin\{longtable\}[\s\S]*?\\end\{longtable\}/gi, badge('📊', 'Tableau'));
 
     // Remplacer les environnements graphiques complexes
-    cleaned = cleaned.replace(/\\pstree[\s\S]*?(?=\\item|\\end|$)/gi, insertExerciseImage('Arbre'));
+    cleaned = cleaned.replace(/\\pstree[\s\S]*?(?=\\item|\\end|$)/gi, badge('🌳', 'Arbre'));
     cleaned = cleaned.replace(/\\psset\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\ps[a-z]+(\[[^\]]*\])?(\([^\)]*\))?(\{[^}]*\})?/gi, '');
     cleaned = cleaned.replace(/\\parbox[\s\S]*?\{[\s\S]*?\}/gi, '');
     cleaned = cleaned.replace(/\\rput[\s\S]*?\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\uput[\s\S]*?\{[^}]*\}/gi, '');
 
-    // Remplacer les array en mode math par l'image de l'exercice (car complexe avec KaTeX)
-    cleaned = cleaned.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/gi, insertExerciseImage('Matrice'));
+    // Remplacer les array en mode math par un badge (car complexe avec KaTeX)
+    cleaned = cleaned.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/gi, badge('📐', 'Matrice'));
 
     // Les listes enumerate/itemize seront converties en HTML par latexToHtml()
     // Donc on ne les supprime PAS ici (contrairement à avant)
