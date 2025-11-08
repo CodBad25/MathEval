@@ -2708,7 +2708,6 @@ function updateExercisePoints(exerciseId, value) {
     }
 
     // Mettre à jour l'onglet avec le nouveau total + vérifier incohérence
-    refreshBaremeTabs();
     renderBaremeExerciseTabs();
 }
 
@@ -3206,7 +3205,7 @@ function renderScratchblocksInElement(element) {
                 // Rendre le bloc Scratch
                 scratchblocks.renderMatching('pre.blocks', {
                     style: 'scratch3',
-                    languages: ['fr', 'en'],
+                    languages: ['en'],
                     scale: 0.75
                 });
             } catch (e) {
