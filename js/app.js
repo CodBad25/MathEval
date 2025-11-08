@@ -3193,15 +3193,35 @@ function cleanComplexLatex(latex, exerciceId) {
             <span>${label}</span>
         </span>`;
 
+    // Fonction pour insérer l'image PNG de l'exercice au lieu d'un badge
+    const insertExerciseImage = (altText) => {
+        // Récupérer l'année de l'exercice depuis appState
+        const year = appState?.dnbData?.[exerciceId]?.annee;
+        if (!year) {
+            // Si pas d'année disponible, retourner le badge par défaut
+            return badge('📐', altText);
+        }
+
+        const pngUrl = `https://coopmaths.fr/alea/static/dnb/${year}/tex/png/${exerciceId}.png`;
+        return `<div style="margin: 15px 0; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 2px solid #e3f2fd;">
+            <p style="margin-bottom: 10px; font-size: 0.9em; color: #666; font-weight: 600;">📐 ${altText}</p>
+            <img src="${pngUrl}"
+                 style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                 alt="${altText}"
+                 onerror="this.parentElement.innerHTML='${badge('📐', altText).replace(/'/g, '&apos;')}'">
+        </div>`;
+    };
+
     // Supprimer TOUS les environnements complexes
     cleaned = cleaned.replace(/\\begin\{center\}[\s\S]*?\\end\{center\}/gi, '');
 
     // Gérer les environnements pspicture et pspicture* (graphiques PSTricks)
     // Utiliser un regex plus robuste qui capture même du contenu mal formaté
-    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]*?\\end\{pspicture\*?\}/gi, badge('📐', 'Figure'));
+    // Remplacer par l'image PNG de l'exercice au lieu d'un simple badge
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]*?\\end\{pspicture\*?\}/gi, insertExerciseImage('Figure graphique'));
 
     // Nettoyer les fragments de pspicture isolés (cas où le \begin ou \end manque)
-    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]{0,500}?(?=\\begin|$)/gi, badge('📐', 'Figure'));
+    cleaned = cleaned.replace(/\\begin\{pspicture\*?\}[\s\S]{0,500}?(?=\\begin|$)/gi, insertExerciseImage('Figure graphique'));
 
     // Nettoyer les commandes PST résiduelles qui pourraient rester
     cleaned = cleaned.replace(/\\pspicture\*?\([^)]*\)\([^)]*\)/gi, '');
@@ -3243,14 +3263,18 @@ function cleanComplexLatex(latex, exerciceId) {
         return `<pre class="blocks" style="margin: 10px 0;">${scratchCode}</pre>`;
     });
 
-    cleaned = cleaned.replace(/\\begin\{tabular[x]?\}[\s\S]*?\\end\{tabular[x]?\}/gi, badge('📊', 'Tableau'));
-    cleaned = cleaned.replace(/\\pstree[\s\S]*?(?=\\item|\\end|$)/gi, badge('🌳', 'Arbre'));
+    // Remplacer les tableaux complexes par l'image de l'exercice
+    cleaned = cleaned.replace(/\\begin\{tabular[x]?\}[\s\S]*?\\end\{tabular[x]?\}/gi, insertExerciseImage('Tableau'));
+    cleaned = cleaned.replace(/\\begin\{longtable\}[\s\S]*?\\end\{longtable\}/gi, insertExerciseImage('Tableau'));
+
+    // Remplacer les environnements graphiques complexes
+    cleaned = cleaned.replace(/\\pstree[\s\S]*?(?=\\item|\\end|$)/gi, insertExerciseImage('Arbre'));
     cleaned = cleaned.replace(/\\psset\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\ps[a-z]+(\[[^\]]*\])?(\([^\)]*\))?(\{[^}]*\})?/gi, '');
     cleaned = cleaned.replace(/\\parbox[\s\S]*?\{[\s\S]*?\}/gi, '');
     cleaned = cleaned.replace(/\\rput[\s\S]*?\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\uput[\s\S]*?\{[^}]*\}/gi, '');
-    
+
     // Supprimer les commandes LaTeX résiduelles (après extraction des items)
     cleaned = cleaned.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?/gi, '');
     cleaned = cleaned.replace(/\\end\{enumerate\}/gi, '');
@@ -3261,7 +3285,9 @@ function cleanComplexLatex(latex, exerciceId) {
     cleaned = cleaned.replace(/\\end\{description\}/gi, '');
     cleaned = cleaned.replace(/\\begin\{minipage\}[\s\S]*?\{[\s\S]*?\}/gi, '');
     cleaned = cleaned.replace(/\\end\{minipage\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/gi, badge('📊', 'Tableau'));
+
+    // Remplacer les array en mode math par l'image de l'exercice (car complexe avec KaTeX)
+    cleaned = cleaned.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/gi, insertExerciseImage('Matrice'));
     
     // Supprimer les commentaires LaTeX
     cleaned = cleaned.replace(/%[^\n]*/g, '');
