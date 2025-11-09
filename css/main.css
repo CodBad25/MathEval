@@ -3614,4 +3614,9 @@
             height: auto;
         }
 
+        /* Cacher les blocs Scratch dans les réponses attendues (corrections) */
+        div[id^="correction_"] .scratchblocks {
+            display: none;
+        }
+
         /* === RESPONSIVE === */
