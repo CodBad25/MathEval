@@ -1359,14 +1359,35 @@ function createFinalExercisesData() {
             exercisesData[exerciseNum] = {
                 title: `Exercice ${exerciseNum} - ${exerciseId}`,
                 totalPoints: 3.5, // Sera remplacé par la config du barème
-                questions: parsedExercise.questions.map((q, qIndex) => ({
-                    id: `q${qIndex + 1}`,
-                    title: `Question ${qIndex + 1}`,
-                    points: 1,
-                    statement: q,
-                    answer: parsedExercise.corrections[qIndex] || "Correction à venir",
-                    competences: [] // Pas de compétences par défaut, elles seront ajoutées via le barème
-                })),
+                questions: parsedExercise.questions.map((qItem, qIndex) => {
+                    // Gérer les objets (nouvelle structure) et strings (rétrocompatibilité)
+                    const isObject = typeof qItem === 'object' && qItem !== null;
+                    const statement = isObject ? qItem.content : qItem;
+                    const isSubQuestion = isObject && qItem.isSubQuestion;
+
+                    // Déterminer le titre de la question
+                    let questionTitle;
+                    if (isSubQuestion) {
+                        questionTitle = `Question ${qItem.parentNumber}.${qItem.subLetter}`;
+                    } else if (isObject && qItem.number) {
+                        questionTitle = `Question ${qItem.number}`;
+                    } else {
+                        questionTitle = `Question ${qIndex + 1}`;
+                    }
+
+                    // Récupérer la correction correspondante
+                    const corrItem = parsedExercise.corrections[qIndex];
+                    const answer = corrItem ? (typeof corrItem === 'object' ? corrItem.content : corrItem) : "Correction à venir";
+
+                    return {
+                        id: `q${qIndex + 1}`,
+                        title: questionTitle,
+                        points: 1,
+                        statement: statement,
+                        answer: answer,
+                        competences: [] // Pas de compétences par défaut, elles seront ajoutées via le barème
+                    };
+                }),
                 dnbId: exerciseId,
                 metadata: {
                     annee: dnbData.annee,
@@ -2141,16 +2162,34 @@ function showBaremeExerciseDNB(exerciseNum) {
 
     // Afficher les questions séparément
     if (parsedExercise && parsedExercise.questions && parsedExercise.questions.length > 0) {
-        parsedExercise.questions.forEach((qText, qIndex) => {
+        parsedExercise.questions.forEach((qItem, qIndex) => {
+            // Gérer les objets (nouvelle structure) et strings (rétrocompatibilité)
+            const isObject = typeof qItem === 'object' && qItem !== null;
+            const qText = isObject ? qItem.content : qItem;
+            const isSubQuestion = isObject && qItem.isSubQuestion;
+
+            // Déterminer le titre de la question
+            let questionTitle;
+            if (isSubQuestion) {
+                questionTitle = `Question ${qItem.parentNumber}.${qItem.subLetter}`;
+            } else if (isObject && qItem.number) {
+                questionTitle = `Question ${qItem.number}`;
+            } else {
+                questionTitle = `Question ${qIndex + 1}`;
+            }
+
             const qId = `q${qIndex + 1}`;
-            const correction = parsedExercise.corrections && parsedExercise.corrections[qIndex] ? parsedExercise.corrections[qIndex] : '';
-            
+
+            // Récupérer la correction correspondante
+            const corrItem = parsedExercise.corrections && parsedExercise.corrections[qIndex] ? parsedExercise.corrections[qIndex] : '';
+            const correction = typeof corrItem === 'object' ? corrItem.content : corrItem;
+
             const qKey = `q${qIndex}`;
             if (!baremeData.questionCompetences) baremeData.questionCompetences = {};
             if (!baremeData.questionCompetences[qKey]) {
                 baremeData.questionCompetences[qKey] = []; // Aucune compétence pré-sélectionnée
             }
-            
+
             // Calculer les points par défaut pour cette question
             if (!baremeData.questionPoints) baremeData.questionPoints = {};
             if (!baremeData.questionPoints[qKey]) {
@@ -2161,7 +2200,7 @@ function showBaremeExerciseDNB(exerciseNum) {
             html += `
                 <div style="background: white; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
-                        <h5 style="color: #4285f4; margin: 0;">Question ${qIndex + 1}</h5>
+                        <h5 style="color: #4285f4; margin: 0;">${questionTitle}</h5>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <input type="number"
                                    id="questionPoints_${exerciseNum}_${qIndex}"
@@ -2204,10 +2243,14 @@ function showBaremeExerciseDNB(exerciseNum) {
     
     // Remplir les divs d'énoncé et correction avec le HTML parsé
     if (parsedExercise && parsedExercise.questions && parsedExercise.questions.length > 0) {
-        parsedExercise.questions.forEach((qText, qIndex) => {
+        parsedExercise.questions.forEach((qItem, qIndex) => {
+            // Gérer les objets (nouvelle structure) et strings (rétrocompatibilité)
+            const isObject = typeof qItem === 'object' && qItem !== null;
+            const qText = isObject ? qItem.content : qItem;
+
             const enonceDiv = document.getElementById(`enonce_q${exerciseIndex}_${qIndex}`);
             const correctionDiv = document.getElementById(`correction_q${exerciseIndex}_${qIndex}`);
-            
+
             if (enonceDiv) {
                 enonceDiv.innerHTML = qText;
                 // Rendre les formules mathématiques avec KaTeX (comme MathALÉA)
@@ -2220,9 +2263,10 @@ function showBaremeExerciseDNB(exerciseNum) {
             // Initialiser l'affichage des compétences pour cette question
             renderDNBQuestionCompetences(exerciseNum, qIndex);
             if (correctionDiv) {
-                const correction = parsedExercise.corrections && parsedExercise.corrections[qIndex] 
-                    ? parsedExercise.corrections[qIndex] 
+                const corrItem = parsedExercise.corrections && parsedExercise.corrections[qIndex]
+                    ? parsedExercise.corrections[qIndex]
                     : 'Pas de correction disponible';
+                const correction = typeof corrItem === 'object' ? corrItem.content : corrItem;
                 correctionDiv.innerHTML = correction;
                 // Rendre les formules mathématiques avec KaTeX
                 setTimeout(() => {
@@ -3447,86 +3491,150 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
             return [cleanContent];
         }
 
-        // Protéger les enumerates et itemizes imbriqués en les remplaçant par des marqueurs
-        let protectedContent = enumerateContent;
-        const nestedEnumerates = [];
-        let nestIndex = 0;
+        // Fonction pour extraire les items de niveau 0 uniquement (en respectant les imbrications)
+        function extractTopLevelItems(text) {
+            const topItems = [];
+            let pos = 0;
+            let depth = 0; // Profondeur d'imbrication enumerate/itemize
 
-        // Debug: log le contenu avant protection
-        if (exerciceId.includes('asie_2')) {
-            console.log('🔍 ========== CONTENU AVANT PROTECTION ==========');
-            console.log('🔍 Longueur totale:', protectedContent.length);
-            console.log('🔍 Premiers 2000 caractères:');
-            console.log(protectedContent.substring(0, 2000));
-            console.log('🔍 ===============================================');
-            console.log('🔍 Nombre de \\begin{enumerate}:', (protectedContent.match(/\\begin\{enumerate\}/gi) || []).length);
-            console.log('🔍 Nombre de \\begin{itemize}:', (protectedContent.match(/\\begin\{itemize\}/gi) || []).length);
-        }
+            // Trouver tous les \item en comptant la profondeur
+            while (pos < text.length) {
+                // Chercher le prochain \item
+                const itemMatch = text.substring(pos).match(/\\item[\s\n\r\t]*/);
 
-        // Remplacer récursivement tous les \begin{itemize}...\end{itemize} (IMPORTANT: itemize aussi!)
-        while (protectedContent.match(/\\begin\{itemize\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{itemize\}/i)) {
-            protectedContent = protectedContent.replace(
-                /\\begin\{itemize\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{itemize\}/i,
-                (match) => {
-                    const marker = `___NESTED_ENUM_${nestIndex}___`;
-                    nestedEnumerates[nestIndex] = match;
-                    nestIndex++;
-                    return marker;
+                // Chercher les prochains \begin{enumerate} et \begin{itemize}
+                const nextEnumBegin = text.substring(pos).search(/\\begin\{enumerate\}/i);
+                const nextItemBegin = text.substring(pos).search(/\\begin\{itemize\}/i);
+
+                // Chercher les prochains \end{enumerate} et \end{itemize}
+                const nextEnumEnd = text.substring(pos).search(/\\end\{enumerate\}/i);
+                const nextItemEnd = text.substring(pos).search(/\\end\{itemize\}/i);
+
+                // Déterminer quel est le prochain token
+                let nextTokenPos = Infinity;
+                let nextTokenType = null;
+
+                if (itemMatch && (nextTokenPos > itemMatch.index)) {
+                    nextTokenPos = itemMatch.index;
+                    nextTokenType = 'item';
                 }
-            );
-        }
+                if (nextEnumBegin !== -1 && (nextTokenPos > nextEnumBegin)) {
+                    nextTokenPos = nextEnumBegin;
+                    nextTokenType = 'enumBegin';
+                }
+                if (nextItemBegin !== -1 && (nextTokenPos > nextItemBegin)) {
+                    nextTokenPos = nextItemBegin;
+                    nextTokenType = 'itemBegin';
+                }
+                if (nextEnumEnd !== -1 && (nextTokenPos > nextEnumEnd)) {
+                    nextTokenPos = nextEnumEnd;
+                    nextTokenType = 'enumEnd';
+                }
+                if (nextItemEnd !== -1 && (nextTokenPos > nextItemEnd)) {
+                    nextTokenPos = nextItemEnd;
+                    nextTokenType = 'itemEnd';
+                }
 
-        // Remplacer récursivement tous les \begin{enumerate}...\end{enumerate} imbriqués
-        while (protectedContent.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i)) {
-            protectedContent = protectedContent.replace(
-                /\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i,
-                (match) => {
-                    const marker = `___NESTED_ENUM_${nestIndex}___`;
-                    nestedEnumerates[nestIndex] = match;
-                    if (exerciceId.includes('asie_2')) {
-                        console.log(`🔒 Enumerate ${nestIndex} protégé:`, match.substring(0, 100));
+                // Si aucun token trouvé, on a fini
+                if (nextTokenType === null) break;
+
+                // Traiter le token
+                if (nextTokenType === 'enumBegin' || nextTokenType === 'itemBegin') {
+                    depth++;
+                    pos += nextTokenPos + (nextTokenType === 'enumBegin' ? 17 : 15);
+                } else if (nextTokenType === 'enumEnd' || nextTokenType === 'itemEnd') {
+                    depth--;
+                    pos += nextTokenPos + 15;
+                } else if (nextTokenType === 'item') {
+                    if (depth === 0) {
+                        // C'est un \item de niveau 0 - marquer sa position
+                        topItems.push(pos + nextTokenPos + itemMatch[0].length);
                     }
-                    nestIndex++;
-                    return marker;
+                    pos += nextTokenPos + itemMatch[0].length;
                 }
-            );
-        }
-
-        // Debug: log le contenu après protection
-        if (exerciceId.includes('asie_2')) {
-            console.log('🔍 Contenu APRÈS protection:', protectedContent.substring(0, 500));
-            console.log(`🔍 Nombre de blocs protégés: ${nestIndex}`);
-        }
-
-        // Découper par \item (maintenant les \item imbriqués sont protégés)
-        const parts = protectedContent.split(/\\item[\s\n\r\t]*/);
-
-        // Ignorer le premier élément (avant le premier \item)
-        for (let i = 1; i < parts.length; i++) {
-            let itemContent = parts[i].trim();
-            if (itemContent) {
-                // Restaurer les enumerates imbriqués
-                for (let j = 0; j < nestedEnumerates.length; j++) {
-                    itemContent = itemContent.replace(`___NESTED_ENUM_${j}___`, nestedEnumerates[j]);
-                }
-
-                // Debug: log le contenu avant nettoyage
-                if (i === 4 && exerciceId.includes('asie_2')) {
-                    console.log(`🔍 Debug Question ${i} AVANT cleanComplexLatex:`, itemContent.substring(0, 200));
-                }
-
-                // Nettoyer le LaTeX complexe
-                itemContent = cleanComplexLatex(itemContent, exerciceId);
-
-                // Debug: log le contenu après nettoyage
-                if (i === 4 && exerciceId.includes('asie_2')) {
-                    console.log(`🔍 Debug Question ${i} APRÈS cleanComplexLatex:`, itemContent.substring(0, 200));
-                }
-
-                items.push(latexToHtml(itemContent, exerciceId));
             }
+
+            // Extraire le contenu entre chaque \item de niveau 0
+            const items = [];
+            for (let i = 0; i < topItems.length; i++) {
+                const start = topItems[i];
+                const end = i < topItems.length - 1 ? topItems[i + 1] : text.length;
+
+                // Trouver le début du prochain \item pour exclure le mot-clé lui-même
+                let content = text.substring(start, end).trim();
+
+                // Supprimer le \item suivant s'il est à la fin
+                content = content.replace(/\\item[\s\n\r\t]*$/, '').trim();
+
+                if (content) {
+                    items.push(content);
+                }
+            }
+
+            return items;
         }
-        
+
+        // Extraire les items de niveau 0
+        const topLevelItems = extractTopLevelItems(enumerateContent);
+
+        // Fonction pour extraire le contenu d'un bloc enumerate imbriqué
+        function extractNestedEnumerate(text) {
+            const match = text.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i);
+            if (!match) return null;
+
+            const beforeEnum = text.substring(0, match.index).trim();
+            const enumContent = match[1];
+            const afterEnum = text.substring(match.index + match[0].length).trim();
+
+            return { beforeEnum, enumContent, afterEnum };
+        }
+
+        // Traiter chaque item de niveau 0
+        topLevelItems.forEach((itemContent, i) => {
+            if (!itemContent) return;
+
+            // Vérifier si cet item contient un enumerate imbriqué (sous-questions)
+            const nestedEnum = extractNestedEnumerate(itemContent);
+
+            if (nestedEnum) {
+                // Cet item a des sous-questions - les séparer
+                const subParts = nestedEnum.enumContent.split(/\\item[\s\n\r\t]*/);
+
+                for (let j = 1; j < subParts.length; j++) {
+                    let subContent = subParts[j].trim();
+                    if (!subContent) continue;
+
+                    // Pour la première sous-question, ajouter l'intro
+                    if (j === 1 && nestedEnum.beforeEnum) {
+                        subContent = nestedEnum.beforeEnum + '\n\n' + subContent;
+                    }
+
+                    // Nettoyer et convertir
+                    subContent = cleanComplexLatex(subContent, exerciceId);
+                    const htmlContent = latexToHtml(subContent, exerciceId);
+
+                    // Ajouter avec métadonnées pour la numérotation
+                    items.push({
+                        content: htmlContent,
+                        isSubQuestion: true,
+                        parentNumber: i + 1, // +1 car forEach commence à 0
+                        subIndex: j - 1,
+                        subLetter: String.fromCharCode(96 + j) // a, b, c, d...
+                    });
+                }
+            } else {
+                // Item normal sans sous-questions
+                itemContent = cleanComplexLatex(itemContent, exerciceId);
+                const htmlContent = latexToHtml(itemContent, exerciceId);
+
+                items.push({
+                    content: htmlContent,
+                    isSubQuestion: false,
+                    number: i + 1 // +1 car forEach commence à 0
+                });
+            }
+        });
+
         return items;
     }
     
@@ -3652,10 +3760,28 @@ function generateExercisesDataFromSelection() {
             });
         } else {
             // Créer une question par item parsé avec les points et compétences du barème
-            parsed.questions.forEach((qText, qIndex) => {
+            parsed.questions.forEach((qItem, qIndex) => {
+                // Gérer les objets (nouvelle structure) et strings (rétrocompatibilité)
+                const isObject = typeof qItem === 'object' && qItem !== null;
+                const qText = isObject ? qItem.content : qItem;
+                const isSubQuestion = isObject && qItem.isSubQuestion;
+
+                // Déterminer le titre de la question
+                let questionTitle;
+                if (isSubQuestion) {
+                    questionTitle = `Question ${qItem.parentNumber}.${qItem.subLetter}`;
+                } else if (isObject && qItem.number) {
+                    questionTitle = `Question ${qItem.number}`;
+                } else {
+                    questionTitle = `Question ${qIndex + 1}`;
+                }
+
                 const qKey = `q${qIndex}`;
                 const qId = `q${qIndex + 1}`;
-                const correction = parsed.corrections && parsed.corrections[qIndex] ? parsed.corrections[qIndex] : '';
+
+                // Récupérer la correction correspondante
+                const corrItem = parsed.corrections && parsed.corrections[qIndex] ? parsed.corrections[qIndex] : '';
+                const correction = typeof corrItem === 'object' ? corrItem.content : corrItem;
 
                 // Récupérer les points de la question depuis le barème
                 const questionPoints = baremeData && baremeData.questionPoints && baremeData.questionPoints[qKey]
@@ -3689,11 +3815,11 @@ function generateExercisesDataFromSelection() {
                     });
                 }
 
-                console.log(`  📝 Q${qIndex + 1}: ${questionPoints} pts, ${questionCompetences.length} compétences`);
+                console.log(`  📝 ${questionTitle}: ${questionPoints} pts, ${questionCompetences.length} compétences`);
 
                 questions.push({
                     id: qId,
-                    title: `Question ${qIndex + 1}`,
+                    title: questionTitle,
                     points: questionPoints,
                     statement: qText,
                     answer: correction || "Pas de correction disponible",
