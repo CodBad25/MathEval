@@ -3381,15 +3381,60 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
     // Fonction helper pour extraire les items
     function extractItems(content, isEnonce) {
         const items = [];
-        
-        // Trouver le bloc enumerate
-        const enumerateMatch = content.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i);
-        if (!enumerateMatch) {
+
+        // Fonction pour extraire le contenu d'un bloc enumerate en gérant les imbrications
+        function extractEnumerateContent(text) {
+            // Trouver le premier \begin{enumerate}
+            const beginMatch = text.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?/i);
+            if (!beginMatch) {
+                return null;
+            }
+
+            const startPos = beginMatch.index + beginMatch[0].length;
+            let depth = 1;
+            let pos = startPos;
+
+            // Parcourir le texte en comptant les niveaux d'imbrication
+            while (pos < text.length && depth > 0) {
+                const remainingText = text.substring(pos);
+
+                // Chercher le prochain \begin{enumerate} ou \end{enumerate}
+                const nextBegin = remainingText.search(/\\begin\{enumerate\}/i);
+                const nextEnd = remainingText.search(/\\end\{enumerate\}/i);
+
+                if (nextEnd === -1) {
+                    // Pas de \end{enumerate} trouvé - bloc mal formé
+                    console.warn('⚠️ Bloc enumerate mal formé - pas de \\end{enumerate}');
+                    return null;
+                }
+
+                // Le prochain tag est-il un begin ou un end?
+                if (nextBegin !== -1 && nextBegin < nextEnd) {
+                    // C'est un \begin - augmenter la profondeur
+                    depth++;
+                    pos += nextBegin + 17; // longueur de "\begin{enumerate}"
+                } else {
+                    // C'est un \end - diminuer la profondeur
+                    depth--;
+                    if (depth === 0) {
+                        // On a trouvé le \end{enumerate} correspondant!
+                        return text.substring(startPos, pos + nextEnd);
+                    }
+                    pos += nextEnd + 15; // longueur de "\end{enumerate}"
+                }
+            }
+
+            return null;
+        }
+
+        // Trouver le bloc enumerate en gérant les imbrications
+        const enumerateContent = extractEnumerateContent(content);
+        if (!enumerateContent) {
             // Pas de enumerate = exercice en bloc unique
             // Nettoyer le contenu et le retourner comme une seule question
             let cleanContent = cleanComplexLatex(content, exerciceId);
             cleanContent = latexToHtml(cleanContent, exerciceId);
-            
+
             // Si le contenu est trop court ou vide, utiliser le PNG
             if (cleanContent.trim().length < 50) {
                 const pngUrl = `https://coopmaths.fr/alea/static/dnb/${appState.dnbData[exerciceId].annee}/tex/png/${exerciceId}.png`;
@@ -3398,11 +3443,9 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
                     <img src="${pngUrl}" style="max-width: 100%; border-radius: 8px;" alt="Exercice complet">
                 </div>`];
             }
-            
+
             return [cleanContent];
         }
-        
-        const enumerateContent = enumerateMatch[1];
 
         // Protéger les enumerates et itemizes imbriqués en les remplaçant par des marqueurs
         let protectedContent = enumerateContent;
