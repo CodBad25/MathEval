@@ -2219,7 +2219,7 @@ function showBaremeExerciseDNB(exerciseNum) {
                     </div>
                     <div style="padding: 12px; background: #e8f5e9; border-radius: 6px;">
                         <strong style="display: block; margin-bottom: 8px; color: #2e7d32;">Réponse attendue :</strong>
-                        <div style="color: #1b5e20; line-height: 1.6; text-align: justify;" id="correction_q${exerciseIndex}_${qIndex}"></div>
+                        <div style="color: #1b5e20; line-height: 1.6; text-align: justify; max-height: 400px; overflow-y: auto;" id="correction_q${exerciseIndex}_${qIndex}"></div>
                     </div>
                     <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #e0e0e0;">
                         <label style="display:block; font-weight:600; margin-bottom:8px; color:#495057;">Compétences évaluées (question) :</label>
@@ -3088,9 +3088,50 @@ async function loadAndParseSelectedExercises() {
 
 function latexToHtml(latex, exerciceId) {
     let html = latex;
-    
+
     // ⚠️ IMPORTANT : Préserver les formules mathématiques AVANT toute autre conversion
     // MathALÉA préserve les formules pour que KaTeX les traite ensuite
+
+    // Nettoyer les commentaires LaTeX EN PREMIER (avant toute autre conversion)
+    // Les commentaires LaTeX commencent par % et vont jusqu'à la fin de la ligne
+    // IMPORTANT: faire ceci AVANT de convertir \% en % pour éviter de supprimer les pourcentages
+    html = html.replace(/%[^\n]*/g, '');
+
+    // ÉTAPE 1: Protéger les formules mathématiques en les remplaçant par des placeholders
+    const mathFormulas = [];
+    let mathCounter = 0;
+
+    // Protéger les formules display mode \[ \]
+    html = html.replace(/\\\[([\s\S]*?)\\\]/g, (match) => {
+        const placeholder = `___MATH_DISPLAY_${mathCounter}___`;
+        mathFormulas[mathCounter] = match;
+        mathCounter++;
+        return placeholder;
+    });
+
+    // Protéger les formules inline mode \( \)
+    html = html.replace(/\\\(([\s\S]*?)\\\)/g, (match) => {
+        const placeholder = `___MATH_INLINE_${mathCounter}___`;
+        mathFormulas[mathCounter] = match;
+        mathCounter++;
+        return placeholder;
+    });
+
+    // Protéger les formules $$ ... $$
+    html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+        const placeholder = `___MATH_DISPLAY_${mathCounter}___`;
+        mathFormulas[mathCounter] = match;
+        mathCounter++;
+        return placeholder;
+    });
+
+    // Protéger les formules $ ... $
+    html = html.replace(/\$([^\$]+?)\$/g, (match) => {
+        const placeholder = `___MATH_INLINE_${mathCounter}___`;
+        mathFormulas[mathCounter] = match;
+        mathCounter++;
+        return placeholder;
+    });
 
     // Nettoyer les commandes de taille de police LaTeX (à ignorer pour HTML/KaTeX)
     html = html.replace(/\\Large\s*/g, '');
@@ -3114,8 +3155,11 @@ function latexToHtml(latex, exerciceId) {
     html = html.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
     html = html.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
     html = html.replace(/\\emph\{([^}]*)\}/g, '<em>$1</em>');
+    // Guillemets français : gérer \og et \fg avec ou sans accolades
     html = html.replace(/\\og\{\}/g, '«');
     html = html.replace(/\\fg\{\}/g, '»');
+    html = html.replace(/\\og\s+/g, '« ');
+    html = html.replace(/\\fg\s+/g, ' »');
     html = html.replace(/\\medskip/gi, '<br>');
     html = html.replace(/\\bigskip/gi, '<br><br>');
     html = html.replace(/\\smallskip/gi, '<br>');
@@ -3135,10 +3179,7 @@ function latexToHtml(latex, exerciceId) {
     html = html.replace(/~/g, ' ');
     html = html.replace(/\\\s+/g, ' ');
     html = html.replace(/\\%/g, '%');
-    
-    // Nettoyer les commentaires LaTeX
-    html = html.replace(/%[^\n]*/g, '');
-    
+
     // Convertir les environnements math LaTeX vers le format KaTeX
     // \( \) pour inline, \[ \] pour display
     // Si le LaTeX utilise déjà $ ou $$, les préserver
@@ -3240,6 +3281,15 @@ function latexToHtml(latex, exerciceId) {
     html = html.replace(/\s{3,}/g, ' ');  // Espaces multiples
     html = html.replace(/\(\s*\)\s*\(\s*\)/g, '');  // ()() vides
     html = html.replace(/\{\s*\}\s*\{\s*\}/g, '');  // {}{} vides
+
+    // ÉTAPE FINALE: Restaurer les formules mathématiques protégées
+    for (let i = 0; i < mathFormulas.length; i++) {
+        const placeholder = `___MATH_DISPLAY_${i}___`;
+        html = html.replace(placeholder, mathFormulas[i]);
+
+        const placeholderInline = `___MATH_INLINE_${i}___`;
+        html = html.replace(placeholderInline, mathFormulas[i]);
+    }
 
     html = html.trim();
 
@@ -3426,54 +3476,84 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
     function extractItems(content, isEnonce) {
         const items = [];
 
-        // Fonction pour extraire le contenu d'un bloc enumerate en gérant les imbrications
-        function extractEnumerateContent(text) {
-            // Trouver le premier \begin{enumerate}
-            const beginMatch = text.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?/i);
-            if (!beginMatch) {
-                return null;
-            }
+        // Nettoyer les commentaires LaTeX AVANT de parser
+        // Les commentaires LaTeX commencent par % et vont jusqu'à la fin de la ligne
+        content = content.replace(/%[^\n]*/g, '');
 
-            const startPos = beginMatch.index + beginMatch[0].length;
-            let depth = 1;
-            let pos = startPos;
+        // Fonction pour extraire TOUS les blocs enumerate de niveau 0 (pas imbriqués)
+        function extractAllEnumerateBlocks(text) {
+            const blocks = [];
+            let searchPos = 0;
 
-            // Parcourir le texte en comptant les niveaux d'imbrication
-            while (pos < text.length && depth > 0) {
-                const remainingText = text.substring(pos);
-
-                // Chercher le prochain \begin{enumerate} ou \end{enumerate}
-                const nextBegin = remainingText.search(/\\begin\{enumerate\}/i);
-                const nextEnd = remainingText.search(/\\end\{enumerate\}/i);
-
-                if (nextEnd === -1) {
-                    // Pas de \end{enumerate} trouvé - bloc mal formé
-                    console.warn('⚠️ Bloc enumerate mal formé - pas de \\end{enumerate}');
-                    return null;
+            while (searchPos < text.length) {
+                // Chercher le prochain \begin{enumerate}
+                const beginMatch = text.substring(searchPos).match(/\\begin\{enumerate\}(?:\[([^\]]*)\])?/i);
+                if (!beginMatch) {
+                    break; // Plus de blocs enumerate
                 }
 
-                // Le prochain tag est-il un begin ou un end?
-                if (nextBegin !== -1 && nextBegin < nextEnd) {
-                    // C'est un \begin - augmenter la profondeur
-                    depth++;
-                    pos += nextBegin + 17; // longueur de "\begin{enumerate}"
-                } else {
-                    // C'est un \end - diminuer la profondeur
-                    depth--;
-                    if (depth === 0) {
-                        // On a trouvé le \end{enumerate} correspondant!
-                        return text.substring(startPos, pos + nextEnd);
+                const blockStart = searchPos + beginMatch.index;
+                const headerLength = beginMatch[0].length;
+
+                // Extraire le paramètre [start=N] s'il existe
+                let startNumber = 1;
+                if (beginMatch[1]) {
+                    const startMatch = beginMatch[1].match(/start\s*=\s*(\d+)/i);
+                    if (startMatch) {
+                        startNumber = parseInt(startMatch[1]);
                     }
-                    pos += nextEnd + 15; // longueur de "\end{enumerate}"
+                }
+
+                const contentStart = blockStart + headerLength;
+                let depth = 1;
+                let pos = contentStart;
+
+                // Parcourir le texte en comptant les niveaux d'imbrication
+                while (pos < text.length && depth > 0) {
+                    const remainingText = text.substring(pos);
+
+                    // Chercher le prochain \begin{enumerate} ou \end{enumerate}
+                    const nextBegin = remainingText.search(/\\begin\{enumerate\}/i);
+                    const nextEnd = remainingText.search(/\\end\{enumerate\}/i);
+
+                    if (nextEnd === -1) {
+                        console.warn('⚠️ Bloc enumerate mal formé - pas de \\end{enumerate}');
+                        break;
+                    }
+
+                    // Le prochain tag est-il un begin ou un end?
+                    if (nextBegin !== -1 && nextBegin < nextEnd) {
+                        // C'est un \begin imbriqué - augmenter la profondeur
+                        depth++;
+                        pos += nextBegin + 17;
+                    } else {
+                        // C'est un \end - diminuer la profondeur
+                        depth--;
+                        if (depth === 0) {
+                            // Bloc trouvé !
+                            blocks.push({
+                                content: text.substring(contentStart, pos + nextEnd),
+                                startNumber: startNumber
+                            });
+                            searchPos = pos + nextEnd + 15; // Continuer après ce bloc
+                            break;
+                        }
+                        pos += nextEnd + 15;
+                    }
+                }
+
+                if (depth > 0) {
+                    // Bloc mal fermé, arrêter la recherche
+                    break;
                 }
             }
 
-            return null;
+            return blocks;
         }
 
-        // Trouver le bloc enumerate en gérant les imbrications
-        const enumerateContent = extractEnumerateContent(content);
-        if (!enumerateContent) {
+        // Trouver tous les blocs enumerate
+        const enumerateBlocks = extractAllEnumerateBlocks(content);
+        if (enumerateBlocks.length === 0) {
             // Pas de enumerate = exercice en bloc unique
             // Nettoyer le contenu et le retourner comme une seule question
             let cleanContent = cleanComplexLatex(content, exerciceId);
@@ -3574,9 +3654,6 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
             return items;
         }
 
-        // Extraire les items de niveau 0
-        const topLevelItems = extractTopLevelItems(enumerateContent);
-
         // Fonction pour extraire le contenu d'un bloc enumerate imbriqué
         function extractNestedEnumerate(text) {
             const match = text.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i);
@@ -3589,50 +3666,61 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
             return { beforeEnum, enumContent, afterEnum };
         }
 
-        // Traiter chaque item de niveau 0
-        topLevelItems.forEach((itemContent, i) => {
-            if (!itemContent) return;
+        // Traiter tous les blocs enumerate
+        let currentQuestionNumber = 1;
 
-            // Vérifier si cet item contient un enumerate imbriqué (sous-questions)
-            const nestedEnum = extractNestedEnumerate(itemContent);
+        enumerateBlocks.forEach((block) => {
+            // Extraire les items de niveau 0 de ce bloc
+            const topLevelItems = extractTopLevelItems(block.content);
 
-            if (nestedEnum) {
-                // Cet item a des sous-questions - les séparer
-                const subParts = nestedEnum.enumContent.split(/\\item[\s\n\r\t]*/);
+            // Traiter chaque item de ce bloc
+            topLevelItems.forEach((itemContent, blockIndex) => {
+                if (!itemContent) return;
 
-                for (let j = 1; j < subParts.length; j++) {
-                    let subContent = subParts[j].trim();
-                    if (!subContent) continue;
+                // Le numéro de la question courante (utilise startNumber du bloc)
+                const questionNumber = block.startNumber + blockIndex;
 
-                    // Pour la première sous-question, ajouter l'intro
-                    if (j === 1 && nestedEnum.beforeEnum) {
-                        subContent = nestedEnum.beforeEnum + '\n\n' + subContent;
+                // Vérifier si cet item contient un enumerate imbriqué (sous-questions)
+                const nestedEnum = extractNestedEnumerate(itemContent);
+
+                if (nestedEnum) {
+                    // Cet item a des sous-questions - les séparer
+                    const subParts = nestedEnum.enumContent.split(/\\item[\s\n\r\t]*/);
+
+                    for (let j = 1; j < subParts.length; j++) {
+                        let subContent = subParts[j].trim();
+                        if (!subContent) continue;
+
+                        // Pour la première sous-question, ajouter l'intro
+                        if (j === 1 && nestedEnum.beforeEnum) {
+                            subContent = nestedEnum.beforeEnum + '\n\n' + subContent;
+                        }
+
+                        // Nettoyer et convertir
+                        subContent = cleanComplexLatex(subContent, exerciceId);
+                        const htmlContent = latexToHtml(subContent, exerciceId);
+
+                        // Ajouter avec métadonnées pour la numérotation
+                        items.push({
+                            content: htmlContent,
+                            isSubQuestion: true,
+                            parentNumber: questionNumber,
+                            subIndex: j - 1,
+                            subLetter: String.fromCharCode(96 + j) // a, b, c, d...
+                        });
                     }
+                } else {
+                    // Item normal sans sous-questions
+                    itemContent = cleanComplexLatex(itemContent, exerciceId);
+                    const htmlContent = latexToHtml(itemContent, exerciceId);
 
-                    // Nettoyer et convertir
-                    subContent = cleanComplexLatex(subContent, exerciceId);
-                    const htmlContent = latexToHtml(subContent, exerciceId);
-
-                    // Ajouter avec métadonnées pour la numérotation
                     items.push({
                         content: htmlContent,
-                        isSubQuestion: true,
-                        parentNumber: i + 1, // +1 car forEach commence à 0
-                        subIndex: j - 1,
-                        subLetter: String.fromCharCode(96 + j) // a, b, c, d...
+                        isSubQuestion: false,
+                        number: questionNumber
                     });
                 }
-            } else {
-                // Item normal sans sous-questions
-                itemContent = cleanComplexLatex(itemContent, exerciceId);
-                const htmlContent = latexToHtml(itemContent, exerciceId);
-
-                items.push({
-                    content: htmlContent,
-                    isSubQuestion: false,
-                    number: i + 1 // +1 car forEach commence à 0
-                });
-            }
+            });
         });
 
         return items;
