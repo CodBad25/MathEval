@@ -3108,11 +3108,36 @@ function latexToHtml(latex, exerciceId) {
         return `\\[${content}\\]`;
     });
     
-    // Supprimer les commandes LaTeX résiduelles qui n'ont pas été converties
-    html = html.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?/gi, '');
-    html = html.replace(/\\end\{enumerate\}/gi, '');
-    html = html.replace(/\\begin\{itemize\}/gi, '');
-    html = html.replace(/\\end\{itemize\}/gi, '');
+    // Convertir les listes LaTeX en HTML
+    // 1. Convertir \begin{enumerate}...\end{enumerate} en <ol>...</ol>
+    html = html.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/gi, (match, content) => {
+        // Découper par \item
+        const items = content.split(/\\item\s*/);
+        let listHtml = '<ol class="latex-enumerate">';
+        for (let i = 1; i < items.length; i++) {
+            if (items[i].trim()) {
+                listHtml += `<li>${items[i].trim()}</li>`;
+            }
+        }
+        listHtml += '</ol>';
+        return listHtml;
+    });
+
+    // 2. Convertir \begin{itemize}...\end{itemize} en <ul>...</ul>
+    html = html.replace(/\\begin\{itemize\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{itemize\}/gi, (match, content) => {
+        // Découper par \item
+        const items = content.split(/\\item\s*/);
+        let listHtml = '<ul class="latex-itemize">';
+        for (let i = 1; i < items.length; i++) {
+            if (items[i].trim()) {
+                listHtml += `<li>${items[i].trim()}</li>`;
+            }
+        }
+        listHtml += '</ul>';
+        return listHtml;
+    });
+
+    // 3. Nettoyer les \item résiduels (au cas où)
     html = html.replace(/\\item\s*/g, '');
     html = html.replace(/\\begin\{description\}/gi, '');
     html = html.replace(/\\end\{description\}/gi, '');
@@ -3286,11 +3311,34 @@ function cleanComplexLatex(latex, exerciceId) {
     cleaned = cleaned.replace(/\\rput[\s\S]*?\{[^}]*\}/gi, '');
     cleaned = cleaned.replace(/\\uput[\s\S]*?\{[^}]*\}/gi, '');
 
-    // Supprimer les commandes LaTeX résiduelles (après extraction des items)
-    cleaned = cleaned.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?/gi, '');
-    cleaned = cleaned.replace(/\\end\{enumerate\}/gi, '');
-    cleaned = cleaned.replace(/\\begin\{itemize\}/gi, '');
-    cleaned = cleaned.replace(/\\end\{itemize\}/gi, '');
+    // Convertir les listes LaTeX en HTML (IMPORTANT: AVANT la suppression!)
+    // 1. Convertir \begin{enumerate}...\end{enumerate} en <ol>...</ol>
+    cleaned = cleaned.replace(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/gi, (match, content) => {
+        const items = content.split(/\\item\s*/);
+        let listHtml = '<ol class="latex-enumerate">';
+        for (let i = 1; i < items.length; i++) {
+            if (items[i].trim()) {
+                listHtml += `<li>${items[i].trim()}</li>`;
+            }
+        }
+        listHtml += '</ol>';
+        return listHtml;
+    });
+
+    // 2. Convertir \begin{itemize}...\end{itemize} en <ul>...</ul>
+    cleaned = cleaned.replace(/\\begin\{itemize\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{itemize\}/gi, (match, content) => {
+        const items = content.split(/\\item\s*/);
+        let listHtml = '<ul class="latex-itemize">';
+        for (let i = 1; i < items.length; i++) {
+            if (items[i].trim()) {
+                listHtml += `<li>${items[i].trim()}</li>`;
+            }
+        }
+        listHtml += '</ul>';
+        return listHtml;
+    });
+
+    // 3. Nettoyer les \item résiduels (au cas où)
     cleaned = cleaned.replace(/\\item\s*/g, '');
     cleaned = cleaned.replace(/\\begin\{description\}/gi, '');
     cleaned = cleaned.replace(/\\end\{description\}/gi, '');
@@ -3356,10 +3404,34 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
         
         const enumerateContent = enumerateMatch[1];
 
-        // Protéger les enumerates imbriqués en les remplaçant par des marqueurs
+        // Protéger les enumerates et itemizes imbriqués en les remplaçant par des marqueurs
         let protectedContent = enumerateContent;
         const nestedEnumerates = [];
         let nestIndex = 0;
+
+        // Debug: log le contenu avant protection
+        if (exerciceId.includes('asie_2')) {
+            console.log('🔍 ========== CONTENU AVANT PROTECTION ==========');
+            console.log('🔍 Longueur totale:', protectedContent.length);
+            console.log('🔍 Premiers 2000 caractères:');
+            console.log(protectedContent.substring(0, 2000));
+            console.log('🔍 ===============================================');
+            console.log('🔍 Nombre de \\begin{enumerate}:', (protectedContent.match(/\\begin\{enumerate\}/gi) || []).length);
+            console.log('🔍 Nombre de \\begin{itemize}:', (protectedContent.match(/\\begin\{itemize\}/gi) || []).length);
+        }
+
+        // Remplacer récursivement tous les \begin{itemize}...\end{itemize} (IMPORTANT: itemize aussi!)
+        while (protectedContent.match(/\\begin\{itemize\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{itemize\}/i)) {
+            protectedContent = protectedContent.replace(
+                /\\begin\{itemize\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{itemize\}/i,
+                (match) => {
+                    const marker = `___NESTED_ENUM_${nestIndex}___`;
+                    nestedEnumerates[nestIndex] = match;
+                    nestIndex++;
+                    return marker;
+                }
+            );
+        }
 
         // Remplacer récursivement tous les \begin{enumerate}...\end{enumerate} imbriqués
         while (protectedContent.match(/\\begin\{enumerate\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{enumerate\}/i)) {
@@ -3368,10 +3440,19 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
                 (match) => {
                     const marker = `___NESTED_ENUM_${nestIndex}___`;
                     nestedEnumerates[nestIndex] = match;
+                    if (exerciceId.includes('asie_2')) {
+                        console.log(`🔒 Enumerate ${nestIndex} protégé:`, match.substring(0, 100));
+                    }
                     nestIndex++;
                     return marker;
                 }
             );
+        }
+
+        // Debug: log le contenu après protection
+        if (exerciceId.includes('asie_2')) {
+            console.log('🔍 Contenu APRÈS protection:', protectedContent.substring(0, 500));
+            console.log(`🔍 Nombre de blocs protégés: ${nestIndex}`);
         }
 
         // Découper par \item (maintenant les \item imbriqués sont protégés)
@@ -3386,8 +3467,19 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
                     itemContent = itemContent.replace(`___NESTED_ENUM_${j}___`, nestedEnumerates[j]);
                 }
 
+                // Debug: log le contenu avant nettoyage
+                if (i === 4 && exerciceId.includes('asie_2')) {
+                    console.log(`🔍 Debug Question ${i} AVANT cleanComplexLatex:`, itemContent.substring(0, 200));
+                }
+
                 // Nettoyer le LaTeX complexe
                 itemContent = cleanComplexLatex(itemContent, exerciceId);
+
+                // Debug: log le contenu après nettoyage
+                if (i === 4 && exerciceId.includes('asie_2')) {
+                    console.log(`🔍 Debug Question ${i} APRÈS cleanComplexLatex:`, itemContent.substring(0, 200));
+                }
+
                 items.push(latexToHtml(itemContent, exerciceId));
             }
         }
@@ -3399,7 +3491,7 @@ function parseLatexQuestions(latexContent, latexCorrection, exerciceId) {
     const enonceItems = extractItems(latexContent, true);
 
     // Extraire les corrections
-    const correctionItems = latexCorrection ? extractItems(latexCorrection, false) : [];
+    let correctionItems = latexCorrection ? extractItems(latexCorrection, false) : [];
 
     console.log(`📄 Parser: ${enonceItems.length} question(s) détectée(s) pour ${exerciceId}`);
     console.log(`📝 Parser: ${correctionItems.length} correction(s) trouvée(s) pour ${exerciceId}`);
