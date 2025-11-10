@@ -169,93 +169,130 @@
   </body>
 
   <style>
-    /* === OPTIMISATION MOBILE COMPLÈTE === */
+    /* ========================================
+       MOBILE RESPONSIVE - PROFESSIONNEL
+       Uniquement pour mobile (max-width: 768px)
+       Version PC totalement préservée
+       ======================================== */
+
     @media (max-width: 768px) {
-      /* Empêcher scroll horizontal */
+      /* === 1. PRÉVENTION SCROLL HORIZONTAL === */
       body, html {
         overflow-x: hidden !important;
-        max-width: 100vw !important;
+        width: 100vw !important;
       }
 
-      /* Bouton Accueil MathEval - À droite du logo MathALÉA */
-      #btn-home-matheval {
-        position: fixed !important;
-        top: 50px !important;
-        left: 210px !important;
-        right: auto !important;
-        padding: 4px 10px !important;
-        border-radius: 12px !important;
-        width: auto !important;
-        height: auto !important;
-        font-size: 10px !important;
-        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25) !important;
-        z-index: 100 !important;
-      }
-
-      #btn-home-matheval svg {
-        width: 12px !important;
-        height: 12px !important;
-      }
-
-      /* Forcer tous les conteneurs à ne pas déborder */
       * {
-        max-width: 100vw !important;
         box-sizing: border-box !important;
       }
 
-      /* Boutons - Forcer à rester dans l'écran */
-      button, .btn, [class*="button"], [role="button"] {
-        max-width: calc(100vw - 40px) !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        flex-shrink: 1 !important;
-        min-width: 0 !important;
-      }
-
-      /* Conteneurs flex/grid - Toujours wrapper sur mobile */
-      [class*="flex"], [class*="grid"], div[style*="display: flex"], div[style*="display:flex"] {
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-        justify-content: flex-start !important;
-      }
-
-      /* Cards et conteneurs - Padding mobile optimisé */
-      [class*="card"], [class*="container"], [class*="panel"] {
-        padding: 12px !important;
-        margin: 8px !important;
-      }
-
-      /* Statistiques - Meilleur espacement */
-      [class*="stats"], [class*="metric"] {
-        font-size: 0.9em !important;
-        padding: 4px 8px !important;
-      }
-
-      /* Images et SVG - Responsive */
-      img, svg {
-        max-width: 100% !important;
+      /* === 2. BOUTON ACCUEIL - En haut à droite, compact === */
+      #btn-home-matheval {
+        position: fixed !important;
+        top: 12px !important;
+        right: 12px !important;
+        padding: 6px 12px !important;
+        border-radius: 16px !important;
+        font-size: 11px !important;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+        z-index: 1000 !important;
+        width: auto !important;
         height: auto !important;
       }
 
-      /* Input fields - Full width sur mobile */
-      input[type="text"], input[type="search"], textarea {
+      #btn-home-matheval svg {
+        width: 14px !important;
+        height: 14px !important;
+      }
+
+      /* === 3. CONTENEURS - Padding cohérent === */
+      body > div, main, [role="main"] {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+      }
+
+      /* === 4. BOUTONS - Responsive et alignés === */
+      /* Tous les boutons s'adaptent à la largeur */
+      button, [role="button"], [class*="btn"] {
+        max-width: 100% !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+      }
+
+      /* === 5. CONTENEURS FLEX/GRID - Wrap automatique === */
+      [class*="flex"], [class*="grid"] {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+      }
+
+      /* === 6. GROUPES DE BOUTONS - 3 boutons export alignés === */
+      /* Détection des conteneurs avec 3 boutons côte à côte */
+      [class*="flex"]:has(button:nth-child(3):last-child),
+      div:has(> button:nth-child(3):last-child) {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+      }
+
+      /* Boutons de même largeur dans les groupes */
+      [class*="flex"] > button,
+      div > button {
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+      }
+
+      /* === 7. CARDS STATISTIQUES - Meilleur espacement === */
+      [class*="card"], [class*="panel"], [class*="box"] {
+        padding: 14px !important;
+        margin: 10px 0 !important;
+        border-radius: 12px !important;
+      }
+
+      /* === 8. INPUTS - Full width === */
+      input, textarea, select {
         width: 100% !important;
         max-width: 100% !important;
+        font-size: 16px !important; /* Évite le zoom automatique sur iOS */
+      }
+
+      /* === 9. IMAGES/ICONS - Responsive === */
+      img:not([class*="icon"]), svg:not([class*="icon"]) {
+        max-width: 100% !important;
+        height: auto !important;
       }
     }
 
-    /* Très petits écrans - Encore plus compact */
+    /* === TRÈS PETITS ÉCRANS (< 480px) === */
     @media (max-width: 480px) {
+      /* Bouton Accueil encore plus compact - icône seule */
+      #btn-home-matheval {
+        padding: 8px !important;
+        border-radius: 50% !important;
+        width: 38px !important;
+        height: 38px !important;
+        justify-content: center !important;
+      }
+
       #btn-home-matheval span {
         display: none !important;
       }
 
-      #btn-home-matheval {
-        padding: 8px !important;
-        border-radius: 50% !important;
-        width: 36px !important;
-        height: 36px !important;
-        justify-content: center !important;
+      #btn-home-matheval svg {
+        width: 18px !important;
+        height: 18px !important;
+      }
+
+      /* Réduction espacement général */
+      [class*="card"], [class*="panel"] {
+        padding: 10px !important;
+      }
+
+      button, [role="button"] {
+        font-size: 13px !important;
+        padding: 8px 12px !important;
       }
     }
 
