@@ -85,6 +85,32 @@
   </head>
 
   <body class="flex-col h-full w-full font-sans touch-manipulation">
+    <!-- Bouton de retour à l'accueil MathEval -->
+    <a href="../index.html" id="btn-home-matheval" style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+      <span>Accueil MathEval</span>
+    </a>
+
     <div id="appMathalea">
       <div id="loading" class="hidden">
         <!-- <div class="loader">

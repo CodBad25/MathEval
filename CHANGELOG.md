@@ -1,5 +1,21 @@
 # Changelog - Correcteur Universel DNB
 
+## 2025-01-10 - Correction Déploiement Netlify
+
+### Correction de bugs
+- **Problème icônes Boxicons sur Netlify** : Les icônes Boxicons s'affichaient comme des carrés (□) après déploiement sur Netlify
+  - **Cause** : Le fichier CSS Boxicons contenait des chemins avec préfixe `/MathEval/` qui fonctionnaient en sous-dossier mais pas à la racine
+  - **Solution** : Ajout d'un fichier `_redirects` pour Netlify qui redirige `/MathEval/*` vers `/:splat` (200)
+  - Les fonts Boxicons (.eot, .woff, .woff2, .ttf, .svg) se chargent maintenant correctement
+
+### Fichiers modifiés
+- `_redirects` : Nouveau fichier de redirection Netlify pour compatibilité des chemins assets
+
+### Commits
+- `20150a8` - Fix: Netlify redirects for Boxicons paths
+
+---
+
 ## 2025-01-09 - Amélioration Parser LaTeX et Exercices Scratch
 
 ### Fonctionnalités ajoutées
