@@ -169,6 +169,27 @@
   </body>
 
   <style>
+    /* === FIX MOBILE UNIQUEMENT: Empêcher débordement horizontal === */
+    @media (max-width: 768px) {
+      /* Empêcher scroll horizontal */
+      body {
+        overflow-x: hidden !important;
+      }
+
+      /* Forcer les boutons à rester dans l'écran */
+      button, .btn, [class*="button"] {
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      /* Conteneurs flex/grid responsive */
+      [class*="flex"], [class*="grid"] {
+        flex-wrap: wrap !important;
+      }
+    }
+
     #loading {
       left: 50% !important;
       margin-left: -100px;
