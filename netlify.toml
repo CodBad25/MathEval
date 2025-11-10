@@ -1,0 +1,16 @@
+[build]
+  publish = "."
+  command = "echo 'No build needed - static files'"
+
+[[redirects]]
+  from = "/api/mathalea/:uuid"
+  to = "/api/mathalea.py"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
