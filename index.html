@@ -404,13 +404,15 @@
                 display: flex;
                 overflow-x: auto;
                 overflow-y: hidden;
-                scroll-snap-type: x mandatory;
-                scroll-behavior: smooth;
+                scroll-snap-type: x proximity;
                 -webkit-overflow-scrolling: touch;
                 gap: 0;
-                padding: 20px 20px 20px 10px; /* Moins de padding gauche pour montrer la carte précédente */
+                padding: 20px 20px 20px 10px;
                 width: 100%;
                 max-width: 100%;
+                /* Optimisations performance */
+                will-change: scroll-position;
+                transform: translateZ(0);
                 /* Masquer la scrollbar */
                 scrollbar-width: none; /* Firefox */
                 -ms-overflow-style: none; /* IE/Edge */
@@ -422,11 +424,16 @@
 
             /* Cartes du carrousel - montrer un bout de la carte suivante */
             .source-card {
-                flex: 0 0 calc(100vw - 60px); /* Réduit pour montrer la carte suivante */
+                flex: 0 0 calc(100vw - 60px);
                 scroll-snap-align: start;
-                margin-right: 15px; /* Espace entre cartes */
-                max-height: calc(100vh - 220px); /* Plus d'espace pour le footer */
+                scroll-snap-stop: normal;
+                margin-right: 15px;
+                max-height: calc(100vh - 220px);
                 overflow-y: auto;
+                /* Optimisations performance */
+                transform: translateZ(0);
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
             }
 
             .source-card:last-child {
@@ -642,54 +649,9 @@
 
         animateLogos();
 
-        // === CARROUSEL MOBILE AVEC SWIPE TACTILE ===
-        function initMobileCarousel() {
-            const sourcesContainer = document.querySelector('.sources-container');
-            if (!sourcesContainer) return;
-
-            // Détection mobile
-            const isMobile = window.innerWidth <= 768;
-            if (!isMobile) return;
-
-            let startX = 0;
-            let scrollLeft = 0;
-            let isDown = false;
-
-            sourcesContainer.addEventListener('touchstart', (e) => {
-                isDown = true;
-                startX = e.touches[0].pageX - sourcesContainer.offsetLeft;
-                scrollLeft = sourcesContainer.scrollLeft;
-            }, { passive: true });
-
-            sourcesContainer.addEventListener('touchmove', (e) => {
-                if (!isDown) return;
-                const x = e.touches[0].pageX - sourcesContainer.offsetLeft;
-                const walk = (x - startX) * 1.5; // Facteur de vitesse
-                sourcesContainer.scrollLeft = scrollLeft - walk;
-            }, { passive: true });
-
-            sourcesContainer.addEventListener('touchend', () => {
-                isDown = false;
-                // Snap vers la carte la plus proche
-                snapToNearestCard();
-            });
-
-            function snapToNearestCard() {
-                const cardWidth = sourcesContainer.querySelector('.source-card').offsetWidth;
-                const scrollPos = sourcesContainer.scrollLeft;
-                const cardIndex = Math.round(scrollPos / (cardWidth + 20)); // +20 pour le margin
-                const targetScroll = cardIndex * (cardWidth + 20);
-
-                sourcesContainer.scrollTo({
-                    left: targetScroll,
-                    behavior: 'smooth'
-                });
-            }
-        }
-
-        // Initialiser le carrousel au chargement et au resize
-        initMobileCarousel();
-        window.addEventListener('resize', initMobileCarousel);
+        // === CARROUSEL MOBILE - Scroll natif optimisé ===
+        // Le scroll-snap CSS gère automatiquement le swipe tactile
+        // Pas besoin de JavaScript pour manipuler le scroll
 
         function selectSource(source) {
             if (source === 'upload') {
