@@ -351,17 +351,137 @@
             font-size: 1.1em;
         }
 
+        /* === RESPONSIVE MOBILE === */
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .container {
+                padding: 0;
+                min-height: 100vh;
+                justify-content: flex-start;
+            }
+
+            /* Header sticky avec logos */
+            .header {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 15px 20px;
+                margin-bottom: 0;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                backdrop-filter: blur(10px);
+                width: 100%;
+            }
+
             .header h1 {
-                font-size: 2.5em;
+                font-size: 2em;
+                margin-bottom: 8px;
             }
 
             .header p {
-                font-size: 1.1em;
+                font-size: 0.95em;
+                margin-bottom: 10px;
             }
 
+            /* Logos réduits sur mobile */
+            .logos-container {
+                gap: 15px;
+                margin-top: 5px;
+            }
+
+            .logo-item {
+                width: 80px;
+                height: 80px;
+                padding: 12px;
+                border: 2px solid rgba(255, 255, 255, 0.4);
+            }
+
+            /* Carrousel mobile avec swipe tactile */
             .sources-container {
-                grid-template-columns: 1fr;
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+                gap: 0;
+                padding: 20px;
+                width: 100%;
+                max-width: 100%;
+                /* Masquer la scrollbar */
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE/Edge */
+            }
+
+            .sources-container::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
+
+            /* Cartes du carrousel */
+            .source-card {
+                flex: 0 0 calc(100vw - 40px);
+                scroll-snap-align: center;
+                margin-right: 20px;
+                max-height: calc(100vh - 180px);
+                overflow-y: auto;
+            }
+
+            .source-card:last-child {
+                margin-right: 0;
+            }
+
+            /* Adapter le contenu des cartes */
+            .source-icon {
+                font-size: 2.8em;
+                margin-bottom: 15px;
+            }
+
+            .source-title {
+                font-size: 1.4em;
+            }
+
+            .source-description {
+                font-size: 0.9em;
+            }
+
+            .source-features {
+                margin: 15px 0;
+            }
+
+            .source-features li {
+                font-size: 0.85em;
+                padding: 6px 0;
+            }
+
+            /* Footer toujours visible */
+            .footer-signature {
+                margin-top: 15px;
+                padding: 12px;
+                font-size: 0.85em;
+            }
+        }
+
+        /* Très petits écrans */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.6em;
+            }
+
+            .header p {
+                font-size: 0.85em;
+            }
+
+            .logo-item {
+                width: 60px;
+                height: 60px;
+                padding: 8px;
+            }
+
+            .source-card {
+                padding: 20px;
             }
         }
     </style>
@@ -511,6 +631,55 @@
         }
 
         animateLogos();
+
+        // === CARROUSEL MOBILE AVEC SWIPE TACTILE ===
+        function initMobileCarousel() {
+            const sourcesContainer = document.querySelector('.sources-container');
+            if (!sourcesContainer) return;
+
+            // Détection mobile
+            const isMobile = window.innerWidth <= 768;
+            if (!isMobile) return;
+
+            let startX = 0;
+            let scrollLeft = 0;
+            let isDown = false;
+
+            sourcesContainer.addEventListener('touchstart', (e) => {
+                isDown = true;
+                startX = e.touches[0].pageX - sourcesContainer.offsetLeft;
+                scrollLeft = sourcesContainer.scrollLeft;
+            }, { passive: true });
+
+            sourcesContainer.addEventListener('touchmove', (e) => {
+                if (!isDown) return;
+                const x = e.touches[0].pageX - sourcesContainer.offsetLeft;
+                const walk = (x - startX) * 1.5; // Facteur de vitesse
+                sourcesContainer.scrollLeft = scrollLeft - walk;
+            }, { passive: true });
+
+            sourcesContainer.addEventListener('touchend', () => {
+                isDown = false;
+                // Snap vers la carte la plus proche
+                snapToNearestCard();
+            });
+
+            function snapToNearestCard() {
+                const cardWidth = sourcesContainer.querySelector('.source-card').offsetWidth;
+                const scrollPos = sourcesContainer.scrollLeft;
+                const cardIndex = Math.round(scrollPos / (cardWidth + 20)); // +20 pour le margin
+                const targetScroll = cardIndex * (cardWidth + 20);
+
+                sourcesContainer.scrollTo({
+                    left: targetScroll,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Initialiser le carrousel au chargement et au resize
+        initMobileCarousel();
+        window.addEventListener('resize', initMobileCarousel);
 
         function selectSource(source) {
             if (source === 'upload') {
