@@ -1,0 +1,2 @@
+# Redirection pour les assets MathEval vers la racine
+/MathEval/*  /:splat  200
