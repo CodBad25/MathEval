@@ -45,6 +45,10 @@ desktop.ini
 alea.backup/
 backups/
 
+# Dossiers de développement/test volumineux
+test-enrichi/
+dnb-question-extractor/
+
 # Fichiers de développement spécifiques
 package-lock.json
 yarn.lock
