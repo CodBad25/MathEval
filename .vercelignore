@@ -49,6 +49,14 @@ backups/
 test-enrichi/
 dnb-question-extractor/
 
+# Fichiers LaTeX sources (250MB - non nécessaires en production)
+alea/static/dnb/
+*.tex
+
+# Fichiers volumineux non essentiels dans MathALÉA
+alea/stats.html
+alea/images/8k_earth_daymap.jpg
+
 # Fichiers de développement spécifiques
 package-lock.json
 yarn.lock
