@@ -60,7 +60,9 @@ const workflowSteps = [
 var workflowState = {
     currentStep: 1,
     completedSteps: [],
-    modalShown: {}
+    modalShown: {},
+    skipAutomatismes: false,
+    disableGuidance: false
 };
 
 // Créer le stepper en haut de la page
@@ -256,6 +258,12 @@ function createGuidanceModal() {
 
 // Afficher la modale de guidage pour une étape
 function showGuidanceModal(stepId) {
+    // Si les écrans d'aide sont désactivés, ne rien afficher
+    if (workflowState.disableGuidance) {
+        console.log('💡 Écrans d\'aide désactivés - modale ignorée');
+        return;
+    }
+
     const step = workflowSteps.find(s => s.id === stepId);
     if (!step) return;
 
@@ -347,9 +355,46 @@ function updateWorkflowStepper() {
 function initWorkflow() {
     console.log('🚀 Initialisation du workflow guidé');
 
+    // Charger les préférences depuis localStorage
+    workflowState.skipAutomatismes = localStorage.getItem('dnb_skipAutomatismes') === 'true';
+    workflowState.disableGuidance = localStorage.getItem('dnb_disableGuidance') === 'true';
+
+    // Mettre à jour les checkboxes avec les valeurs sauvegardées
+    const skipCheckbox = document.getElementById('skipAutomatismes');
+    const disableCheckbox = document.getElementById('disableGuidance');
+    if (skipCheckbox) skipCheckbox.checked = workflowState.skipAutomatismes;
+    if (disableCheckbox) disableCheckbox.checked = workflowState.disableGuidance;
+
+    // Afficher l'écran de configuration initial
+    showPage('configurationPage');
+}
+
+// Démarrer avec la configuration choisie
+function startWithConfiguration() {
+    // Lire les préférences
+    const skipAutomatismes = document.getElementById('skipAutomatismes').checked;
+    const disableGuidance = document.getElementById('disableGuidance').checked;
+
+    // Sauvegarder dans localStorage
+    localStorage.setItem('dnb_skipAutomatismes', skipAutomatismes);
+    localStorage.setItem('dnb_disableGuidance', disableGuidance);
+
+    // Mettre à jour l'état
+    workflowState.skipAutomatismes = skipAutomatismes;
+    workflowState.disableGuidance = disableGuidance;
+
+    console.log(`⚙️ Configuration: skipAutomatismes=${skipAutomatismes}, disableGuidance=${disableGuidance}`);
+
     // Créer le stepper
     createWorkflowStepper();
 
-    // Démarrer à l'étape 1
-    goToStep(1);
+    // Démarrer au bon endroit
+    if (skipAutomatismes) {
+        // Passer directement à l'étape 2 (exercices DNB)
+        workflowState.completedSteps.push(1); // Marquer étape 1 comme "passée"
+        goToStep(2);
+    } else {
+        // Commencer par les automatismes
+        goToStep(1);
+    }
 }

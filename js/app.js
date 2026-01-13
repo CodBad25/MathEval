@@ -13,6 +13,7 @@ function showPage(pageId) {
 
     // Liste de toutes les pages de l'application
     const allPages = [
+        'configurationPage',
         'automatismesSelectionPage',
         'dnbSelectionPage',
         'baremeDesignPage',
@@ -750,25 +751,38 @@ function clearAutomatismesFilters() {
     renderAutomatismes();
 }
 
+// Passer l'étape automatismes sans en sélectionner
+function skipAutomatismesStep() {
+    console.log('⏭️ Passage de l\'étape automatismes');
+    // Passer directement à l'étape suivante
+    completeStepAndNext(1);
+}
+
 // Continuer vers la sélection DNB après automatismes
 function continueFromAutomatismes() {
     if (!appState.selectedAutomatismes || appState.selectedAutomatismes.length === 0) {
-        alert('⚠️ Veuillez sélectionner au moins un automatisme pour l\'exercice 1');
+        // Demander confirmation pour passer sans automatismes
+        if (!confirm('⚠️ Aucun automatisme sélectionné.\n\nVoulez-vous continuer sans exercice 1 (Automatismes) ?')) {
+            return;
+        }
+        console.log('⏭️ Passage des automatismes - aucun exercice 1 créé');
+        // Passer à l'étape suivante sans créer l'exercice 1
+        completeStepAndNext(1);
         return;
     }
 
     const totalPoints = appState.selectedAutomatismes.length;
-    
+
     if (totalPoints > 6) {
         alert('❌ Vous avez sélectionné trop d\'automatismes (max 6 points)');
         return;
     }
 
     console.log('🔄 Génération des questions pour les automatismes sélectionnés...');
-    
+
     // Créer l'exercice 1 directement (génération locale via notre code)
     createExercise1FromAutomatismes();
-    
+
     console.log('✅ Exercice 1 créé avec génération locale');
 
     // Passer à l'étape suivante du workflow
