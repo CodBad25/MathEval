@@ -1,5 +1,69 @@
 # Changelog - Correcteur Universel DNB
 
+## 2026-01-18 - Préservation des valeurs aléatoires MathALÉA
+
+### Problème résolu
+- **Bug critique** : Les valeurs aléatoires des exercices changeaient entre la page de sélection (Start) et le mode Évaluation
+- **Conséquence** : Impossible de corriger avec les mêmes valeurs que le sujet conçu
+
+### Cause identifiée
+1. Les seeds étaient stockés dans `exercicesParams` mais pas toujours sauvegardés dans l'URL avant navigation
+2. Dans `Evaluation.svelte`, `nouvelleVersion()` était appelé SANS initialiser `seedrandom()` avec le seed
+
+### Solutions implémentées
+
+#### 1. Start.svelte - Sauvegarde des seeds avant navigation
+```javascript
+function handleExport(vue: VueType) {
+  if (vue === 'evaluation') {
+    mathaleaUpdateUrlFromExercicesParams()  // Force la sauvegarde des seeds dans l'URL
+  }
+  // ...
+}
+```
+**Fichier** : `/mathalea/src/components/setup/start/Start.svelte`
+
+#### 2. Evaluation.svelte - Initialisation seedrandom
+```javascript
+import seedrandom from 'seedrandom'
+
+// Dans initExercices()
+for (const ex of exercices) {
+  if (ex.seed) {
+    seedrandom(ex.seed, { global: true })  // NOUVEAU: initialise le générateur
+  }
+  if (typeof ex.nouvelleVersion === 'function') {
+    ex.nouvelleVersion()
+  }
+}
+```
+**Fichier** : `/mathalea/src/components/setup/evaluation/Evaluation.svelte`
+
+### Fonctionnement technique
+- `seedrandom(seed, { global: true })` initialise le générateur de nombres aléatoires global avec une graine déterministe
+- Avec le même seed, `Math.random()` produit toujours la même séquence de nombres
+- Les exercices MathALÉA utilisent `Math.random()` pour générer les valeurs
+
+### Fichiers modifiés
+- `mathalea/src/components/setup/start/Start.svelte` : Appel `mathaleaUpdateUrlFromExercicesParams()` avant navigation
+- `mathalea/src/components/setup/evaluation/Evaluation.svelte` : Import `seedrandom`, initialisation avant `nouvelleVersion()`
+- `alea/*` : Rebuild complet de l'application MathALÉA
+
+### Fichiers ajoutés
+- `sujet_evaluation_sauvegarde.txt` : Sauvegarde de l'URL du sujet avec tous les seeds
+
+### Commits
+- `b2e06a6` - fix: preserver les valeurs aleatoires entre Start et Evaluation
+
+### Référence technique
+Le mécanisme de seeds dans MathALÉA :
+- Chaque exercice a un `seed` (ex: "rVvG")
+- Le seed est passé via le paramètre URL `alea`
+- `mathaleaHandleParamOfOneExercice()` applique : `if (param.alea) exercice.seed = param.alea`
+- Source : `/mathalea/src/lib/mathalea.ts` lignes 447-452
+
+---
+
 ## 2025-01-10 - Correction Déploiement Netlify
 
 ### Correction de bugs
