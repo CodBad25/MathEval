@@ -30,7 +30,9 @@ var appState = {
         mode: 'b', // 'a' = points par compétence, 'b' = répartition auto, 'c' = total uniquement
         totalMax: 20, // DNB 2025 sur 20 points (Ex1: 6pts + Ex2-5: 14pts)
         exercises: {} // exerciseId: { totalPoints, selectedCompetences, pointsPerCompetence }
-    }
+    },
+    // Seed pour les valeurs aléatoires (conserve les mêmes valeurs entre prévisualisation et évaluation)
+    exerciseSeed: null
 };
 
 /**
@@ -55,6 +57,7 @@ function resetAppState() {
     appState.selectedAutomatismes = [];
     appState.parsedExercises = {};
     appState.parsedAutomatismes = {};
+    appState.exerciseSeed = null; // Réinitialiser le seed pour de nouvelles valeurs
     console.log('🔄 État réinitialisé');
 }
 

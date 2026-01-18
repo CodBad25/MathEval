@@ -846,6 +846,15 @@ function updateExercice1Preview() {
 
     previewDiv.style.display = 'block';
 
+    // 🎲 Initialiser le seed pour des valeurs aléatoires reproductibles
+    if (!appState.exerciseSeed && window.mathaleaUtils) {
+        appState.exerciseSeed = window.mathaleaUtils.generateSeed();
+        console.log('🎲 Nouveau seed généré:', appState.exerciseSeed);
+    }
+    if (appState.exerciseSeed && window.mathaleaUtils) {
+        window.mathaleaUtils.setSeed(appState.exerciseSeed);
+    }
+
     let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
 
     selected.forEach((autoId, index) => {
@@ -1052,6 +1061,12 @@ function createExercise1FromAutomatismes() {
     console.log('🔧🔧🔧 createExercise1FromAutomatismes APPELÉE 🔧🔧🔧');
     console.log('📊 Automatismes sélectionnés:', selected);
     console.log('📦 parsedAutomatismes:', appState.parsedAutomatismes);
+
+    // 🎲 Réinitialiser le seed pour reproduire les mêmes valeurs aléatoires
+    if (appState.exerciseSeed && window.mathaleaUtils) {
+        window.mathaleaUtils.setSeed(appState.exerciseSeed);
+        console.log('🎲 Seed réinitialisé:', appState.exerciseSeed);
+    }
 
     // Répartition automatique des 6 points
     const pointsPerQuestion = distributePoints(6, nbQuestions);
@@ -1891,6 +1906,12 @@ function generateExercisesDataFromSelection() {
     console.log('📋 exercisesData AVANT:', Object.keys(exercisesData), exercisesData);
     console.log('📋 appState.selectedAutomatismes:', appState.selectedAutomatismes);
     const newData = {};
+
+    // 🎲 Réinitialiser le seed pour reproduire les mêmes valeurs aléatoires
+    if (appState.exerciseSeed && window.mathaleaUtils) {
+        window.mathaleaUtils.setSeed(appState.exerciseSeed);
+        console.log('🎲 Seed réinitialisé pour régénération:', appState.exerciseSeed);
+    }
 
     // 🎯 RECRÉER L'EXERCICE 1 (AUTOMATISMES) depuis appState
     if (appState.selectedAutomatismes && appState.selectedAutomatismes.length > 0) {

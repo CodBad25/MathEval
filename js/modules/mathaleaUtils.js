@@ -1,7 +1,74 @@
 /**
  * Fonctions utilitaires MathALÉA simplifiées
  * Version adaptée pour la génération d'automatismes DNB
+ * Avec support de seed pour reproduire les mêmes valeurs aléatoires
  */
+
+// Générateur aléatoire seedable (mulberry32 - rapide et fiable)
+let currentSeed = null;
+let seededRandom = Math.random;
+
+/**
+ * Générateur pseudo-aléatoire mulberry32
+ * @param {number} seed - graine numérique
+ * @returns {function} - fonction retournant un nombre entre 0 et 1
+ */
+function mulberry32(seed) {
+    return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+/**
+ * Convertit une chaîne en nombre pour le seed
+ * @param {string} str - chaîne à convertir
+ * @returns {number}
+ */
+function stringToSeed(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return Math.abs(hash);
+}
+
+/**
+ * Définit le seed pour les fonctions aléatoires
+ * @param {string|number|null} seed - graine (null = aléatoire pur)
+ */
+function setSeed(seed) {
+    if (seed === null || seed === undefined) {
+        currentSeed = null;
+        seededRandom = Math.random;
+        console.log('🎲 Mode aléatoire pur (sans seed)');
+    } else {
+        const numericSeed = typeof seed === 'string' ? stringToSeed(seed) : seed;
+        currentSeed = seed;
+        seededRandom = mulberry32(numericSeed);
+        console.log(`🎲 Seed défini: "${seed}" (numérique: ${numericSeed})`);
+    }
+}
+
+/**
+ * Récupère le seed actuel
+ * @returns {string|number|null}
+ */
+function getSeed() {
+    return currentSeed;
+}
+
+/**
+ * Génère un seed unique basé sur le timestamp
+ * @returns {string}
+ */
+function generateSeed() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+}
 
 /**
  * Génère un entier aléatoire entre min et max (inclus)
@@ -15,7 +82,7 @@ function randint(min, max, listeAEviter = []) {
         min = Math.floor(min);
         max = Math.ceil(max);
     }
-    
+
     // Convertir listeAEviter en tableau
     if (typeof listeAEviter === 'number') {
         listeAEviter = [listeAEviter];
@@ -23,20 +90,20 @@ function randint(min, max, listeAEviter = []) {
     if (!Array.isArray(listeAEviter)) {
         listeAEviter = [];
     }
-    
+
     const range = max - min;
     let tentatives = 0;
     let rand;
-    
+
     do {
-        rand = Math.floor(Math.random() * (range + 1)) + min;
+        rand = Math.floor(seededRandom() * (range + 1)) + min;
         tentatives++;
         if (tentatives > 1000) {
             console.warn('randint: trop de tentatives, abandon de l\'évitement');
             break;
         }
     } while (listeAEviter.includes(rand));
-    
+
     return rand;
 }
 
@@ -48,7 +115,7 @@ function randint(min, max, listeAEviter = []) {
 function shuffle(array) {
     const result = [...array];
     for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(seededRandom() * (i + 1));
         [result[i], result[j]] = [result[j], result[i]];
     }
     return result;
@@ -60,7 +127,7 @@ function shuffle(array) {
  * @returns {*}
  */
 function choice(array) {
-    return array[Math.floor(Math.random() * array.length)];
+    return array[Math.floor(seededRandom() * array.length)];
 }
 
 /**
@@ -145,7 +212,10 @@ window.mathaleaUtils = {
     arrondi,
     pgcd,
     simplifierFraction,
-    decimalToFraction
+    decimalToFraction,
+    setSeed,
+    getSeed,
+    generateSeed
 };
 
 
