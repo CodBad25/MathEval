@@ -1,0 +1,321 @@
+[
+  {
+    "nom": "Amérique du Nord ^",
+    "exercices": [
+      {
+        "numero": 1,
+        "points": 20,
+        "titre": "Exercice 1 :                                20 points",
+        "nbQuestions": 5,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Calculer la longueur AB...."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Montrer que les droites (DE) et (BC) sont parallèles...."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Montrer que la longueur DE est égale à 42 m...."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Montrer que la longueur EM est environ égale à 24, 2 m...."
+          },
+          {
+            "numero": "5",
+            "textePreview": "En déduire l’aire du triangle AMD...."
+          }
+        ]
+      },
+      {
+        "numero": 4,
+        "points": 20,
+        "titre": "Exercice 4 :                                20 points",
+        "nbQuestions": 7,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Le temps et la distance parcourue par Malo sont-ils proportionnels ?..."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Quelle distance Malo a-t-il parcourue au bout de 20 minutes ? Aucune justification n’est attendue...."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Combien de temps a-t-il mis pour faire les 9 premiers kilomètres ? Aucune justification n’est attend..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Quelle est la vitesse moyenne de Malo lors de cette course ? Exprimer le résultat au dixième de km/h..."
+          },
+          {
+            "numero": "5",
+            "textePreview": "Louise et Hillal ont couru sur le même parcours de 13, 5 km. Louise à une vitesse régu-lière égale à..."
+          },
+          {
+            "numero": "a",
+            "textePreview": "Sachant que Louise et Hillal sont partis en même temps, qui a été le premier à franchir la ligne d’..."
+          },
+          {
+            "numero": "b",
+            "textePreview": "Quelle distance sépare Louise et Hillal, lorsque le premier des deux franchit la ligne d’arrivée ?..."
+          }
+        ]
+      },
+      {
+        "numero": 5,
+        "points": 20,
+        "titre": "Exercice 5 :                                20 points",
+        "nbQuestions": 8,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Les scripts 1 et2 permettent chacun d’obtenir un des dessins ci-dessous. Associer cha-cun des script..."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Le  script 3 permet d’obtenir le losange ci-contre.La partie du script effacée contient les 3 ins-tr..."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Quelles sont les coordonnées du point de départ du lutin ?..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Parmi les 5 captures d’écran proposées ci-dessous, seules deux sont possibles. Les-quelles ?L’intégr..."
+          },
+          {
+            "numero": "5",
+            "textePreview": "On clique sur le drapeau vert, et on observe le message affiché.Quelle est la probabilité que le mes..."
+          },
+          {
+            "numero": "6",
+            "textePreview": "On lance de nouveau le programme 100 fois et on regroupe les résultats obtenus dans le tableau suiva..."
+          },
+          {
+            "numero": "a",
+            "textePreview": "Calculer la fréquence de l’affichage «Voici le dessin ! »...."
+          },
+          {
+            "numero": "b",
+            "textePreview": "Pourquoi ce résultat est-il différent de celui obtenu àla question 5..."
+          }
+        ]
+      },
+      {
+        "numero": 1,
+        "points": 16,
+        "titre": "Exercice 1                                 16 points",
+        "nbQuestions": 0,
+        "questions": []
+      },
+      {
+        "numero": 3,
+        "points": 20,
+        "titre": "Exercice 3                                 20 points",
+        "nbQuestions": 4,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Calculer le périmètre du carré EFGH...."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Calculer AB...."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Construire en vraie grandeur le rectangle ABCD...."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Les périmètres de ABCD et EFGH sont-ils égaux..."
+          }
+        ]
+      },
+      {
+        "numero": 4,
+        "points": 17,
+        "titre": "Exercice 4                                 17 points",
+        "nbQuestions": 4,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "définir triangle équilatéral..."
+          },
+          {
+            "numero": "2",
+            "textePreview": "répéter fois..."
+          },
+          {
+            "numero": "3",
+            "textePreview": "avancer de pas..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "tourner de de degrés..."
+          }
+        ]
+      },
+      {
+        "numero": 5,
+        "points": 23,
+        "titre": "Exercice 5                                 23 points",
+        "nbQuestions": 3,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Parmi les trois propositions suivantes, laquelle correspond à la décomposition en pro-duits de facte..."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Donner la décomposition en produit de facteurs premiers du nombre 350...."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Quel nombre maximal de lots la responsable du magasin pourra-t-elle constituer ?PGCD..."
+          }
+        ]
+      },
+      {
+        "numero": 1,
+        "points": 20,
+        "titre": "Exercice 1                                 20 points",
+        "nbQuestions": 5,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "On tire une boule dans l’urne A, quelle est la probabilité d’obtenir un nombre pair ?..."
+          },
+          {
+            "numero": "2",
+            "textePreview": "On tire une boule dans l’urne B, justifier que la probabilité d’obtenir un nombre pre-mier est de 3..."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Quelle urne contient le plus grand nombre de boules dont le numéro est un multiple de 6 ?..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "On tire une boule au hasard dans l’une des urnes. Démontrer que la probabilité d’ob-tenir un nombre..."
+          },
+          {
+            "numero": "5",
+            "textePreview": "En repartant avec la composition initiale des urnes A et B on décide d’ajouter une boule numérotée..."
+          }
+        ]
+      },
+      {
+        "numero": 2,
+        "points": 23,
+        "titre": "Exercice 2                                 23 points",
+        "nbQuestions": 8,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Justifier que AD = 200 m...."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Calculer la longueur CD...."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Pour que le parcours soit validé il est nécessaire que les droites (CD) et (BE) soient-  —-—.parallè..."
+          },
+          {
+            "numero": "a",
+            "textePreview": "Les droites (CD) et (BE) sont-elles parallèles ?-  —-—...."
+          },
+          {
+            "numero": "b",
+            "textePreview": "La mesure de l’angle ACD est-elle supérieure à 20°?..."
+          },
+          {
+            "numero": "c",
+            "textePreview": "Le parcours est-il validé ?Partie B : La natationConcernant l’épreuve de natation, il s’agit de nage..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Quel est le temps médian de cette série ?..."
+          },
+          {
+            "numero": "5",
+            "textePreview": "Un poisson rouge nage à la vitesse de 5 km/h. Nage-t-il plus vite que l’élève le plus rapide ?..."
+          }
+        ]
+      },
+      {
+        "numero": 3,
+        "points": 18,
+        "titre": "Exercice 3                                 18 points",
+        "nbQuestions": 0,
+        "questions": []
+      },
+      {
+        "numero": 4,
+        "points": 20,
+        "titre": "Exercice 4                                 20 points",
+        "nbQuestions": 6,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Vérifier  que si on choisit 10 comme nombre de départ, on obtient 20 avec ce pro-gramme...."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Quel résultat obtient-t-on avec ce programme si on choisit -7 comme nombre de dé-part ?..."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Zoé prétend que son programme est « magique » car, quel que soit le nombre choisi, le résultat est t..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Démontrer que si le nombre de départ est x, le résultat obtenu avec le programme de Fred est 20x +..."
+          },
+          {
+            "numero": "5",
+            "textePreview": "Quel nombre faut-il choisir au départ pour obtenir 75 avec le programme de Fred ?quand est cliquéde..."
+          },
+          {
+            "numero": "6",
+            "textePreview": "Constatant que son programme n’a rien de ma-gique, Fred souhaite le modifier afin que le résul-tat..."
+          }
+        ]
+      },
+      {
+        "numero": 5,
+        "points": 19,
+        "titre": "Exercice 5                                 19 points",
+        "nbQuestions": 5,
+        "questions": [
+          {
+            "numero": "1",
+            "textePreview": "Montrer qu’avec l’option Achat la dépense àlafin de la première année est de 23 300 ^...."
+          },
+          {
+            "numero": "2",
+            "textePreview": "Après 36 mois, calculer l’économie réalisée par le client s’il choisit l’option Location...."
+          },
+          {
+            "numero": "3",
+            "textePreview": "Afin de comparer les dépenses correspondant à ces options le client a réalisé le tableau suivant à l..."
+          },
+          {
+            "numero": "4",
+            "textePreview": "Déterminer l’expression de f (x) permettant de calculer la dépense correspondant à l’option Achat...."
+          },
+          {
+            "numero": "5",
+            "textePreview": "Sur le graphique de la page suivante, on a tracé les courbes représentatives Cf et Cg..."
+          }
+        ]
+      }
+    ]
+  }
+]

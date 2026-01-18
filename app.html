@@ -79,6 +79,68 @@
         </div>
     </div>
 
+    <!-- Barre de verrouillage des exercices -->
+    <div id="lockBar" style="
+        display: none;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+        border-bottom: 2px solid #ffc107;
+        padding: 10px 20px;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        flex-shrink: 0;
+    ">
+        <div id="lockBarUnlocked" style="display: flex; align-items: center; gap: 15px;">
+            <span style="font-size: 1.1em;">🎲 <strong>Valeurs aléatoires non verrouillées</strong></span>
+            <button onclick="lockAllExercises()" style="
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                color: white;
+                border: none;
+                padding: 8px 20px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+                transition: all 0.2s;
+            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                🔒 Verrouiller les exercices
+            </button>
+        </div>
+        <div id="lockBarLocked" style="display: none; align-items: center; gap: 15px;">
+            <span style="
+                background: #28a745;
+                color: white;
+                padding: 6px 15px;
+                border-radius: 20px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            ">
+                🔒 Exercices verrouillés ✓
+            </span>
+            <span style="font-family: monospace; background: #e9ecef; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;">
+                Seed: <strong id="lockBarSeed">-</strong>
+            </span>
+            <button onclick="unlockAllExercises()" style="
+                background: #dc3545;
+                color: white;
+                border: none;
+                padding: 6px 15px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 0.9em;
+                transition: all 0.2s;
+            " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                🔓 Déverrouiller
+            </button>
+        </div>
+    </div>
+
     <!-- Wrapper pour le contenu scrollable -->
     <div id="contentWrapper">
     <div class="container">

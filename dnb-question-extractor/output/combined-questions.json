@@ -1,0 +1,857 @@
+{
+  "dnb_2025_06_ameriquenord_1": {
+    "exerciceNum": 1,
+    "sujet": "Amérique du Nord ^",
+    "points": 20,
+    "images": [
+      {
+        "name": "Image_003.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_003.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_004.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_004.gif",
+        "width": "152",
+        "height": "81"
+      },
+      {
+        "name": "Image_032.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_032.jpg",
+        "width": "816",
+        "height": "1056"
+      }
+    ],
+    "questions": [
+      {
+        "numero": 1,
+        "latex": "Quelle est la moyenne des tailles des élèves de cette classe ?",
+        "sousQuestions": []
+      },
+      {
+        "numero": 2,
+        "latex": "Quelle est la médiane des tailles des élèves de cette classe ?",
+        "sousQuestions": []
+      }
+    ]
+  },
+  "dnb_2025_06_ameriquenord_4": {
+    "exerciceNum": 4,
+    "sujet": "Amérique du Nord ^",
+    "points": 20,
+    "images": [
+      {
+        "name": "Image_039.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_039.jpg",
+        "width": "556",
+        "height": "940"
+      },
+      {
+        "name": "Image_040.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_040.jpg",
+        "width": "90",
+        "height": "41"
+      },
+      {
+        "name": "Image_041.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_041.jpg",
+        "width": "104",
+        "height": "90"
+      },
+      {
+        "name": "Image_042.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_042.jpg",
+        "width": "79",
+        "height": "69"
+      },
+      {
+        "name": "Image_043.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_043.jpg",
+        "width": "190",
+        "height": "34"
+      },
+      {
+        "name": "Image_044.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_044.jpg",
+        "width": "336",
+        "height": "340"
+      },
+      {
+        "name": "Image_045.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_045.jpg",
+        "width": "144",
+        "height": "282"
+      },
+      {
+        "name": "Image_073.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_073.jpg",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_074.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_074.jpg",
+        "width": "179",
+        "height": "197"
+      }
+    ],
+    "questions": [
+      {
+        "numero": 1,
+        "latex": "Le temps et la distance parcourue par Malo sont-ils proportionnels ?",
+        "sousQuestions": []
+      },
+      {
+        "numero": 2,
+        "latex": "Quelle distance Malo a-t-il parcourue au bout de 20 minutes ?\n\nAucune justification n'est attendue.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 3,
+        "latex": "Combien de temps a-t-il mis pour faire les 9 premiers kilomètres ?\n\nAucune justification n'est attendue.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 4,
+        "latex": "Quelle est la vitesse moyenne de Malo lors de cette course? Exprimer le résultat au dixième de km/h près.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 5,
+        "latex": "Louise et Hillal ont couru sur le même parcours de $13,5$ km. Louise à une vitesse régulière égale à $12$~km/h et Hillal a une vitesse régulière égale à $10$ km/h",
+        "sousQuestions": [
+          {
+            "lettre": "a",
+            "latex": "Sachant que Louise et Hillal sont partis en même temps, qui a été le premier à"
+          },
+          {
+            "lettre": "b",
+            "latex": "Quelle distance sépare Louise et Hillal, lorsque le premier des deux franchit la ligne d'arrivée ?"
+          }
+        ]
+      }
+    ]
+  },
+  "dnb_2025_06_ameriquenord_5": {
+    "exerciceNum": 5,
+    "sujet": "Amérique du Nord ^",
+    "points": 19,
+    "images": [
+      {
+        "name": "Image_011.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_011.gif",
+        "width": "565",
+        "height": "927"
+      },
+      {
+        "name": "Image_012.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_012.jpg",
+        "width": "552",
+        "height": "299"
+      },
+      {
+        "name": "Image_013.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_013.gif",
+        "width": "516",
+        "height": "144"
+      },
+      {
+        "name": "Image_014.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_014.gif",
+        "width": "230",
+        "height": "124"
+      },
+      {
+        "name": "Image_015.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_015.jpg",
+        "width": "494",
+        "height": "96"
+      },
+      {
+        "name": "Image_016.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_016.jpg",
+        "width": "556",
+        "height": "556"
+      },
+      {
+        "name": "Image_017.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_017.jpg",
+        "width": "64",
+        "height": "39"
+      },
+      {
+        "name": "Image_018.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_018.png",
+        "width": "30",
+        "height": "102"
+      },
+      {
+        "name": "Image_019.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_019.jpg",
+        "width": "26",
+        "height": "24"
+      },
+      {
+        "name": "Image_020.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_020.jpg",
+        "width": "104",
+        "height": "44"
+      },
+      {
+        "name": "Image_021.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_021.jpg",
+        "width": "28",
+        "height": "7"
+      },
+      {
+        "name": "Image_022.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_022.png",
+        "width": "28",
+        "height": "41"
+      },
+      {
+        "name": "Image_023.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_023.png",
+        "width": "56",
+        "height": "168"
+      },
+      {
+        "name": "Image_024.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_024.gif",
+        "width": "552",
+        "height": "363"
+      },
+      {
+        "name": "Image_025.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_025.gif",
+        "width": "198",
+        "height": "27"
+      },
+      {
+        "name": "Image_026.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_026.gif",
+        "width": "258",
+        "height": "27"
+      },
+      {
+        "name": "Image_027.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_027.gif",
+        "width": "20",
+        "height": "31"
+      },
+      {
+        "name": "Image_028.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_028.gif",
+        "width": "47",
+        "height": "27"
+      },
+      {
+        "name": "Image_029.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_029.gif",
+        "width": "168",
+        "height": "27"
+      },
+      {
+        "name": "Image_030.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_030.gif",
+        "width": "122",
+        "height": "106"
+      },
+      {
+        "name": "Image_031.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_031.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_046.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_046.jpg",
+        "width": "559",
+        "height": "886"
+      },
+      {
+        "name": "Image_047.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_047.gif",
+        "width": "210",
+        "height": "144"
+      },
+      {
+        "name": "Image_048.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_048.jpg",
+        "width": "176",
+        "height": "123"
+      },
+      {
+        "name": "Image_049.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_049.gif",
+        "width": "210",
+        "height": "101"
+      },
+      {
+        "name": "Image_050.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_050.jpg",
+        "width": "86",
+        "height": "45"
+      },
+      {
+        "name": "Image_051.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_051.jpg",
+        "width": "549",
+        "height": "89"
+      },
+      {
+        "name": "Image_052.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_052.gif",
+        "width": "552",
+        "height": "481"
+      },
+      {
+        "name": "Image_053.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_053.gif",
+        "width": "62",
+        "height": "61"
+      },
+      {
+        "name": "Image_054.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_054.gif",
+        "width": "65",
+        "height": "66"
+      },
+      {
+        "name": "Image_055.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_055.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_056.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_056.gif",
+        "width": "552",
+        "height": "142"
+      },
+      {
+        "name": "Image_057.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_057.gif",
+        "width": "228",
+        "height": "143"
+      },
+      {
+        "name": "Image_058.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_058.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_059.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_059.gif",
+        "width": "389",
+        "height": "149"
+      },
+      {
+        "name": "Image_060.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_060.gif",
+        "width": "552",
+        "height": "965"
+      },
+      {
+        "name": "Image_061.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_061.gif",
+        "width": "516",
+        "height": "257"
+      },
+      {
+        "name": "Image_062.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_062.gif",
+        "width": "266",
+        "height": "187"
+      },
+      {
+        "name": "Image_063.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_063.gif",
+        "width": "552",
+        "height": "965"
+      },
+      {
+        "name": "Image_064.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_064.jpg",
+        "width": "556",
+        "height": "464"
+      },
+      {
+        "name": "Image_065.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_065.png",
+        "width": "287",
+        "height": "52"
+      },
+      {
+        "name": "Image_066.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_066.png",
+        "width": "108",
+        "height": "275"
+      },
+      {
+        "name": "Image_067.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_067.gif",
+        "width": "552",
+        "height": "727"
+      },
+      {
+        "name": "Image_075.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_075.jpg",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_076.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_076.jpg",
+        "width": "197",
+        "height": "211"
+      },
+      {
+        "name": "Image_077.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_077.gif",
+        "width": "552",
+        "height": "561"
+      },
+      {
+        "name": "Image_078.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_078.jpg",
+        "width": "530",
+        "height": "527"
+      },
+      {
+        "name": "Image_079.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_079.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_080.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_080.gif",
+        "width": "556",
+        "height": "294"
+      },
+      {
+        "name": "Image_081.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_081.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_082.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_082.gif",
+        "width": "552",
+        "height": "891"
+      },
+      {
+        "name": "Image_083.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_083.gif",
+        "width": "492",
+        "height": "228"
+      },
+      {
+        "name": "Image_084.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_084.gif",
+        "width": "127",
+        "height": "193"
+      },
+      {
+        "name": "Image_085.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_085.gif",
+        "width": "125",
+        "height": "176"
+      },
+      {
+        "name": "Image_086.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_086.gif",
+        "width": "124",
+        "height": "181"
+      },
+      {
+        "name": "Image_087.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_087.gif",
+        "width": "552",
+        "height": "845"
+      },
+      {
+        "name": "Image_088.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_088.gif",
+        "width": "59",
+        "height": "60"
+      },
+      {
+        "name": "Image_089.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_089.jpg",
+        "width": "544",
+        "height": "338"
+      },
+      {
+        "name": "Image_090.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_090.gif",
+        "width": "552",
+        "height": "489"
+      },
+      {
+        "name": "Image_091.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_091.gif",
+        "width": "552",
+        "height": "861"
+      },
+      {
+        "name": "Image_092.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_092.gif",
+        "width": "195",
+        "height": "123"
+      },
+      {
+        "name": "Image_093.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_093.gif",
+        "width": "262",
+        "height": "174"
+      },
+      {
+        "name": "Image_094.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_094.jpg",
+        "width": "556",
+        "height": "873"
+      },
+      {
+        "name": "Image_095.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_095.gif",
+        "width": "244",
+        "height": "212"
+      },
+      {
+        "name": "Image_096.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_096.gif",
+        "width": "165",
+        "height": "133"
+      },
+      {
+        "name": "Image_097.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_097.jpg",
+        "width": "556",
+        "height": "745"
+      },
+      {
+        "name": "Image_098.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_098.jpg",
+        "width": "142",
+        "height": "41"
+      },
+      {
+        "name": "Image_099.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_099.png",
+        "width": "152",
+        "height": "188"
+      },
+      {
+        "name": "Image_100.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_100.png",
+        "width": "149",
+        "height": "188"
+      },
+      {
+        "name": "Image_101.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_101.png",
+        "width": "149",
+        "height": "188"
+      },
+      {
+        "name": "Image_102.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_102.gif",
+        "width": "561",
+        "height": "539"
+      },
+      {
+        "name": "Image_103.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_103.gif",
+        "width": "555",
+        "height": "183"
+      },
+      {
+        "name": "Image_104.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_104.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_105.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_105.jpg",
+        "width": "556",
+        "height": "894"
+      },
+      {
+        "name": "Image_106.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_106.jpg",
+        "width": "534",
+        "height": "444"
+      },
+      {
+        "name": "Image_107.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_107.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_108.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_108.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_109.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_109.gif",
+        "width": "298",
+        "height": "258"
+      },
+      {
+        "name": "Image_110.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_110.gif",
+        "width": "605",
+        "height": "929"
+      },
+      {
+        "name": "Image_111.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_111.jpg",
+        "width": "430",
+        "height": "231"
+      },
+      {
+        "name": "Image_112.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_112.jpg",
+        "width": "556",
+        "height": "837"
+      },
+      {
+        "name": "Image_113.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_113.gif",
+        "width": "407",
+        "height": "183"
+      },
+      {
+        "name": "Image_114.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_114.jpg",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_115.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_115.png",
+        "width": "136",
+        "height": "159"
+      },
+      {
+        "name": "Image_116.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_116.png",
+        "width": "68",
+        "height": "102"
+      },
+      {
+        "name": "Image_117.png",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_117.png",
+        "width": "170",
+        "height": "193"
+      },
+      {
+        "name": "Image_118.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_118.jpg",
+        "width": "57",
+        "height": "184"
+      }
+    ],
+    "questions": [
+      {
+        "numero": 1,
+        "latex": "Les scripts 1 et 2 permettent chacun d'obtenir un des dessins ci-dessous. Associer chacun des scripts à son dessin.\n\n\\begin{center}\n\\begin{tabularx}{\\linewidth}{|*{2}{>{\\centering \\arraybackslash}X|}}\\hline\nDessin 1&Dessin 2\\\\ \\hline\n\\psset{unit=0.9cm}\n\\begin{pspicture}(-1.5,-1.5)(1.5,1.3)\n\\pspolygon(1.5;0)(1.5;60)(1.5;120)(1.5;180)(1.5;240)(1.5;300)\n\\end{pspicture}&\n\\psset{unit=1cm}\n\\begin{pspicture}(-1.8,-1)(1.8,1.8)\n\\pspolygon(1.4;-30)(1.4;90)(1.4;210)\n\\end{pspicture}\\\\ \\hline\n\\end{tabularx}\n\\end{center}\n\n\n\\begin{minipage}{0.55\\linewidth}",
+        "sousQuestions": []
+      },
+      {
+        "numero": 2,
+        "latex": "Le script 3 permet d'obtenir le losange ci-contre.\n\nLa partie du script effacée contient les 3 instructions A, B et C ci-dessous.\n\nSur votre copie, recopier dans le bon ordre les instructions cachées.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 3,
+        "latex": "Calculer la fréquence de l'affichage \\og Voici le dessin! \\fg{}.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 4,
+        "latex": "Pourquoi ce résultat est-il différent de celui obtenu à la question 5 ?",
+        "sousQuestions": []
+      }
+    ]
+  },
+  "dnb_2025_06_ameriquenord_3": {
+    "exerciceNum": 3,
+    "sujet": "Amérique du Nord ^",
+    "points": 18,
+    "images": [
+      {
+        "name": "Image_007.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_007.gif",
+        "width": "552",
+        "height": "493"
+      },
+      {
+        "name": "Image_008.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_008.gif",
+        "width": "238",
+        "height": "163"
+      },
+      {
+        "name": "Image_009.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_009.gif",
+        "width": "552",
+        "height": "798"
+      },
+      {
+        "name": "Image_010.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_010.jpg",
+        "width": "471",
+        "height": "382"
+      },
+      {
+        "name": "Image_036.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_036.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_037.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_037.gif",
+        "width": "347",
+        "height": "129"
+      },
+      {
+        "name": "Image_038.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_038.gif",
+        "width": "142",
+        "height": "187"
+      },
+      {
+        "name": "Image_068.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_068.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_069.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_069.jpg",
+        "width": "366",
+        "height": "201"
+      },
+      {
+        "name": "Image_070.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_070.gif",
+        "width": "816",
+        "height": "1056"
+      },
+      {
+        "name": "Image_071.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_071.gif",
+        "width": "224",
+        "height": "204"
+      },
+      {
+        "name": "Image_072.jpg",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_072.jpg",
+        "width": "240",
+        "height": "119"
+      }
+    ],
+    "questions": [
+      {
+        "numero": 1,
+        "latex": "Montrer que, lorsque le nombre choisi est 4, le résultat obtenu avec le programme A est 5.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 2,
+        "latex": "Montrer que, lorsque le nombre choisi est $- 2$, le résultat obtenu avec le programme A est 5.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 3,
+        "latex": "Justifier que l'affirmation suivante est vraie :\n\n\\begin{center}\\og Le programme A donne toujours le même résultat. \\fg\\end{center}",
+        "sousQuestions": []
+      },
+      {
+        "numero": 4,
+        "latex": "Lorsque le nombre choisi est 10, quel résultat obtient-on avec le programme B ?",
+        "sousQuestions": []
+      },
+      {
+        "numero": 5,
+        "latex": "Il existe exactement deux nombres pour lesquels les programmes A et B fournissent à chaque fois des résultats identiques.\n\nQuels sont ces deux nombres?",
+        "sousQuestions": []
+      }
+    ]
+  },
+  "dnb_2025_06_ameriquenord_2": {
+    "exerciceNum": 2,
+    "sujet": "Amérique du Nord ^",
+    "points": 23,
+    "images": [
+      {
+        "name": "Image_005.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_005.gif",
+        "width": "552",
+        "height": "335"
+      },
+      {
+        "name": "Image_006.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_006.gif",
+        "width": "313",
+        "height": "235"
+      },
+      {
+        "name": "Image_033.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_033.gif",
+        "width": "558",
+        "height": "754"
+      },
+      {
+        "name": "Image_034.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_034.gif",
+        "width": "196",
+        "height": "183"
+      },
+      {
+        "name": "Image_035.gif",
+        "fullPath": "/Users/macbelhaj/Library/Application Support/Client PRONOTE/Bottles/v2024_FRANCE/drive_c/users/badri/Documents/Annee_2025_Brevet_OCR_files/Image_035.gif",
+        "width": "456",
+        "height": "332"
+      }
+    ],
+    "questions": [
+      {
+        "numero": 1,
+        "latex": "Calculer la longueur AB.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 2,
+        "latex": "Montrer que les droites (DE) et (BC) sont parallèles.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 3,
+        "latex": "Montrer que la longueur DE est égale à $42$~m.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 4,
+        "latex": "Montrer que la longueur EM est environ égale à $24,2$~m.",
+        "sousQuestions": []
+      },
+      {
+        "numero": 5,
+        "latex": "En déduire l'aire du triangle AMD.",
+        "sousQuestions": []
+      }
+    ]
+  }
+}

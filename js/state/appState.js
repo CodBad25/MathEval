@@ -32,7 +32,10 @@ var appState = {
         exercises: {} // exerciseId: { totalPoints, selectedCompetences, pointsPerCompetence }
     },
     // Seed pour les valeurs aléatoires (conserve les mêmes valeurs entre prévisualisation et évaluation)
-    exerciseSeed: null
+    exerciseSeed: null,
+    // Verrouillage global des exercices
+    exercisesLocked: false,
+    globalSeed: null
 };
 
 /**
@@ -58,6 +61,8 @@ function resetAppState() {
     appState.parsedExercises = {};
     appState.parsedAutomatismes = {};
     appState.exerciseSeed = null; // Réinitialiser le seed pour de nouvelles valeurs
+    appState.exercisesLocked = false;
+    appState.globalSeed = null;
     console.log('🔄 État réinitialisé');
 }
 

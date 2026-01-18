@@ -1,0 +1,16 @@
+{
+  "name": "dnb-question-extractor",
+  "version": "1.0.0",
+  "description": "Extraction automatique des questions DNB à partir de HTML OCR et fichiers LaTeX",
+  "scripts": {
+    "parse": "node scripts/1-parse-html.js",
+    "extract": "node scripts/2-extract-latex.js",
+    "generate": "node scripts/3-generate-png.js",
+    "all": "npm run parse && npm run extract && npm run generate"
+  },
+  "dependencies": {
+    "jsdom": "^23.0.0",
+    "katex": "^0.16.25",
+    "puppeteer": "^24.30.0"
+  }
+}

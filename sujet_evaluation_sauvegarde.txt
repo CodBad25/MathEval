@@ -1,0 +1,23 @@
+# Sauvegarde du sujet d'évaluation - 18 janvier 2026
+# NE PAS SUPPRIMER CE FICHIER
+
+## URL du sujet (mode Évaluation)
+https://mathseval.netlify.app/alea/index.html?uuid=9d15d&id=5C11&n=3&d=10&s2=false&s3=true&s4=1-2-3&cd=1&alea=rVvG&uuid=4c10a&id=5C12-0&alea=ABUa&uuid=cd0d8&id=5C12-1&n=2&d=10&s2=false&s3=true&s4=6&cd=1&alea=Y4II&uuid=65bd7&id=5G10-3&n=4&d=10&s=5&s2=true&cd=1&alea=DFQG&uuid=cd69a&id=5G10-4&alea=CARk&uuid=eb45a&id=BP2AutoV3&alea=naC4&uuid=f9a02&id=BP2AutoV7&n=2&d=10&s=3&s2=true&s3=4&s4=3&cd=1&alea=3Ebk&v=evaluation
+
+## URL du sujet (mode Sélection)
+https://mathseval.netlify.app/alea/index.html?uuid=9d15d&id=5C11&n=3&d=10&s2=false&s3=true&s4=1-2-3&cd=1&alea=rVvG&uuid=4c10a&id=5C12-0&alea=ABUa&uuid=cd0d8&id=5C12-1&n=2&d=10&s2=false&s3=true&s4=6&cd=1&alea=Y4II&uuid=65bd7&id=5G10-3&n=4&d=10&s=5&s2=true&cd=1&alea=DFQG&uuid=cd69a&id=5G10-4&alea=CARk&uuid=eb45a&id=BP2AutoV3&alea=naC4&uuid=f9a02&id=BP2AutoV7&n=2&d=10&s=3&s2=true&s3=4&s4=3&cd=1&alea=3Ebk
+
+## Exercices et leurs seeds
+| Exercice | ID | Seed |
+|----------|-----|------|
+| Traduire une phrase par une expression | 5C11 | rVvG |
+| Calculer en utilisant les priorités opératoires | 5C12-0 | ABUa |
+| Traduire une phrase par une expression et la calculer | 5C12-1 | Y4II |
+| Angles | 5G10-3 | DFQG |
+| Angles | 5G10-4 | CARk |
+| Automatisme BP2 V3 | BP2AutoV3 | naC4 |
+| Automatisme BP2 V7 | BP2AutoV7 | 3Ebk |
+
+## Paramètres importants
+- Les seeds (alea) garantissent que les valeurs aléatoires restent identiques
+- Pour retrouver exactement le même sujet, utilisez l'URL ci-dessus

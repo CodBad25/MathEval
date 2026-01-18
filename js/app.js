@@ -50,7 +50,215 @@ function showPage(pageId) {
     } else {
         console.error(`❌ Page ${pageId} introuvable`);
     }
+
+    // Mettre à jour l'affichage de la barre de verrouillage selon la page
+    updateLockBarVisibility(pageId);
 }
+
+// === SYSTÈME DE VERROUILLAGE GLOBAL DES EXERCICES ===
+
+/**
+ * Affiche/masque la barre de verrouillage selon la page active
+ */
+function updateLockBarVisibility(pageId) {
+    const lockBar = document.getElementById('lockBar');
+    if (!lockBar) return;
+
+    // Afficher la barre uniquement sur les pages de sélection/configuration
+    const pagesWithLockBar = ['automatismesSelectionPage', 'dnbSelectionPage', 'baremeDesignPage'];
+    if (pagesWithLockBar.includes(pageId)) {
+        lockBar.style.display = 'flex';
+    } else {
+        lockBar.style.display = 'none';
+    }
+}
+
+/**
+ * Met à jour l'affichage de la barre de verrouillage
+ */
+function updateLockBarUI() {
+    const lockBarUnlocked = document.getElementById('lockBarUnlocked');
+    const lockBarLocked = document.getElementById('lockBarLocked');
+    const lockBarSeed = document.getElementById('lockBarSeed');
+    const lockBar = document.getElementById('lockBar');
+
+    if (!lockBarUnlocked || !lockBarLocked || !lockBar) return;
+
+    if (appState.exercisesLocked) {
+        lockBarUnlocked.style.display = 'none';
+        lockBarLocked.style.display = 'flex';
+        lockBarSeed.textContent = appState.globalSeed || appState.exerciseSeed || '-';
+        lockBar.style.background = 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)';
+        lockBar.style.borderBottomColor = '#28a745';
+    } else {
+        lockBarUnlocked.style.display = 'flex';
+        lockBarLocked.style.display = 'none';
+        lockBar.style.background = 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)';
+        lockBar.style.borderBottomColor = '#ffc107';
+    }
+}
+
+/**
+ * Verrouille tous les exercices avec le seed actuel
+ */
+function lockAllExercises() {
+    // Générer un seed global si nécessaire
+    if (!appState.exerciseSeed && window.mathaleaUtils) {
+        appState.exerciseSeed = window.mathaleaUtils.generateSeed();
+    }
+
+    appState.globalSeed = appState.exerciseSeed;
+    appState.exercisesLocked = true;
+
+    // Sauvegarder dans localStorage
+    localStorage.setItem('matheval_seed', appState.globalSeed);
+    localStorage.setItem('matheval_locked', 'true');
+
+    // Mettre à jour l'URL avec le seed
+    const url = new URL(window.location.href);
+    url.searchParams.set('seed', appState.globalSeed);
+    window.history.replaceState({}, '', url.toString());
+
+    // Appliquer le seed
+    if (window.mathaleaUtils) {
+        window.mathaleaUtils.setSeed(appState.globalSeed);
+    }
+
+    // Mettre à jour l'UI
+    updateLockBarUI();
+
+    console.log('🔒 Exercices verrouillés avec seed:', appState.globalSeed);
+
+    // Notification visuelle
+    showLockNotification('🔒 Exercices verrouillés ! Les valeurs sont maintenant figées.');
+}
+
+/**
+ * Déverrouille les exercices et régénère les valeurs
+ */
+function unlockAllExercises() {
+    if (!confirm('⚠️ Déverrouiller va générer de NOUVELLES valeurs aléatoires.\n\nÊtes-vous sûr de vouloir continuer ?')) {
+        return;
+    }
+
+    // Générer un nouveau seed
+    if (window.mathaleaUtils) {
+        appState.exerciseSeed = window.mathaleaUtils.generateSeed();
+        window.mathaleaUtils.setSeed(appState.exerciseSeed);
+    }
+
+    appState.globalSeed = null;
+    appState.exercisesLocked = false;
+
+    // Supprimer du localStorage
+    localStorage.removeItem('matheval_seed');
+    localStorage.removeItem('matheval_locked');
+
+    // Supprimer le seed de l'URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('seed');
+    window.history.replaceState({}, '', url.toString());
+
+    // Mettre à jour l'UI
+    updateLockBarUI();
+
+    // Regénérer les aperçus
+    if (typeof updateExercice1Preview === 'function') {
+        updateExercice1Preview();
+    }
+
+    console.log('🔓 Exercices déverrouillés, nouveau seed:', appState.exerciseSeed);
+
+    // Notification visuelle
+    showLockNotification('🔓 Exercices déverrouillés ! Nouvelles valeurs générées.');
+}
+
+/**
+ * Charge le seed depuis l'URL ou localStorage au démarrage
+ */
+function loadSeedFromStorage() {
+    // Priorité 1: URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSeed = urlParams.get('seed');
+
+    // Priorité 2: localStorage
+    const storedSeed = localStorage.getItem('matheval_seed');
+    const storedLocked = localStorage.getItem('matheval_locked') === 'true';
+
+    if (urlSeed) {
+        appState.exerciseSeed = urlSeed;
+        appState.globalSeed = urlSeed;
+        appState.exercisesLocked = true;
+        localStorage.setItem('matheval_seed', urlSeed);
+        localStorage.setItem('matheval_locked', 'true');
+        console.log('🔒 Seed chargé depuis URL:', urlSeed);
+    } else if (storedSeed && storedLocked) {
+        appState.exerciseSeed = storedSeed;
+        appState.globalSeed = storedSeed;
+        appState.exercisesLocked = true;
+        // Mettre à jour l'URL
+        const url = new URL(window.location.href);
+        url.searchParams.set('seed', storedSeed);
+        window.history.replaceState({}, '', url.toString());
+        console.log('🔒 Seed chargé depuis localStorage:', storedSeed);
+    }
+
+    // Appliquer le seed si existant
+    if (appState.exerciseSeed && window.mathaleaUtils) {
+        window.mathaleaUtils.setSeed(appState.exerciseSeed);
+    }
+
+    // Mettre à jour l'UI
+    setTimeout(updateLockBarUI, 100);
+}
+
+/**
+ * Affiche une notification temporaire
+ */
+function showLockNotification(message) {
+    // Supprimer notification existante
+    const existing = document.getElementById('lockNotification');
+    if (existing) existing.remove();
+
+    const notification = document.createElement('div');
+    notification.id = 'lockNotification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2c3e50;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: slideDown 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Supprimer après 3 secondes
+    setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Ajouter les animations CSS
+const lockAnimStyle = document.createElement('style');
+lockAnimStyle.textContent = `
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 1; transform: translateX(-50%) translateY(0); }
+        to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    }
+`;
+document.head.appendChild(lockAnimStyle);
 
 // Définition des exercices (version complète - comme dans votre fichier original)
 // ⚠️ IMPORTANT : var pour scope global et remplacement dynamique possible
@@ -642,7 +850,11 @@ function updateExercice1Preview() {
     previewDiv.style.display = 'block';
 
     // 🎲 Initialiser le seed pour des valeurs aléatoires reproductibles
-    if (!appState.exerciseSeed) {
+    // Si exercices verrouillés, utiliser le globalSeed
+    if (appState.exercisesLocked && appState.globalSeed) {
+        appState.exerciseSeed = appState.globalSeed;
+        console.log('🔒 Utilisation du seed verrouillé:', appState.exerciseSeed);
+    } else if (!appState.exerciseSeed) {
         appState.exerciseSeed = window.mathaleaUtils.generateSeed();
         console.log('🎲 Nouveau seed généré:', appState.exerciseSeed);
     }
@@ -783,6 +995,19 @@ function continueFromAutomatismes() {
     if (totalPoints > 6) {
         alert('❌ Vous avez sélectionné trop d\'automatismes (max 6 points)');
         return;
+    }
+
+    // 🔒 Avertir si les exercices ne sont pas verrouillés
+    if (!appState.exercisesLocked) {
+        const confirmContinue = confirm(
+            '⚠️ ATTENTION : Les exercices ne sont pas verrouillés !\n\n' +
+            'Si vous continuez sans verrouiller, les valeurs aléatoires pourraient changer lors de la correction.\n\n' +
+            '🔒 Cliquez sur "Annuler" pour verrouiller d\'abord.\n' +
+            '➡️ Cliquez sur "OK" pour continuer quand même.'
+        );
+        if (!confirmContinue) {
+            return;
+        }
     }
 
     console.log('🔄 Génération des questions pour les automatismes sélectionnés...');
@@ -7488,6 +7713,9 @@ saveValidationData = function() {
 // === INITIALISATION ===
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Correcteur Universel - Initialisation');
+
+    // 🔒 Charger le seed verrouillé depuis URL/localStorage
+    loadSeedFromStorage();
 
     // Charger le mode de barème depuis localStorage
     const savedBaremeMode = localStorage.getItem('dnb_bareme_mode') || 'b';

@@ -7,6 +7,11 @@
   to = "/api/mathalea.py"
   status = 200
 
+[[redirects]]
+  from = "/MathEval/*"
+  to = "/:splat"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
