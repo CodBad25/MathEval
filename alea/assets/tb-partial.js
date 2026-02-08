@@ -339,6 +339,46 @@
     });
   }
 
+  // Inject comment indicator dots on student cards in overview
+  function injectCommentDots() {
+    const comments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const students = window.__studentList;
+    if (!students) return;
+
+    // Find all student card buttons (they contain h3 with the student name)
+    document.querySelectorAll('button').forEach(card => {
+      const h3 = card.querySelector('h3');
+      if (!h3) return;
+      const badges = card.querySelectorAll('div[title^="Exercice"]');
+      if (badges.length === 0) return;
+
+      const cardName = h3.textContent.trim();
+      const student = students.find(s => s.nom === cardName);
+      if (!student) return;
+      const studentComments = comments[student.id];
+      if (!studentComments) return;
+
+      badges.forEach(badge => {
+        if (badge.querySelector('.tbm-dot')) return;
+        const titleMatch = badge.title.match(/Exercice\s+(\d+)/);
+        if (!titleMatch) return;
+        const exIdx = parseInt(titleMatch[1]) - 1;
+        const exComments = studentComments[exIdx];
+        if (!exComments) return;
+        const texts = Object.entries(exComments)
+          .filter(([_, v]) => v)
+          .map(([q, v]) => 'Q' + (parseInt(q) + 1) + ': ' + v);
+        if (texts.length === 0) return;
+
+        const dot = document.createElement('span');
+        dot.className = 'tbm-dot';
+        dot.textContent = '\u2022';
+        dot.title = texts.join('\n');
+        badge.appendChild(dot);
+      });
+    });
+  }
+
   // Observe DOM changes to re-inject buttons when needed
   const observer = new MutationObserver(() => {
     const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
@@ -346,6 +386,7 @@
       injectButtons();
     }
     applySideBySideLayout();
+    injectCommentDots();
   });
 
   function init() {

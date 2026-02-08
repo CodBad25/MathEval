@@ -23,3 +23,4 @@
 .tbm-modal-cancel{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:13px;color:#334155}
 .tbm-modal-save{background:#84cc16;color:#fff;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:13px;font-weight:600}
 .tbm-modal-save:hover{background:#65a30d}
+.tbm-dot{color:#f59e0b;font-size:16px;line-height:1;margin-left:2px;cursor:default;font-weight:bold}
