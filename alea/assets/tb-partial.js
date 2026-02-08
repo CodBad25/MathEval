@@ -1,0 +1,341 @@
+// tb-partial.js - Bouton TB- (crédit partiel : moitié des points)
+(function() {
+  'use strict';
+  if (!new URLSearchParams(window.location.search).get('v')?.includes('correction')) return;
+
+  const STORAGE_KEY = 'tbMinusComments';
+  const RECENT_KEY = 'tbMinusRecentComments';
+  const PRESET_KEY = 'tbMinusPresetComments';
+  let activePopover = null;
+
+  // Get preset comments for a specific exercise (stored as {exIndex: [comments]})
+  function getPresets(exIndex) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+      // Migration: old format was a flat array → treat as empty
+      if (Array.isArray(raw)) return [];
+      return raw[exIndex] || [];
+    } catch { return []; }
+  }
+
+  // Save presets for a specific exercise
+  function savePresets(exIndex, comments) {
+    try {
+      let raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+      if (Array.isArray(raw)) raw = {}; // migrate old format
+      raw[exIndex] = comments;
+      localStorage.setItem(PRESET_KEY, JSON.stringify(raw));
+    } catch { /* ignore */ }
+  }
+
+  // Get recent comments for a specific exercise (stored as {exIndex: [comments]})
+  function getRecentComments(exIndex) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(RECENT_KEY) || '{}');
+      if (Array.isArray(raw)) return [];
+      return raw[exIndex] || [];
+    } catch { return []; }
+  }
+
+  // Add a comment to the recent list for a specific exercise (max 10)
+  function addRecentComment(exIndex, comment) {
+    if (!comment.trim()) return;
+    try {
+      let raw = JSON.parse(localStorage.getItem(RECENT_KEY) || '{}');
+      if (Array.isArray(raw)) raw = {};
+      let list = raw[exIndex] || [];
+      list = list.filter(c => c !== comment);
+      list.unshift(comment);
+      if (list.length > 10) list.pop();
+      raw[exIndex] = list;
+      localStorage.setItem(RECENT_KEY, JSON.stringify(raw));
+    } catch { /* ignore */ }
+  }
+
+  // Get all chips for an exercise: presets first, then recent (no duplicates)
+  function getAllChips(exIndex) {
+    const presets = getPresets(exIndex);
+    const recent = getRecentComments(exIndex);
+    const all = [...presets];
+    recent.forEach(c => { if (!all.includes(c)) all.push(c); });
+    return all;
+  }
+
+  // Get current exercise index from active tab
+  function getExIndex() {
+    if (window.__getExIndex) return window.__getExIndex();
+    const tabs = document.querySelectorAll('nav[aria-label="Tabs"] button');
+    for (let i = 0; i < tabs.length; i++) {
+      if (tabs[i].className.includes('ring-2')) return i;
+    }
+    return 0;
+  }
+
+  // Get current exercise name from the page heading
+  function getExName() {
+    const h2 = document.querySelector('h2');
+    return h2 ? h2.textContent.trim() : 'Exercice #' + (getExIndex() + 1);
+  }
+
+  // Save comment for a specific student/exercise/question
+  function saveComment(exIndex, qIndex, comment) {
+    const sid = window.__getStudentId ? window.__getStudentId() : window.__lastStudentId;
+    if (!sid) return;
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (!data[sid]) data[sid] = {};
+    if (!data[sid][exIndex]) data[sid][exIndex] = {};
+    data[sid][exIndex][qIndex] = comment;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    addRecentComment(exIndex, comment);
+  }
+
+  // Get existing comment for current student/exercise/question
+  function getExistingComment(exIndex, qIndex) {
+    const sid = window.__getStudentId ? window.__getStudentId() : window.__lastStudentId;
+    if (!sid) return '';
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      return data[sid]?.[exIndex]?.[qIndex] || '';
+    } catch { return ''; }
+  }
+
+  // Close any open popover
+  function closePopover() {
+    if (activePopover) {
+      activePopover.remove();
+      activePopover = null;
+    }
+  }
+
+  // Show comment popover near a button
+  function showPopover(btn, exIndex, qIndex) {
+    closePopover();
+    const pop = document.createElement('div');
+    pop.className = 'tbm-popover';
+    pop.style.flexDirection = 'column';
+
+    const existing = getExistingComment(exIndex, qIndex);
+    const chips = getAllChips(exIndex);
+
+    // Input row
+    const inputRow = document.createElement('div');
+    inputRow.style.cssText = 'display:flex;gap:4px;width:100%';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Commentaire...';
+    input.value = existing;
+    input.className = 'tbm-input';
+    const okBtn = document.createElement('button');
+    okBtn.textContent = 'OK';
+    okBtn.className = 'tbm-ok';
+    inputRow.appendChild(input);
+    inputRow.appendChild(okBtn);
+    pop.appendChild(inputRow);
+
+    // Chips (presets + recent for this exercise)
+    if (chips.length > 0) {
+      const chipsDiv = document.createElement('div');
+      chipsDiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;width:100%;margin-top:4px';
+      chips.forEach(c => {
+        const chip = document.createElement('button');
+        chip.className = 'tbm-chip';
+        chip.textContent = c;
+        chip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          saveComment(exIndex, qIndex, c);
+          closePopover();
+        });
+        chipsDiv.appendChild(chip);
+      });
+      pop.appendChild(chipsDiv);
+    }
+
+    // Save on OK click or Enter
+    function doSave() {
+      const val = input.value.trim();
+      if (val) saveComment(exIndex, qIndex, val);
+      closePopover();
+    }
+    okBtn.addEventListener('click', (e) => { e.stopPropagation(); doSave(); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.stopPropagation(); doSave(); }
+    });
+
+    btn.parentElement.style.position = 'relative';
+    btn.parentElement.appendChild(pop);
+    activePopover = pop;
+    setTimeout(() => input.focus(), 20);
+
+    // Close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', function handler(e) {
+        if (!pop.contains(e.target)) {
+          closePopover();
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 10);
+  }
+
+  // Show configuration modal for preset comments (per exercise)
+  function showConfigModal() {
+    const exIndex = getExIndex();
+    const exName = getExName();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tbm-modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'tbm-modal';
+    modal.innerHTML = `
+      <h3>Commentaires TB- — Ex. #${exIndex + 1}</h3>
+      <p><b>${exName}</b><br>Un commentaire par ligne. Spécifiques à cet exercice.</p>
+      <textarea class="tbm-config-textarea"></textarea>
+      <div class="tbm-modal-actions">
+        <button class="tbm-modal-cancel">Annuler</button>
+        <button class="tbm-modal-save">Enregistrer</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const textarea = modal.querySelector('textarea');
+    textarea.value = getPresets(exIndex).join('\n');
+    setTimeout(() => textarea.focus(), 20);
+
+    modal.querySelector('.tbm-modal-cancel').addEventListener('click', () => overlay.remove());
+    modal.querySelector('.tbm-modal-save').addEventListener('click', () => {
+      const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l);
+      savePresets(exIndex, lines);
+      overlay.remove();
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
+
+  // Check if a question has TB- status
+  function getStatus(exIndex, qIndex) {
+    const sid = window.__getStudentId ? window.__getStudentId() : null;
+    if (!sid) return null;
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      return corr[sid]?.[exIndex]?.[qIndex]?.status || null;
+    } catch { return null; }
+  }
+
+  // Create a TB- button for per-question evaluation
+  function createTBMinusBtn(qIndex) {
+    const btn = document.createElement('button');
+    btn.className = 'px-3 py-1 rounded text-sm font-bold transition-all tbm-btn';
+    btn.textContent = 'TB-';
+    btn.title = 'Bien mais erreur mineure (moitié des points)';
+    btn.dataset.tbminus = 'question';
+    btn.dataset.qindex = qIndex;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const exIndex = getExIndex();
+      if (window.__setEval) {
+        window.__setEval(exIndex, qIndex, 'TB-');
+      }
+      setTimeout(() => updateButtonStyles(), 50);
+      showPopover(btn, exIndex, qIndex);
+    });
+
+    return btn;
+  }
+
+  // Create a TB- button for exercise-level rapid evaluation
+  function createTBMinusExBtn() {
+    const btn = document.createElement('button');
+    btn.className = 'px-4 py-2 bg-lime-500 hover:bg-lime-600 text-white rounded font-bold transition-all text-sm';
+    btn.textContent = '△ TB- - Erreur mineure';
+    btn.title = 'Marquer toutes les questions comme TB- (moitié des points)';
+    btn.dataset.tbminus = 'exercise';
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const exIndex = getExIndex();
+      if (window.__setExEval) {
+        window.__setExEval(exIndex, 'TB-');
+      }
+      setTimeout(() => updateButtonStyles(), 50);
+    });
+
+    return btn;
+  }
+
+  // Update TB- button styles based on current status
+  function updateButtonStyles() {
+    const exIndex = getExIndex();
+    document.querySelectorAll('button[data-tbminus="question"]').forEach(btn => {
+      const qIndex = parseInt(btn.dataset.qindex);
+      const status = getStatus(exIndex, qIndex);
+      if (status === 'TB-') {
+        btn.className = 'px-3 py-1 rounded text-sm font-bold transition-all tbm-btn tbm-active';
+      } else {
+        btn.className = 'px-3 py-1 rounded text-sm font-bold transition-all tbm-btn';
+      }
+    });
+  }
+
+  // Inject TB- buttons into the page
+  function injectButtons() {
+    const tbButtons = document.querySelectorAll('button[title="Tout Bon"]');
+    tbButtons.forEach((tbBtn, idx) => {
+      const parent = tbBtn.parentElement;
+      if (!parent || parent.querySelector('[data-tbminus]')) return;
+      const tfBtn = parent.querySelector('button[title="Tout Faux"]');
+      if (!tfBtn) return;
+      parent.insertBefore(createTBMinusBtn(idx), tfBtn);
+    });
+
+    const rapidTBBtns = document.querySelectorAll('button[title="Marquer toutes les questions comme Tout Bon"]');
+    rapidTBBtns.forEach(rapidTB => {
+      const parent = rapidTB.parentElement;
+      if (!parent || parent.querySelector('[data-tbminus]')) return;
+      const rapidTF = parent.querySelector('button[title="Marquer toutes les questions comme Tout Faux"]');
+      if (!rapidTF) return;
+      parent.insertBefore(createTBMinusExBtn(), rapidTF);
+    });
+
+    updateButtonStyles();
+  }
+
+  // Inject config button (once)
+  function injectConfigButton() {
+    if (document.getElementById('tbm-config-trigger')) return;
+    const btn = document.createElement('button');
+    btn.id = 'tbm-config-trigger';
+    btn.className = 'tbm-config-btn';
+    btn.textContent = '⚙ Commentaires TB-';
+    btn.addEventListener('click', showConfigModal);
+    document.body.appendChild(btn);
+  }
+
+  // Observe DOM changes to re-inject buttons when needed
+  const observer = new MutationObserver(() => {
+    const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
+    if (tbBtns.length > 0) {
+      injectButtons();
+    }
+  });
+
+  function init() {
+    const app = document.getElementById('app') || document.getElementById('appMathalea');
+    if (!app) { setTimeout(init, 100); return; }
+    observer.observe(app, { childList: true, subtree: true });
+    setTimeout(injectButtons, 500);
+    injectConfigButton();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePopover();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
