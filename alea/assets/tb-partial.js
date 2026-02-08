@@ -342,8 +342,8 @@
   // Inject comment indicator dots on student cards in overview
   function injectCommentDots() {
     const comments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    const students = window.__studentList;
-    if (!students) return;
+    const students = window.__getStudentList ? window.__getStudentList() : null;
+    if (!students || students.length === 0) return;
 
     // Find all student card buttons (they contain h3 with the student name)
     document.querySelectorAll('button').forEach(card => {
