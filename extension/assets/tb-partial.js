@@ -312,6 +312,20 @@
     return n % 1 === 0 ? n.toString() : n.toFixed(1);
   }
 
+  // Read the competency level (TBM/MS/MF/MI) from the active exercise tab
+  function getActiveTabLevel() {
+    const tabs = document.querySelectorAll('nav[aria-label="Tabs"] button');
+    for (const tab of tabs) {
+      if (!tab.className.includes('ring-2')) continue;
+      const spans = tab.querySelectorAll('span');
+      for (const span of spans) {
+        const t = span.textContent.trim();
+        if (['TBM', 'MS', 'MF', 'MI'].includes(t)) return t;
+      }
+    }
+    return 'MF'; // fallback
+  }
+
   // Update exercise score display (called only on explicit user action)
   function updateExerciseScore() {
     const sid = window.__getStudentId ? window.__getStudentId() : null;
@@ -355,9 +369,16 @@
     }
     badge.style.display = 'inline-flex';
     badge.textContent = txt;
-    if (pct >= 80) { badge.style.background = '#dcfce7'; badge.style.color = '#166534'; badge.style.borderColor = '#86efac'; }
-    else if (pct >= 50) { badge.style.background = '#fef9c3'; badge.style.color = '#854d0e'; badge.style.borderColor = '#fde047'; }
-    else { badge.style.background = '#fee2e2'; badge.style.color = '#991b1b'; badge.style.borderColor = '#fca5a5'; }
+    // Match color to competency level badge on the active tab
+    const level = getActiveTabLevel();
+    const colors = {
+      'TBM': { bg: '#e8f5e9', color: '#2e7d32', border: '#4CAF50' },
+      'MS':  { bg: '#e3f2fd', color: '#1565c0', border: '#2196F3' },
+      'MF':  { bg: '#fff3e0', color: '#e65100', border: '#FF9800' },
+      'MI':  { bg: '#ffebee', color: '#b71c1c', border: '#F44336' }
+    };
+    const c = colors[level] || colors['MF'];
+    badge.style.background = c.bg; badge.style.color = c.color; badge.style.borderColor = c.border;
   }
 
   // Update TB- button styles based on current status
