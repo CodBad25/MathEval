@@ -2352,7 +2352,7 @@ Le barème sera conservé.
                           <div class="question-enonce">${gn.enonce}</div>
                           ${Xt.detailParQuestion&&bn!=="NE"?`
                             <div style="margin-top: 3px; padding: 3px 5px; background: ${bn==="TB"?"#f0fdf4":bn==="TB-"?"#f7fee7":bn==="TF"?"#fffbeb":"#f9fafb"}; border-radius: 2px; font-size: 7px; color: ${xi.color}; font-style: italic;">
-                              ${bn==="TB"?"→ Excellente maîtrise":bn==="TB-"?"→ Bonne démarche mais erreur"+(function(){try{var _c=JSON.parse(localStorage.getItem("tbMinusComments")||"{}"),_cm=_c[we.id]&&_c[we.id][Bt]&&_c[we.id][Bt][vi];return _cm?" : "+_cm:""}catch(e){return""}})():bn==="TF"?"→ Besoin de renforcement":bn==="NR"?"→ Travail non remis":""}
+                              ${bn==="TB"?"→ Excellente maîtrise":bn==="TB-"?"→ Bonne démarche mais erreur":bn==="TF"?"→ Besoin de renforcement":bn==="NR"?"→ Travail non remis":""}
                             </div>
                           `:""}
                         </div>
