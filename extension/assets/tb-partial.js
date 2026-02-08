@@ -270,29 +270,59 @@
     return btn;
   }
 
-  // Get points obtained and total for a question
-  function getQuestionPoints(exIndex, qIndex) {
-    const sid = window.__getStudentId ? window.__getStudentId() : null;
-    if (!sid) return null;
-    try {
-      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
-      const qData = corr[sid]?.[exIndex]?.[qIndex];
-      if (!qData || !qData.status || qData.status === 'NE' || qData.status === 'Non évalué') return null;
-      const exercises = window.__getExercises ? window.__getExercises() : null;
-      const totalPts = exercises?.[exIndex]?.questions?.[qIndex]?.points || 1;
-      let obtained = 0;
-      if (qData.pointsObtenus !== undefined) {
-        obtained = qData.pointsObtenus;
-      } else if (qData.status === 'TB') {
-        obtained = totalPts;
-      } else if (qData.status === 'TB-') {
-        obtained = totalPts / 2;
-      }
-      return { obtained, total: totalPts, status: qData.status };
-    } catch { return null; }
+  function formatScore(n) {
+    return n % 1 === 0 ? n.toString() : n.toFixed(1);
   }
 
-  // Update TB- button styles and inject score labels
+  // Update exercise score display (called only on explicit user action)
+  function updateExerciseScore() {
+    const sid = window.__getStudentId ? window.__getStudentId() : null;
+    if (!sid) return;
+    const exIndex = getExIndex();
+    const exercises = window.__getExercises ? window.__getExercises() : null;
+    if (!exercises || !exercises[exIndex]) return;
+    const ex = exercises[exIndex];
+    let corr;
+    try { corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}'); } catch { return; }
+    const studentData = corr[sid];
+    if (!studentData) return;
+
+    let obtained = 0, total = 0, evaluated = 0;
+    ex.questions.forEach((q, qi) => {
+      total += q.points || 1;
+      const qData = studentData[exIndex]?.[qi];
+      if (qData && qData.status && qData.status !== 'NE' && qData.status !== 'Non évalué') {
+        evaluated++;
+        if (qData.pointsObtenus !== undefined) obtained += qData.pointsObtenus;
+        else if (qData.status === 'TB') obtained += (q.points || 1);
+        else if (qData.status === 'TB-') obtained += (q.points || 1) / 2;
+      }
+    });
+
+    const h2 = document.querySelector('h2');
+    if (!h2) return;
+    let badge = document.getElementById('tbm-ex-score');
+    if (evaluated === 0) {
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    const pct = total > 0 ? Math.round(obtained / total * 100) : 0;
+    const txt = formatScore(obtained) + ' / ' + formatScore(total) + ' pts (' + pct + '%)';
+    if (badge && badge.textContent === txt) return;
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'tbm-ex-score';
+      badge.style.cssText = 'display:inline-flex;align-items:center;font-size:16px;font-weight:800;padding:4px 14px;border-radius:8px;border:2px solid;margin-left:12px;white-space:nowrap';
+      h2.parentElement.appendChild(badge);
+    }
+    badge.style.display = 'inline-flex';
+    badge.textContent = txt;
+    if (pct >= 80) { badge.style.background = '#dcfce7'; badge.style.color = '#166534'; badge.style.borderColor = '#86efac'; }
+    else if (pct >= 50) { badge.style.background = '#fef9c3'; badge.style.color = '#854d0e'; badge.style.borderColor = '#fde047'; }
+    else { badge.style.background = '#fee2e2'; badge.style.color = '#991b1b'; badge.style.borderColor = '#fca5a5'; }
+  }
+
+  // Update TB- button styles based on current status
   function updateButtonStyles() {
     const exIndex = getExIndex();
     document.querySelectorAll('button[data-tbminus="question"]').forEach(btn => {
@@ -303,33 +333,8 @@
       } else {
         btn.className = 'px-3 py-1 rounded text-sm font-bold transition-all tbm-btn';
       }
-
-      // Inject or update score label
-      const parent = btn.parentElement;
-      if (!parent) return;
-      let label = parent.querySelector('.tbm-score');
-      const pts = getQuestionPoints(exIndex, qIndex);
-      if (pts) {
-        const txt = formatScore(pts.obtained) + '/' + formatScore(pts.total) + ' pt' + (pts.total > 1 ? 's' : '');
-        if (!label) {
-          label = document.createElement('span');
-          label.className = 'tbm-score';
-          parent.appendChild(label);
-        }
-        label.textContent = txt;
-        // Color based on status
-        if (pts.status === 'TB') label.style.color = '#16a34a';
-        else if (pts.status === 'TB-') label.style.color = '#ca8a04';
-        else if (pts.status === 'TF' || pts.status === 'NR') label.style.color = '#dc2626';
-        else label.style.color = '#6b7280';
-      } else if (label) {
-        label.remove();
-      }
     });
-  }
-
-  function formatScore(n) {
-    return n % 1 === 0 ? n.toString() : n.toFixed(1);
+    updateExerciseScore();
   }
 
   // Inject TB- buttons into the page
@@ -353,70 +358,6 @@
     });
 
     updateButtonStyles();
-  }
-
-  // Inject or update exercise-level score display
-  function injectExerciseScore() {
-    const sid = window.__getStudentId ? window.__getStudentId() : null;
-    if (!sid) return;
-    const exIndex = getExIndex();
-    const exercises = window.__getExercises ? window.__getExercises() : null;
-    if (!exercises || !exercises[exIndex]) return;
-
-    const ex = exercises[exIndex];
-    let corr;
-    try { corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}'); } catch { return; }
-    const studentData = corr[sid];
-    if (!studentData) return;
-
-    let obtained = 0, total = 0, evaluated = 0;
-    ex.questions.forEach((q, qi) => {
-      total += q.points || 1;
-      const qData = studentData[exIndex]?.[qi];
-      if (qData && qData.status && qData.status !== 'NE' && qData.status !== 'Non évalué') {
-        evaluated++;
-        if (qData.pointsObtenus !== undefined) {
-          obtained += qData.pointsObtenus;
-        } else if (qData.status === 'TB') {
-          obtained += (q.points || 1);
-        } else if (qData.status === 'TB-') {
-          obtained += (q.points || 1) / 2;
-        }
-      }
-    });
-
-    // Find the h2 (exercise title) to inject score nearby
-    const h2 = document.querySelector('h2');
-    if (!h2) return;
-
-    let badge = document.getElementById('tbm-ex-score');
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.id = 'tbm-ex-score';
-      badge.className = 'tbm-ex-score';
-      h2.parentElement.appendChild(badge);
-    }
-
-    if (evaluated === 0) {
-      if (badge.style.display !== 'none') badge.style.display = 'none';
-      return;
-    }
-
-    const pct = total > 0 ? Math.round(obtained / total * 100) : 0;
-    const newText = formatScore(obtained) + ' / ' + formatScore(total) + ' pts (' + pct + '%)';
-    // Skip DOM update if content hasn't changed (prevents observer loop)
-    if (badge.textContent === newText && badge.style.display === 'inline-flex') return;
-    badge.style.display = 'inline-flex';
-    badge.textContent = newText;
-
-    // Color based on percentage
-    if (pct >= 80) {
-      badge.style.background = '#dcfce7'; badge.style.color = '#166534'; badge.style.borderColor = '#86efac';
-    } else if (pct >= 50) {
-      badge.style.background = '#fef9c3'; badge.style.color = '#854d0e'; badge.style.borderColor = '#fde047';
-    } else {
-      badge.style.background = '#fee2e2'; badge.style.color = '#991b1b'; badge.style.borderColor = '#fca5a5';
-    }
   }
 
   // Inject config button (once)
@@ -492,29 +433,30 @@
     });
   }
 
-  // Debounced main injection (prevents MutationObserver cascading loops)
-  let mainTimer = null;
-  function scheduleInjections() {
-    clearTimeout(mainTimer);
-    mainTimer = setTimeout(() => {
-      const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
-      if (tbBtns.length > 0) {
-        injectButtons();
-      }
-      applySideBySideLayout();
-      injectCommentDots();
-      injectExerciseScore();
-    }, 150);
+  // Debounced comment dots injection (Svelte re-renders destroy injected DOM)
+  let dotsTimer = null;
+  function scheduleCommentDots() {
+    clearTimeout(dotsTimer);
+    dotsTimer = setTimeout(injectCommentDots, 300);
   }
 
   // Observe DOM changes to re-inject buttons when needed
-  const observer = new MutationObserver(scheduleInjections);
+  const observer = new MutationObserver(() => {
+    const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
+    if (tbBtns.length > 0) {
+      injectButtons();
+    }
+    applySideBySideLayout();
+    scheduleCommentDots();
+  });
 
   function init() {
     const app = document.getElementById('app') || document.getElementById('appMathalea');
     if (!app) { setTimeout(init, 100); return; }
     observer.observe(app, { childList: true, subtree: true });
-    setTimeout(scheduleInjections, 500);
+    setTimeout(injectButtons, 500);
+    setTimeout(applySideBySideLayout, 600);
+    setTimeout(injectCommentDots, 800);
     injectConfigButton();
   }
 
