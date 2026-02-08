@@ -12,12 +12,10 @@
   function getPresets(exIndex) {
     try {
       let raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
-      // Migration: old format was a flat array → copy to all exercises
+      // Migration: old format was a flat array → discard, user reconfigures per exercise
       if (Array.isArray(raw)) {
-        const migrated = {};
-        for (let i = 0; i < 10; i++) migrated[i] = [...raw];
-        localStorage.setItem(PRESET_KEY, JSON.stringify(migrated));
-        raw = migrated;
+        localStorage.setItem(PRESET_KEY, JSON.stringify({}));
+        return [];
       }
       return raw[exIndex] || [];
     } catch { return []; }
