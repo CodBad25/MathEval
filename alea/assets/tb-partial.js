@@ -11,9 +11,14 @@
   // Get preset comments for a specific exercise (stored as {exIndex: [comments]})
   function getPresets(exIndex) {
     try {
-      const raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
-      // Migration: old format was a flat array → treat as empty
-      if (Array.isArray(raw)) return [];
+      let raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+      // Migration: old format was a flat array → copy to all exercises
+      if (Array.isArray(raw)) {
+        const migrated = {};
+        for (let i = 0; i < 10; i++) migrated[i] = [...raw];
+        localStorage.setItem(PRESET_KEY, JSON.stringify(migrated));
+        raw = migrated;
+      }
       return raw[exIndex] || [];
     } catch { return []; }
   }
