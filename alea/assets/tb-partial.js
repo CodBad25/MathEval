@@ -318,12 +318,34 @@
     document.body.appendChild(btn);
   }
 
+  // Layout côte à côte : énoncé | correction pour les questions avec figures
+  function applySideBySideLayout() {
+    document.querySelectorAll('.mb-2').forEach(container => {
+      if (container.dataset.sideBySide) return;
+      const children = Array.from(container.children);
+      const enonce = children.find(el => el.classList.contains('bg-gray-50'));
+      const correction = children.find(el => el.className && el.className.includes('bg-green-50'));
+      if (!enonce || !correction) return;
+      // Only apply if there's a figure (SVG) in the content
+      if (!enonce.querySelector('svg') && !correction.querySelector('svg')) return;
+      container.dataset.sideBySide = '1';
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex;gap:8px;width:100%';
+      enonce.style.cssText += ';flex:1;min-width:0';
+      correction.style.cssText += ';flex:1;min-width:0';
+      container.insertBefore(wrapper, enonce);
+      wrapper.appendChild(enonce);
+      wrapper.appendChild(correction);
+    });
+  }
+
   // Observe DOM changes to re-inject buttons when needed
   const observer = new MutationObserver(() => {
     const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
     if (tbBtns.length > 0) {
       injectButtons();
     }
+    applySideBySideLayout();
   });
 
   function init() {
@@ -331,6 +353,7 @@
     if (!app) { setTimeout(init, 100); return; }
     observer.observe(app, { childList: true, subtree: true });
     setTimeout(injectButtons, 500);
+    setTimeout(applySideBySideLayout, 600);
     injectConfigButton();
   }
 
