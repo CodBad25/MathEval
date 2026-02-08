@@ -326,8 +326,6 @@
         label.remove();
       }
     });
-    // Also update exercise score
-    injectExerciseScore();
   }
 
   function formatScore(n) {
@@ -400,13 +398,16 @@
     }
 
     if (evaluated === 0) {
-      badge.style.display = 'none';
+      if (badge.style.display !== 'none') badge.style.display = 'none';
       return;
     }
 
-    badge.style.display = 'inline-flex';
     const pct = total > 0 ? Math.round(obtained / total * 100) : 0;
-    badge.textContent = formatScore(obtained) + ' / ' + formatScore(total) + ' pts (' + pct + '%)';
+    const newText = formatScore(obtained) + ' / ' + formatScore(total) + ' pts (' + pct + '%)';
+    // Skip DOM update if content hasn't changed (prevents observer loop)
+    if (badge.textContent === newText && badge.style.display === 'inline-flex') return;
+    badge.style.display = 'inline-flex';
+    badge.textContent = newText;
 
     // Color based on percentage
     if (pct >= 80) {
@@ -491,38 +492,29 @@
     });
   }
 
-  // Debounced comment dots injection (Svelte re-renders destroy injected DOM)
-  let dotsTimer = null;
-  function scheduleCommentDots() {
-    clearTimeout(dotsTimer);
-    dotsTimer = setTimeout(injectCommentDots, 300);
-  }
-
-  // Debounced exercise score update
-  let scoreTimer = null;
-  function scheduleExerciseScore() {
-    clearTimeout(scoreTimer);
-    scoreTimer = setTimeout(injectExerciseScore, 200);
+  // Debounced main injection (prevents MutationObserver cascading loops)
+  let mainTimer = null;
+  function scheduleInjections() {
+    clearTimeout(mainTimer);
+    mainTimer = setTimeout(() => {
+      const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
+      if (tbBtns.length > 0) {
+        injectButtons();
+      }
+      applySideBySideLayout();
+      injectCommentDots();
+      injectExerciseScore();
+    }, 150);
   }
 
   // Observe DOM changes to re-inject buttons when needed
-  const observer = new MutationObserver(() => {
-    const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
-    if (tbBtns.length > 0) {
-      injectButtons();
-    }
-    applySideBySideLayout();
-    scheduleCommentDots();
-    scheduleExerciseScore();
-  });
+  const observer = new MutationObserver(scheduleInjections);
 
   function init() {
     const app = document.getElementById('app') || document.getElementById('appMathalea');
     if (!app) { setTimeout(init, 100); return; }
     observer.observe(app, { childList: true, subtree: true });
-    setTimeout(injectButtons, 500);
-    setTimeout(applySideBySideLayout, 600);
-    setTimeout(injectCommentDots, 800);
+    setTimeout(scheduleInjections, 500);
     injectConfigButton();
   }
 
