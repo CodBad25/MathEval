@@ -270,7 +270,29 @@
     return btn;
   }
 
-  // Update TB- button styles based on current status
+  // Get points obtained and total for a question
+  function getQuestionPoints(exIndex, qIndex) {
+    const sid = window.__getStudentId ? window.__getStudentId() : null;
+    if (!sid) return null;
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      const qData = corr[sid]?.[exIndex]?.[qIndex];
+      if (!qData || !qData.status || qData.status === 'NE' || qData.status === 'Non évalué') return null;
+      const exercises = window.__getExercises ? window.__getExercises() : null;
+      const totalPts = exercises?.[exIndex]?.questions?.[qIndex]?.points || 1;
+      let obtained = 0;
+      if (qData.pointsObtenus !== undefined) {
+        obtained = qData.pointsObtenus;
+      } else if (qData.status === 'TB') {
+        obtained = totalPts;
+      } else if (qData.status === 'TB-') {
+        obtained = totalPts / 2;
+      }
+      return { obtained, total: totalPts, status: qData.status };
+    } catch { return null; }
+  }
+
+  // Update TB- button styles and inject score labels
   function updateButtonStyles() {
     const exIndex = getExIndex();
     document.querySelectorAll('button[data-tbminus="question"]').forEach(btn => {
@@ -281,7 +303,33 @@
       } else {
         btn.className = 'px-3 py-1 rounded text-sm font-bold transition-all tbm-btn';
       }
+
+      // Inject or update score label
+      const parent = btn.parentElement;
+      if (!parent) return;
+      let label = parent.querySelector('.tbm-score');
+      const pts = getQuestionPoints(exIndex, qIndex);
+      if (pts) {
+        const txt = formatScore(pts.obtained) + '/' + formatScore(pts.total) + ' pt' + (pts.total > 1 ? 's' : '');
+        if (!label) {
+          label = document.createElement('span');
+          label.className = 'tbm-score';
+          parent.appendChild(label);
+        }
+        label.textContent = txt;
+        // Color based on status
+        if (pts.status === 'TB') label.style.color = '#16a34a';
+        else if (pts.status === 'TB-') label.style.color = '#ca8a04';
+        else if (pts.status === 'TF' || pts.status === 'NR') label.style.color = '#dc2626';
+        else label.style.color = '#6b7280';
+      } else if (label) {
+        label.remove();
+      }
     });
+  }
+
+  function formatScore(n) {
+    return n % 1 === 0 ? n.toString() : n.toFixed(1);
   }
 
   // Inject TB- buttons into the page
