@@ -25,3 +25,4 @@
 .tbm-modal-save:hover{background:#65a30d}
 .tbm-dot{color:#f59e0b;font-size:16px;line-height:1;margin-left:2px;cursor:default;font-weight:bold}
 .tbm-score{font-size:12px;font-weight:700;margin-left:6px;padding:1px 6px;border-radius:4px;background:#f8fafc;border:1px solid #e2e8f0;white-space:nowrap}
+.tbm-ex-score{display:inline-flex;align-items:center;font-size:16px;font-weight:800;padding:4px 14px;border-radius:8px;border:2px solid;margin-left:12px;white-space:nowrap}
