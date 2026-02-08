@@ -251,7 +251,9 @@
   // Create a TB- button for exercise-level rapid evaluation
   function createTBMinusExBtn() {
     const btn = document.createElement('button');
-    btn.className = 'px-4 py-2 bg-lime-500 hover:bg-lime-600 text-white rounded font-bold transition-all text-sm';
+    btn.style.cssText = 'padding:8px 16px;background:#84cc16;color:#fff;border:none;border-radius:4px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s';
+    btn.addEventListener('mouseenter', () => { btn.style.background = '#65a30d'; });
+    btn.addEventListener('mouseleave', () => { btn.style.background = '#84cc16'; });
     btn.textContent = '△ TB- - Erreur mineure';
     btn.title = 'Marquer toutes les questions comme TB- (moitié des points)';
     btn.dataset.tbminus = 'exercise';
