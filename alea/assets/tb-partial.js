@@ -379,6 +379,13 @@
     });
   }
 
+  // Debounced comment dots injection (Svelte re-renders destroy injected DOM)
+  let dotsTimer = null;
+  function scheduleCommentDots() {
+    clearTimeout(dotsTimer);
+    dotsTimer = setTimeout(injectCommentDots, 300);
+  }
+
   // Observe DOM changes to re-inject buttons when needed
   const observer = new MutationObserver(() => {
     const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
@@ -386,7 +393,7 @@
       injectButtons();
     }
     applySideBySideLayout();
-    injectCommentDots();
+    scheduleCommentDots();
   });
 
   function init() {
@@ -395,6 +402,7 @@
     observer.observe(app, { childList: true, subtree: true });
     setTimeout(injectButtons, 500);
     setTimeout(applySideBySideLayout, 600);
+    setTimeout(injectCommentDots, 800);
     injectConfigButton();
   }
 
