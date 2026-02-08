@@ -8,6 +8,41 @@
   const PRESET_KEY = 'tbMinusPresetComments';
   let activePopover = null;
 
+  // === Backup/Restore : sauvegarde les données TB- dans studentCorrections ===
+  // Comme ça l'export JSON natif les embarque, et l'import les restaure.
+  function backupTBData() {
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      corr['__tbMinus'] = {
+        presets: JSON.parse(localStorage.getItem(PRESET_KEY) || '{}'),
+        recent: JSON.parse(localStorage.getItem(RECENT_KEY) || '{}'),
+        comments: JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+      };
+      localStorage.setItem('studentCorrections', JSON.stringify(corr));
+    } catch { /* ignore */ }
+  }
+
+  function restoreTBData() {
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      const backup = corr['__tbMinus'];
+      if (!backup) return;
+      const isEmpty = (key) => {
+        const v = localStorage.getItem(key);
+        return !v || v === '{}' || v === '[]';
+      };
+      if (isEmpty(PRESET_KEY) && backup.presets && Object.keys(backup.presets).length > 0) {
+        localStorage.setItem(PRESET_KEY, JSON.stringify(backup.presets));
+      }
+      if (isEmpty(RECENT_KEY) && backup.recent && Object.keys(backup.recent).length > 0) {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(backup.recent));
+      }
+      if (isEmpty(STORAGE_KEY) && backup.comments && Object.keys(backup.comments).length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(backup.comments));
+      }
+    } catch { /* ignore */ }
+  }
+
   // Get preset comments for a specific exercise (stored as {exIndex: [comments]})
   function getPresets(exIndex) {
     try {
@@ -28,6 +63,7 @@
       if (Array.isArray(raw)) raw = {}; // migrate old format
       raw[exIndex] = comments;
       localStorage.setItem(PRESET_KEY, JSON.stringify(raw));
+      backupTBData();
     } catch { /* ignore */ }
   }
 
@@ -52,6 +88,7 @@
       if (list.length > 10) list.pop();
       raw[exIndex] = list;
       localStorage.setItem(RECENT_KEY, JSON.stringify(raw));
+      backupTBData();
     } catch { /* ignore */ }
   }
 
@@ -90,6 +127,7 @@
     data[sid][exIndex][qIndex] = comment;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     addRecentComment(exIndex, comment);
+    backupTBData();
   }
 
   // Get existing comment for current student/exercise/question
@@ -465,6 +503,7 @@
   function init() {
     const app = document.getElementById('app') || document.getElementById('appMathalea');
     if (!app) { setTimeout(init, 100); return; }
+    restoreTBData();
     observer.observe(app, { childList: true, subtree: true });
     setTimeout(injectButtons, 500);
     setTimeout(applySideBySideLayout, 600);
