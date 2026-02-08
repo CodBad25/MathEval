@@ -146,11 +146,13 @@
       activePopover.remove();
       activePopover = null;
     }
+    window.__blockAutoAdvance = false;
   }
 
   // Show comment popover near a button
   function showPopover(btn, exIndex, qIndex) {
     closePopover();
+    window.__blockAutoAdvance = true;
     const pop = document.createElement('div');
     pop.className = 'tbm-popover';
     pop.style.flexDirection = 'column';
