@@ -372,8 +372,9 @@
 
         const dot = document.createElement('span');
         dot.className = 'tbm-dot';
-        dot.textContent = '\u2022';
+        dot.textContent = '💬';
         dot.title = texts.join('\n');
+        dot.style.cssText = 'font-size:10px;margin-left:3px;cursor:help;filter:brightness(1.2)';
         badge.appendChild(dot);
       });
     });
