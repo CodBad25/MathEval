@@ -339,11 +339,11 @@
 
   // Inject TB- buttons into the page
   function injectButtons() {
-    const tbButtons = document.querySelectorAll('button[title="Tout Bon"]');
+    const tbButtons = document.querySelectorAll('button[title^="Tout Bon"]');
     tbButtons.forEach((tbBtn, idx) => {
       const parent = tbBtn.parentElement;
       if (!parent || parent.querySelector('[data-tbminus]')) return;
-      const tfBtn = parent.querySelector('button[title="Tout Faux"]');
+      const tfBtn = parent.querySelector('button[title^="Tout Faux"]');
       if (!tfBtn) return;
       parent.insertBefore(createTBMinusBtn(idx), tfBtn);
     });
@@ -442,13 +442,25 @@
 
   // Observe DOM changes to re-inject buttons when needed
   const observer = new MutationObserver(() => {
-    const tbBtns = document.querySelectorAll('button[title="Tout Bon"]');
+    const tbBtns = document.querySelectorAll('button[title^="Tout Bon"]');
     if (tbBtns.length > 0) {
       injectButtons();
+      installTabListener();
     }
     applySideBySideLayout();
     scheduleCommentDots();
   });
+
+  // Listen for exercise tab clicks to update score badge
+  function installTabListener() {
+    const nav = document.querySelector('nav[aria-label="Tabs"]');
+    if (!nav || nav.dataset.tbmTabListener) return;
+    nav.dataset.tbmTabListener = '1';
+    nav.addEventListener('click', (e) => {
+      if (!e.target.closest('button')) return;
+      setTimeout(updateExerciseScore, 200);
+    });
+  }
 
   function init() {
     const app = document.getElementById('app') || document.getElementById('appMathalea');
@@ -457,6 +469,7 @@
     setTimeout(injectButtons, 500);
     setTimeout(applySideBySideLayout, 600);
     setTimeout(injectCommentDots, 800);
+    setTimeout(installTabListener, 500);
     injectConfigButton();
   }
 
