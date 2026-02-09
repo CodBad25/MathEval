@@ -257,33 +257,38 @@
       y += 1;
     }
 
-    // ── EXERCICES (chips gris compacts) ──
+    // ── EXERCICES (grille 2 colonnes) ──
     if (cfg.showExercises!==false && exs.length>0) {
       doc.setTextColor(...C.dark);
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.text('EXERCICES', M, y+1);
       y += 3.5;
-      const chipH = 5, chipGap = 1.5, chipPadX = 2;
-      let cx = M, cy = y;
+      const cols = 2, colGap = 2, colW = (W - colGap) / cols, rowH = 4.5;
       exs.forEach((ex, i) => {
+        const col = i % cols, row = Math.floor(i / cols);
+        const cx = M + col * (colW + colGap);
+        const cy = y + row * rowH;
         const sc = exScore(sid, i);
         const ep = sc.t>0 ? sc.o/sc.t*100 : 0;
         const lv = sc.t>0 ? levelFromPct(ep) : {code:'-',color:[150,150,150]};
-        const label = `Ex${i+1}: ${fmt(sc.o)}/${sc.t}`;
-        doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-        const labelW = doc.getTextWidth(label);
-        const lvlW = doc.getTextWidth(' '+lv.code);
-        const chipW = chipPadX*2 + labelW + lvlW + 1;
-        if (cx + chipW > PW - M) { cx = M; cy += chipH + chipGap; }
-        doc.setFillColor(235, 235, 235);
-        doc.roundedRect(cx, cy, chipW, chipH, 1, 1, 'F');
-        doc.setTextColor(...C.dark); doc.setFont('helvetica','normal'); doc.setFontSize(5.5);
-        doc.text(label, cx + chipPadX, cy + 3.5);
+        // Fond alterné
+        doc.setFillColor(row%2===0 ? 248 : 240, row%2===0 ? 248 : 243, row%2===0 ? 250 : 247);
+        doc.rect(cx, cy, colW, rowH, 'F');
+        // Numéro + titre tronqué
+        doc.setTextColor(...C.dark); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+        doc.text(`${i+1}.`, cx + 1.5, cy + 3.2);
+        doc.setFont('helvetica','normal');
+        const titleMaxW = colW - 28;
+        let title = ex.titre || `Exercice ${i+1}`;
+        while (doc.getTextWidth(title) > titleMaxW && title.length > 5) title = title.slice(0,-1);
+        if (title !== (ex.titre || `Exercice ${i+1}`)) title += '…';
+        doc.text(title, cx + 5.5, cy + 3.2);
+        // Score + niveau (aligné à droite)
+        doc.text(`${fmt(sc.o)}/${sc.t}`, cx + colW - 14, cy + 3.2);
         doc.setTextColor(...lv.color); doc.setFont('helvetica','bold');
-        doc.text(lv.code, cx + chipPadX + labelW + 1, cy + 3.5);
-        cx += chipW + chipGap;
+        doc.text(lv.code, cx + colW - 3, cy + 3.2);
       });
-      y = cy + chipH + 2;
+      y += Math.ceil(exs.length / cols) * rowH + 1.5;
     }
 
     // ── STATS CLASSE (compact) + QR + SIGNATURES ──
