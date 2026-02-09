@@ -13,6 +13,17 @@
     danger: [231, 76, 60], dark: [44, 62, 80], light: [236, 240, 241], white: [255, 255, 255]
   };
   const SEUIL_TBM = 90, SEUIL_MS = 70, SEUIL_MF = 30;
+  // Couleur unique par compétence
+  const compColorMap = {
+    modeliser:   [155, 89, 182],   // Violet
+    calculer:    [52, 152, 219],   // Bleu
+    raisonner:   [46, 204, 113],   // Vert
+    communiquer: [230, 126, 34],   // Orange
+    representer: [231, 76, 60],    // Rouge
+    chercher:    [241, 196, 15],   // Jaune
+  };
+  const compLetterMap = { modeliser:'M', calculer:'Ca', raisonner:'R', communiquer:'Co', representer:'Re', chercher:'Ch' };
+  function compColor(k) { return compColorMap[k] || colors.primary; }
 
   function getConfig() { try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch { return {}; } }
   function saveConfig(c) { localStorage.setItem(CONFIG_KEY, JSON.stringify(c)); }
@@ -220,7 +231,7 @@
         y += bh + 4;
       }
 
-      // ── COMPÉTENCES (barres pleines) ──
+      // ── COMPÉTENCES (barres avec couleur unique par compétence + badge niveau) ──
       if (cfg.showCompetences!==false && compKeys.length>0) {
         doc.setTextColor(...colors.dark);
         doc.setFontSize(9); doc.setFont('helvetica','bold');
@@ -228,12 +239,30 @@
         y += 4;
         compKeys.forEach(k => {
           const c = comps[k];
-          doc.setFillColor(...c.lvl.color);
+          const cc = compColor(k);
+          // Barre de fond (couleur de la compétence)
+          doc.setFillColor(...cc);
           doc.roundedRect(M, y, W, 8, 2, 2, 'F');
+          // Icône : petit cercle blanc avec lettre
+          const iconR = 3;
+          doc.setFillColor(255,255,255);
+          doc.circle(M + iconR + 1.5, y + 4, iconR, 'F');
+          doc.setTextColor(...cc);
+          doc.setFontSize(6); doc.setFont('helvetica','bold');
+          doc.text(compLetterMap[k]||k.charAt(0).toUpperCase(), M + iconR + 1.5, y + 5.2, {align:'center'});
+          // Nom de la compétence
           doc.setTextColor(255,255,255);
           doc.setFontSize(8); doc.setFont('helvetica','bold');
-          doc.text(niceComp(k), M+4, y+5.5);
-          doc.text(`${c.lvl.code} — ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)`, PW-M-4, y+5.5, {align:'right'});
+          doc.text(niceComp(k), M + iconR*2 + 4, y+5.5);
+          // Badge niveau + score à droite
+          const badgeText = `${c.lvl.code} — ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)`;
+          // Fond blanc semi-transparent pour le badge
+          const tw = doc.getTextWidth(badgeText) + 6;
+          doc.setFillColor(255,255,255,0.3);
+          doc.roundedRect(PW - M - tw - 1, y + 1, tw + 2, 6, 1, 1, 'F');
+          doc.setTextColor(255,255,255);
+          doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.text(badgeText, PW-M-3, y+5.5, {align:'right'});
           y += 9;
         });
         y += 3;
@@ -358,26 +387,26 @@
 
           compAvgKeys.forEach((k, i) => {
             const avg = Math.round(cAvg[k].s / cAvg[k].n);
-            const lv = levelFromPct(avg);
+            const cc = compColor(k);
             const by = startY + i * (barH + gap);
 
-            // Label
+            // Label avec couleur de la compétence
             doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-            doc.setTextColor(...colors.dark);
+            doc.setTextColor(...cc);
             doc.text(niceComp(k), barX, by + 3.5);
 
             // Fond barre gris
             doc.setFillColor(220, 220, 220);
             doc.roundedRect(barX + labelW, by, fillW, barH, 1, 1, 'F');
 
-            // Barre remplie
+            // Barre remplie (couleur de la compétence)
             const filledW = Math.max(1, (avg / 100) * fillW);
-            doc.setFillColor(...lv.color);
+            doc.setFillColor(...cc);
             doc.roundedRect(barX + labelW, by, filledW, barH, 1, 1, 'F');
 
             // Pourcentage
             doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-            doc.setTextColor(...lv.color);
+            doc.setTextColor(...cc);
             doc.text(`${avg}%`, barX + labelW + fillW + 2, by + 3.5);
           });
         }
