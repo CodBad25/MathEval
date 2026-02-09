@@ -101,13 +101,30 @@
     scores.sort((a,b)=>a-b);
     const sum = scores.reduce((a,b)=>a+b,0);
     const med = scores.length%2===0 ? (scores[scores.length/2-1]+scores[scores.length/2])/2 : scores[Math.floor(scores.length/2)];
-    return { n:scores.length, avg:Math.round(sum/scores.length*10)/10, min:scores[0], max:scores[scores.length-1], med:Math.round(med*10)/10, total:globalScore(getStudents().find(s=>isCorrected(s.id)).id).total };
+    return { n:scores.length, avg:Math.round(sum/scores.length*10)/10, min:scores[0], max:scores[scores.length-1], med:Math.round(med*10)/10, total:globalScore(getStudents().find(s=>isCorrected(s.id)).id).total, scores };
   }
 
   function classCompAvgs() {
     const a = {};
     getStudents().forEach(s => { if(!isCorrected(s.id)) return; const sc=compScores(s.id); Object.keys(sc).forEach(k => { if(!a[k]) a[k]={s:0,n:0}; a[k].s+=sc[k].pct; a[k].n++; }); });
     return a;
+  }
+
+  function scoreDistribution(stats) {
+    if (!stats || !stats.scores || !stats.total) return null;
+    const total = stats.total;
+    const nbBins = 5;
+    const binSize = total / nbBins;
+    const bins = new Array(nbBins).fill(0);
+    const labels = [];
+    for (let i = 0; i < nbBins; i++) {
+      labels.push(`${fmt(Math.round(binSize*i))}-${fmt(Math.round(binSize*(i+1)))}`);
+    }
+    stats.scores.forEach(s => {
+      const bin = Math.min(nbBins-1, Math.floor(s / binSize));
+      bins[bin]++;
+    });
+    return { bins, labels, max: Math.max(...bins) };
   }
 
   // ===================== PDF (strict 1 page / élève) =====================
@@ -119,6 +136,7 @@
     const exs = getExercises(), cfg = getConfig();
     const stats = cfg.showStats!==false ? classStats() : null;
     const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
+    const dist = stats ? scoreDistribution(stats) : null;
     const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
 
     ids.forEach((sid, idx) => {
@@ -146,59 +164,77 @@
       doc.text(date, PW/2, 23, {align:'center'});
       y = 29;
 
-      // ── ÉLÈVE + NOTE (une seule bande) ──
+      // ── NOM ÉLÈVE (bande grise) ──
       doc.setFillColor(...colors.light);
-      doc.roundedRect(M, y, W, 14, 2, 2, 'F');
+      doc.roundedRect(M, y, W, 9, 2, 2, 'F');
       doc.setTextColor(...colors.dark);
       doc.setFontSize(13); doc.setFont('helvetica','bold');
-      doc.text(name, M+5, y+9);
+      doc.text(name, M+4, y+6.5);
+      y += 13;
+
+      // ── NOTE + APPRÉCIATION (côte à côte) ──
       if (cfg.showNote!==false && g.total>0) {
         const lvl = levelFromPct(pct);
-        // Note box à droite
-        const nw = 75;
-        doc.setFillColor(...lvl.color);
-        doc.roundedRect(PW-M-nw, y, nw, 14, 2, 2, 'F');
-        doc.setTextColor(255,255,255);
-        doc.setFontSize(16); doc.setFont('helvetica','bold');
-        doc.text(`${fmt(g.correct)} / ${g.total}`, PW-M-nw+5, y+10);
-        doc.setFontSize(8); doc.setFont('helvetica','normal');
-        doc.text(lvl.code+' — '+lvl.label, PW-M-3, y+10, {align:'right'});
-      }
-      y += 18;
+        const hasComment = cfg.showComment!==false && comment;
+        const noteW = hasComment ? 42 : W;
+        const noteH = 20;
 
-      // ── APPRÉCIATION ──
-      if (cfg.showComment!==false && comment) {
-        doc.setTextColor(...colors.dark);
-        doc.setFontSize(10); doc.setFont('helvetica','bold');
-        doc.text('APPRÉCIATION', M, y);
-        y += 4;
-        const lines = doc.splitTextToSize(comment, W-12);
-        const bh = Math.max(10, 6 + lines.length*4);
-        doc.setFillColor(...colors.light);
+        // Note box
+        doc.setFillColor(...lvl.color);
+        doc.roundedRect(M, y, noteW, noteH, 2, 2, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(20); doc.setFont('helvetica','bold');
+        doc.text(`${fmt(g.correct)}/${g.total}`, M + noteW/2, y+10, {align:'center'});
+        doc.setFontSize(7); doc.setFont('helvetica','normal');
+        doc.text(lvl.code+' — '+lvl.label, M + noteW/2, y+16, {align:'center'});
+
+        // Appreciation box (à droite de la note)
+        if (hasComment) {
+          const appX = M + noteW + 3;
+          const appW = W - noteW - 3;
+          const lines = doc.splitTextToSize(comment, appW - 10);
+          const appH = Math.max(noteH, 6 + lines.length * 3.5);
+
+          doc.setFillColor(248, 249, 250);
+          doc.roundedRect(appX, y, appW, appH, 2, 2, 'F');
+          doc.setDrawColor(...colors.primary); doc.setLineWidth(0.8);
+          doc.line(appX, y, appX, y + appH);
+          doc.setTextColor(...colors.dark);
+          doc.setFontSize(8); doc.setFont('helvetica','normal');
+          doc.text(lines, appX + 5, y + 5);
+          y += Math.max(noteH, appH) + 4;
+        } else {
+          y += noteH + 4;
+        }
+      } else if (cfg.showComment!==false && comment) {
+        // Pas de note mais un commentaire seul
+        const lines = doc.splitTextToSize(comment, W - 10);
+        const bh = Math.max(10, 6 + lines.length * 3.5);
+        doc.setFillColor(248, 249, 250);
         doc.roundedRect(M, y, W, bh, 2, 2, 'F');
         doc.setDrawColor(...colors.primary); doc.setLineWidth(0.8);
-        doc.line(M, y, M, y+bh);
+        doc.line(M, y, M, y + bh);
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(9); doc.setFont('helvetica','normal');
-        doc.text(lines, M+6, y+5);
-        y += bh + 5;
+        doc.setFontSize(8); doc.setFont('helvetica','normal');
+        doc.text(lines, M + 5, y + 5);
+        y += bh + 4;
       }
 
       // ── COMPÉTENCES (barres pleines) ──
       if (cfg.showCompetences!==false && compKeys.length>0) {
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(10); doc.setFont('helvetica','bold');
+        doc.setFontSize(9); doc.setFont('helvetica','bold');
         doc.text('COMPÉTENCES ÉVALUÉES', M, y);
-        y += 5;
+        y += 4;
         compKeys.forEach(k => {
           const c = comps[k];
           doc.setFillColor(...c.lvl.color);
           doc.roundedRect(M, y, W, 8, 2, 2, 'F');
           doc.setTextColor(255,255,255);
-          doc.setFontSize(9); doc.setFont('helvetica','bold');
+          doc.setFontSize(8); doc.setFont('helvetica','bold');
           doc.text(niceComp(k), M+4, y+5.5);
           doc.text(`${c.lvl.code} — ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)`, PW-M-4, y+5.5, {align:'right'});
-          y += 10;
+          y += 9;
         });
         y += 3;
       }
@@ -206,67 +242,147 @@
       // ── DÉTAIL PAR EXERCICE ──
       if (cfg.showExercises!==false && exs.length>0) {
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(10); doc.setFont('helvetica','bold');
+        doc.setFontSize(9); doc.setFont('helvetica','bold');
         doc.text('DÉTAIL PAR EXERCICE', M, y);
-        y += 4;
+        y += 3;
         // Header
         doc.setFillColor(...colors.primary);
-        doc.rect(M, y, W, 6, 'F');
+        doc.rect(M, y, W, 5.5, 'F');
         doc.setTextColor(255,255,255);
         doc.setFontSize(7); doc.setFont('helvetica','bold');
-        doc.text('#', M+3, y+4.5);
-        doc.text('Exercice', M+10, y+4.5);
-        doc.text('Score', PW-M-32, y+4.5);
-        doc.text('Niveau', PW-M-12, y+4.5);
-        y += 6;
+        doc.text('#', M+3, y+4);
+        doc.text('Exercice', M+10, y+4);
+        doc.text('Score', PW-M-30, y+4);
+        doc.text('Niveau', PW-M-12, y+4);
+        y += 5.5;
         exs.forEach((ex, i) => {
           const sc = exScore(sid, i);
           const ep = sc.t>0 ? sc.o/sc.t*100 : 0;
           const lv = sc.t>0 ? levelFromPct(ep) : {code:'-',color:[150,150,150]};
           doc.setFillColor(i%2===0?250:242, i%2===0?250:245, i%2===0?250:248);
-          doc.rect(M, y, W, 5.5, 'F');
+          doc.rect(M, y, W, 5, 'F');
           doc.setTextColor(...colors.dark);
-          doc.setFontSize(7); doc.setFont('helvetica','bold');
-          doc.text(String(i+1), M+3, y+4);
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+          doc.text(String(i+1), M+3, y+3.5);
           doc.setFont('helvetica','normal');
-          doc.text((ex.titre||`Exercice ${i+1}`).substring(0,65), M+10, y+4);
-          doc.text(`${fmt(sc.o)}/${sc.t}`, PW-M-32, y+4);
+          doc.text((ex.titre||`Exercice ${i+1}`).substring(0,70), M+10, y+3.5);
+          doc.text(`${fmt(sc.o)}/${sc.t}`, PW-M-30, y+3.5);
           doc.setTextColor(...lv.color); doc.setFont('helvetica','bold');
-          doc.text(lv.code, PW-M-12, y+4);
-          y += 5.5;
+          doc.text(lv.code, PW-M-12, y+3.5);
+          y += 5;
         });
-        y += 5;
+        y += 4;
       }
 
-      // ── STATISTIQUES CLASSE ──
+      // ── RÉSULTATS DE LA CLASSE (histogramme + barres compétences) ──
       if (cfg.showStats!==false && stats) {
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(10); doc.setFont('helvetica','bold');
-        doc.text('STATISTIQUES CLASSE', M, y);
+        doc.setFontSize(9); doc.setFont('helvetica','bold');
+        doc.text('RÉSULTATS DE LA CLASSE', M, y);
         y += 4;
+
+        // Fond de la section stats
+        const statsH = 50;
         doc.setFillColor(...colors.light);
-        const sh = Object.keys(cAvg).length>0 ? 18 : 12;
-        doc.roundedRect(M, y, W, sh, 2, 2, 'F');
+        doc.roundedRect(M, y, W, statsH, 2, 2, 'F');
+
+        // --- Texte stats en haut ---
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(8); doc.setFont('helvetica','normal');
-        doc.text(`Moy: ${fmt(stats.avg)}/${stats.total}`, M+4, y+6);
-        doc.text(`Min: ${fmt(stats.min)}`, M+50, y+6);
-        doc.text(`Méd: ${fmt(stats.med)}`, M+80, y+6);
-        doc.text(`Max: ${fmt(stats.max)}`, M+110, y+6);
-        doc.text(`${stats.n} corrigé(s)`, M+140, y+6);
-        if (Object.keys(cAvg).length>0) {
-          let x = M+4;
-          doc.setFontSize(7);
-          Object.keys(cAvg).forEach(k => {
-            const avg = Math.round(cAvg[k].s/cAvg[k].n);
+        doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+        doc.text(`Moy: ${fmt(stats.avg)}/${stats.total}`, M+4, y+5);
+        doc.text(`Min: ${fmt(stats.min)}`, M+40, y+5);
+        doc.text(`Méd: ${fmt(stats.med)}`, M+62, y+5);
+        doc.text(`Max: ${fmt(stats.max)}`, M+84, y+5);
+        doc.text(`${stats.n} corrigé(s)`, M+106, y+5);
+
+        const chartY = y + 9;
+        const chartH = 32;
+
+        // --- HISTOGRAMME (moitié gauche) ---
+        if (dist && dist.max > 0) {
+          const histX = M + 4;
+          const histW = W/2 - 10;
+          const nbBins = dist.bins.length;
+          const barGap = 2;
+          const barW = (histW - (nbBins-1)*barGap) / nbBins;
+
+          // Titre
+          doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.setTextColor(...colors.dark);
+          doc.text('Distribution des notes', histX + histW/2, chartY, {align:'center'});
+
+          const barsY = chartY + 4;
+          const barsH = chartH - 8;
+
+          for (let i = 0; i < nbBins; i++) {
+            const x = histX + i * (barW + barGap);
+            const h = dist.max > 0 ? (dist.bins[i] / dist.max) * barsH : 0;
+
+            // Couleur selon la tranche
+            const midPct = ((i + 0.5) / nbBins) * 100;
+            const binLvl = levelFromPct(midPct);
+            doc.setFillColor(...binLvl.color);
+
+            if (h > 0) {
+              doc.roundedRect(x, barsY + barsH - h, barW, h, 1, 1, 'F');
+              // Nombre au-dessus
+              doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+              doc.setTextColor(...colors.dark);
+              doc.text(String(dist.bins[i]), x + barW/2, barsY + barsH - h - 1.5, {align:'center'});
+            }
+
+            // Label en dessous
+            doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+            doc.setTextColor(100,100,100);
+            doc.text(dist.labels[i], x + barW/2, barsY + barsH + 3.5, {align:'center'});
+          }
+        }
+
+        // --- BARRES COMPÉTENCES (moitié droite) ---
+        const compAvgKeys = Object.keys(cAvg);
+        if (compAvgKeys.length > 0) {
+          const barX = M + W/2 + 5;
+          const barAreaW = W/2 - 10;
+
+          // Titre
+          doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.setTextColor(...colors.dark);
+          doc.text('Réussite par compétence', barX + barAreaW/2, chartY, {align:'center'});
+
+          const labelW = 28;
+          const pctW = 12;
+          const fillW = barAreaW - labelW - pctW;
+          const barH = 5;
+          const startY = chartY + 5;
+          const gap = Math.min(3, (chartH - 8 - compAvgKeys.length * barH) / Math.max(1, compAvgKeys.length - 1));
+
+          compAvgKeys.forEach((k, i) => {
+            const avg = Math.round(cAvg[k].s / cAvg[k].n);
             const lv = levelFromPct(avg);
-            doc.setTextColor(...lv.color); doc.setFont('helvetica','bold');
-            const t = `${niceComp(k)}: ${avg}%`;
-            doc.text(t, x, y+13);
-            x += doc.getTextWidth(t)+8;
+            const by = startY + i * (barH + gap);
+
+            // Label
+            doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+            doc.setTextColor(...colors.dark);
+            doc.text(niceComp(k), barX, by + 3.5);
+
+            // Fond barre gris
+            doc.setFillColor(220, 220, 220);
+            doc.roundedRect(barX + labelW, by, fillW, barH, 1, 1, 'F');
+
+            // Barre remplie
+            const filledW = Math.max(1, (avg / 100) * fillW);
+            doc.setFillColor(...lv.color);
+            doc.roundedRect(barX + labelW, by, filledW, barH, 1, 1, 'F');
+
+            // Pourcentage
+            doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+            doc.setTextColor(...lv.color);
+            doc.text(`${avg}%`, barX + labelW + fillW + 2, by + 3.5);
           });
         }
-        y += sh + 5;
+
+        y += statsH + 4;
       }
 
       // ── SIGNATURES (toujours en bas de page) ──
