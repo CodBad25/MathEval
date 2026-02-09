@@ -235,9 +235,12 @@
       doc.roundedRect(M, y, noteW, noteH, 1.5, 1.5, 'F');
       doc.setTextColor(255,255,255);
       doc.setFontSize(15); doc.setFont('helvetica','bold');
-      doc.text(`${fmt(g.correct)}/${g.total}`, M + noteW/2, y+7, {align:'center'});
-      doc.setFontSize(5.5); doc.setFont('helvetica','normal');
-      doc.text(lvl.code+' — '+lvl.label, M + noteW/2, y+12, {align:'center'});
+      doc.text(`${fmt(g.correct)}/${g.total}`, M + noteW/2, y+5.5, {align:'center'});
+      const sur20 = Math.round(g.correct / g.total * 20 * 10) / 10;
+      doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text(`(${fmt(sur20)}/20)`, M + noteW/2, y+9, {align:'center'});
+      doc.setFontSize(5.5);
+      doc.text(lvl.code+' — '+lvl.label, M + noteW/2, y+12.5, {align:'center'});
 
       if (hasComment) {
         const appX = M + noteW + 2;
