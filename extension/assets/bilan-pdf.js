@@ -169,13 +169,20 @@
     doc.text(sub + '  •  ' + date, PW/2, y+11, {align:'center'});
     y += 16;
 
-    // ── NOM (compact 6mm) ──
+    // ── NOM + QR code ──
+    const qrInNameSize = 10;
+    const nameBarH = qrImg ? qrInNameSize + 2 : 6;
     doc.setFillColor(...C.light);
-    doc.roundedRect(M, y, W, 6, 1.5, 1.5, 'F');
+    doc.roundedRect(M, y, W, nameBarH, 1.5, 1.5, 'F');
     doc.setTextColor(...C.dark);
     doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text(name, M+3, y+4.5);
-    y += 8;
+    doc.text(name, M+3, y + nameBarH/2 + 1.5);
+    if (qrImg) {
+      doc.addImage(qrImg, 'PNG', PW - M - qrInNameSize - 1, y + 1, qrInNameSize, qrInNameSize);
+      doc.setFontSize(3.5); doc.setTextColor(130,130,130); doc.setFont('helvetica','normal');
+      doc.text('Refaire', PW - M - qrInNameSize/2 - 1, y + qrInNameSize + 1.5, {align:'center'});
+    }
+    y += nameBarH + 2;
 
     // ── NOTE + APPRÉCIATION (côte à côte, compact) ──
     if (cfg.showNote!==false && g.total>0) {
@@ -250,38 +257,33 @@
       y += 1;
     }
 
-    // ── EXERCICES (tableau compact) ──
+    // ── EXERCICES (chips gris compacts) ──
     if (cfg.showExercises!==false && exs.length>0) {
       doc.setTextColor(...C.dark);
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.text('EXERCICES', M, y+1);
-      y += 3;
-      doc.setFillColor(...C.primary);
-      doc.rect(M, y, W, 4.5, 'F');
-      doc.setTextColor(255,255,255);
-      doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-      doc.text('#', M+2, y+3.2);
-      doc.text('Exercice', M+8, y+3.2);
-      doc.text('Score', PW-M-24, y+3.2);
-      doc.text('Niveau', PW-M-9, y+3.2);
-      y += 4.5;
+      y += 3.5;
+      const chipH = 5, chipGap = 1.5, chipPadX = 2;
+      let cx = M, cy = y;
       exs.forEach((ex, i) => {
         const sc = exScore(sid, i);
         const ep = sc.t>0 ? sc.o/sc.t*100 : 0;
         const lv = sc.t>0 ? levelFromPct(ep) : {code:'-',color:[150,150,150]};
-        doc.setFillColor(i%2===0?250:244, i%2===0?250:246, i%2===0?250:249);
-        doc.rect(M, y, W, 4, 'F');
-        doc.setTextColor(...C.dark);
+        const label = `Ex${i+1}: ${fmt(sc.o)}/${sc.t}`;
         doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-        doc.text(String(i+1), M+2, y+2.8);
-        doc.setFont('helvetica','normal');
-        doc.text((ex.titre||`Exercice ${i+1}`).substring(0,65), M+8, y+2.8);
-        doc.text(`${fmt(sc.o)}/${sc.t}`, PW-M-24, y+2.8);
+        const labelW = doc.getTextWidth(label);
+        const lvlW = doc.getTextWidth(' '+lv.code);
+        const chipW = chipPadX*2 + labelW + lvlW + 1;
+        if (cx + chipW > PW - M) { cx = M; cy += chipH + chipGap; }
+        doc.setFillColor(235, 235, 235);
+        doc.roundedRect(cx, cy, chipW, chipH, 1, 1, 'F');
+        doc.setTextColor(...C.dark); doc.setFont('helvetica','normal'); doc.setFontSize(5.5);
+        doc.text(label, cx + chipPadX, cy + 3.5);
         doc.setTextColor(...lv.color); doc.setFont('helvetica','bold');
-        doc.text(lv.code, PW-M-9, y+2.8);
-        y += 4;
+        doc.text(lv.code, cx + chipPadX + labelW + 1, cy + 3.5);
+        cx += chipW + chipGap;
       });
-      y += 1;
+      y = cy + chipH + 2;
     }
 
     // ── STATS CLASSE (compact) + QR + SIGNATURES ──
@@ -353,22 +355,15 @@
       y += statsH + 1;
     }
 
-    // QR code (petit, à droite) + Signatures
-    const sigY = bottomY - 6;
-    if (qrImg) {
-      const qrSize = 14;
-      doc.addImage(qrImg, 'PNG', PW/2 - qrSize/2, sigY - qrSize - 1, qrSize, qrSize);
-      doc.setFontSize(4); doc.setTextColor(150,150,150); doc.setFont('helvetica','normal');
-      doc.text('Refaire les exercices', PW/2, sigY - 0.5, {align:'center'});
-    }
-
+    // Signatures (positionnées en bas de la demi-page, avec espace pour signer)
     if (cfg.showSignatures!==false) {
+      const sigY = bottomY - 8;
       doc.setDrawColor(...C.dark); doc.setLineWidth(0.2);
-      doc.line(M, sigY, M+45, sigY);
+      doc.line(M, sigY, M+50, sigY);
       doc.setFontSize(5.5); doc.setTextColor(...C.dark); doc.setFont('helvetica','normal');
-      doc.text('Signature élève', M+22, sigY+3, {align:'center'});
-      doc.line(PW-M-45, sigY, PW-M, sigY);
-      doc.text('Signature parents', PW-M-22, sigY+3, {align:'center'});
+      doc.text('Signature élève', M+25, sigY+3, {align:'center'});
+      doc.line(PW-M-50, sigY, PW-M, sigY);
+      doc.text('Signature parents', PW-M-25, sigY+3, {align:'center'});
     }
   }
 
