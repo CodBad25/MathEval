@@ -22,6 +22,46 @@
     communiquer: [230, 126, 34], representer: [231, 76, 60], chercher: [241, 196, 15],
   };
   function compColor(k) { return compColorMap[k] || C.primary; }
+  const compEmojiMap = {
+    modeliser:'🏗️', calculer:'🧮', raisonner:'🧩', communiquer:'💬', representer:'🎨', chercher:'🔍',
+  };
+  // Convertit un emoji en image PNG data URL via canvas
+  function emojiToDataURL(emoji, sizePx) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = sizePx;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, sizePx, sizePx);
+    ctx.font = `${Math.floor(sizePx * 0.8)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, sizePx / 2, sizePx / 2 + sizePx * 0.05);
+    return canvas.toDataURL('image/png');
+  }
+  // Cache des images emoji pré-générées
+  let _compImgCache = null;
+  function getCompImages() {
+    if (_compImgCache) return _compImgCache;
+    _compImgCache = {};
+    Object.keys(compEmojiMap).forEach(k => {
+      _compImgCache[k] = emojiToDataURL(compEmojiMap[k], 64);
+    });
+    return _compImgCache;
+  }
+  // Dessine l'icône emoji d'une compétence dans le PDF
+  function drawCompIcon(doc, k, x, y, size) {
+    const imgs = getCompImages();
+    if (imgs[k]) {
+      try { doc.addImage(imgs[k], 'PNG', x, y, size, size); return; } catch(e) {}
+    }
+    // Fallback : pastille colorée avec lettre
+    const cc = compColor(k);
+    doc.setFillColor(...cc);
+    doc.circle(x + size/2, y + size/2, size/2, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(size * 1.6); doc.setFont('helvetica','bold');
+    const abbr = {modeliser:'Mo',calculer:'Ca',raisonner:'Ra',communiquer:'Co',representer:'Re',chercher:'Ch'}[k]||'?';
+    doc.text(abbr, x + size/2, y + size/2 + size*0.25, {align:'center'});
+  }
 
   function getConfig() { try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch { return {}; } }
   function saveConfig(c) { localStorage.setItem(CONFIG_KEY, JSON.stringify(c)); }
@@ -241,14 +281,19 @@
       y += 3;
       compKeys.forEach(k => {
         const c = comps[k], cc = compColor(k);
+        const badgeSize = 4;
+        // Pastille icône
+        drawCompIcon(doc, k, M, y + 0.75, badgeSize);
+        // Barre de fond
         doc.setFillColor(230, 230, 230);
-        doc.roundedRect(M, y, W, 5.5, 1, 1, 'F');
-        const filledW = Math.max(6, (c.pct / 100) * W);
+        doc.roundedRect(M + badgeSize + 1.5, y, W - badgeSize - 1.5, 5.5, 1, 1, 'F');
+        const barW = W - badgeSize - 1.5;
+        const filledW = Math.max(6, (c.pct / 100) * barW);
         doc.setFillColor(...cc);
-        doc.roundedRect(M, y, filledW, 5.5, 1, 1, 'F');
+        doc.roundedRect(M + badgeSize + 1.5, y, filledW, 5.5, 1, 1, 'F');
         doc.setTextColor(255,255,255);
         doc.setFontSize(6); doc.setFont('helvetica','bold');
-        doc.text(niceComp(k), M+2, y+4);
+        doc.text(niceComp(k), M + badgeSize + 3.5, y+4);
         doc.setTextColor(...C.dark);
         doc.setFontSize(5.5); doc.setFont('helvetica','bold');
         doc.text(`${c.lvl.code} ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)`, PW-M-1, y+4, {align:'right'});
@@ -257,13 +302,14 @@
       y += 1;
     }
 
-    // ── EXERCICES (grille 2 colonnes) ──
+    // ── EXERCICES (grille 2 colonnes + pastilles compétences) ──
     if (cfg.showExercises!==false && exs.length>0) {
+      const cw = getCW();
       doc.setTextColor(...C.dark);
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.text('EXERCICES', M, y+1);
       y += 3.5;
-      const cols = 2, colGap = 2, colW = (W - colGap) / cols, rowH = 4.5;
+      const cols = 2, colGap = 2, colW = (W - colGap) / cols, rowH = 5.5;
       exs.forEach((ex, i) => {
         const col = i % cols, row = Math.floor(i / cols);
         const cx = M + col * (colW + colGap);
@@ -271,18 +317,31 @@
         const sc = exScore(sid, i);
         const ep = sc.t>0 ? sc.o/sc.t*100 : 0;
         const lv = sc.t>0 ? levelFromPct(ep) : {code:'-',color:[150,150,150]};
+        // Compétences de cet exercice
+        let exComps = [];
+        const w = cw?.[ex.exerciceIndex];
+        if (w) exComps = Object.keys(w).map(c => normalizeComp(c));
+        else if (ex.competencesExercice) exComps = ex.competencesExercice.map(c => normalizeComp(c));
         // Fond alterné
         doc.setFillColor(row%2===0 ? 248 : 240, row%2===0 ? 248 : 243, row%2===0 ? 250 : 247);
         doc.rect(cx, cy, colW, rowH, 'F');
-        // Numéro + titre tronqué
+        // Pastilles compétences (à gauche)
+        const badgeS = 3;
+        let bx = cx + 1;
+        exComps.forEach(k => {
+          drawCompIcon(doc, k, bx, cy + 0.5, badgeS);
+          bx += badgeS + 0.5;
+        });
+        // Numéro + titre tronqué (après les pastilles)
+        const textStart = bx + 1;
         doc.setTextColor(...C.dark); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-        doc.text(`${i+1}.`, cx + 1.5, cy + 3.2);
+        doc.text(`${i+1}.`, textStart, cy + 3.2);
         doc.setFont('helvetica','normal');
-        const titleMaxW = colW - 28;
+        const titleMaxW = cx + colW - textStart - 18;
         let title = ex.titre || `Exercice ${i+1}`;
         while (doc.getTextWidth(title) > titleMaxW && title.length > 5) title = title.slice(0,-1);
         if (title !== (ex.titre || `Exercice ${i+1}`)) title += '…';
-        doc.text(title, cx + 5.5, cy + 3.2);
+        doc.text(title, textStart + 4, cy + 3.2);
         // Score + niveau (aligné à droite)
         doc.text(`${fmt(sc.o)}/${sc.t}`, cx + colW - 14, cy + 3.2);
         doc.setTextColor(...lv.color); doc.setFont('helvetica','bold');
