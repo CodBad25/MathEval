@@ -10,31 +10,25 @@
 
   const CONFIG_KEY = 'bilanConfig';
 
-  // --- Couleurs ---
+  // --- Couleurs (identiques au gazoil) ---
   const colors = {
     primary: [41, 128, 185],
-    success: [76, 175, 80],
-    info: [33, 150, 243],
-    warning: [255, 152, 0],
-    danger: [244, 67, 54],
+    success: [39, 174, 96],
+    warning: [230, 126, 34],
+    danger: [231, 76, 60],
     dark: [44, 62, 80],
     light: [236, 240, 241],
     white: [255, 255, 255]
   };
 
-  // --- Seuils (mêmes que dans l'app) ---
-  const SEUIL_TBM = 90;
-  const SEUIL_MS = 70;
-  const SEUIL_MF = 30;
+  // --- Seuils ---
+  const SEUIL_TBM = 90, SEUIL_MS = 70, SEUIL_MF = 30;
 
   // --- Helpers ---
   function getConfig() {
-    try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); }
-    catch { return {}; }
+    try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch { return {}; }
   }
-  function saveConfig(cfg) {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-  }
+  function saveConfig(cfg) { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
 
   function normalizeCompetence(name) {
     if (!name) return name;
@@ -42,37 +36,23 @@
   }
 
   function niceCompetence(key) {
-    const map = {
-      'modeliser': 'Modéliser',
-      'calculer': 'Calculer',
-      'raisonner': 'Raisonner',
-      'communiquer': 'Communiquer',
-      'representer': 'Représenter',
-      'chercher': 'Chercher'
-    };
+    const map = { modeliser: 'Modéliser', calculer: 'Calculer', raisonner: 'Raisonner', communiquer: 'Communiquer', representer: 'Représenter', chercher: 'Chercher' };
     return map[key] || key.charAt(0).toUpperCase() + key.slice(1);
   }
 
   function levelFromPct(pct) {
     if (pct >= SEUIL_TBM) return { code: 'TBM', label: 'Très Bonne Maîtrise', color: colors.success };
-    if (pct >= SEUIL_MS) return { code: 'MS', label: 'Maîtrise Satisfaisante', color: colors.info };
+    if (pct >= SEUIL_MS) return { code: 'MS', label: 'Maîtrise Satisfaisante', color: colors.primary };
     if (pct >= SEUIL_MF) return { code: 'MF', label: 'Maîtrise Fragile', color: colors.warning };
     return { code: 'MI', label: 'Maîtrise Insuffisante', color: colors.danger };
   }
 
-  function levelColor(pct) {
-    return levelFromPct(pct).color;
-  }
-
-  // --- Scoring functions (mirrors bi/Cn/Ft from bundle) ---
+  // --- Scoring ---
   function getCorrections() {
-    try { return JSON.parse(localStorage.getItem('studentCorrections') || '{}'); }
-    catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('studentCorrections') || '{}'); } catch { return {}; }
   }
-
   function getCompetencyWeights() {
-    try { return JSON.parse(localStorage.getItem('competencyWeights') || 'null'); }
-    catch { return null; }
+    try { return JSON.parse(localStorage.getItem('competencyWeights') || 'null'); } catch { return null; }
   }
 
   function globalScore(studentId) {
@@ -83,11 +63,10 @@
     exercises.forEach(ex => {
       ex.questions.forEach(q => {
         const c = corr[ex.exerciceIndex]?.[q.questionIndex];
-        const status = c?.status;
         total += q.points;
         if (c?.pointsObtenus !== undefined) correct += c.pointsObtenus;
-        else if (status === 'TB') correct += q.points;
-        else if (status === 'TB-') correct += q.points / 2;
+        else if (c?.status === 'TB') correct += q.points;
+        else if (c?.status === 'TB-') correct += q.points / 2;
       });
     });
     return { correct, total };
@@ -101,11 +80,10 @@
     let obtenus = 0, totaux = 0;
     ex.questions.forEach(q => {
       const c = corr[ex.exerciceIndex]?.[q.questionIndex];
-      const status = c?.status;
       totaux += q.points;
       if (c?.pointsObtenus !== undefined) obtenus += c.pointsObtenus;
-      else if (status === 'TB') obtenus += q.points;
-      else if (status === 'TB-') obtenus += q.points / 2;
+      else if (c?.status === 'TB') obtenus += q.points;
+      else if (c?.status === 'TB-') obtenus += q.points / 2;
     });
     return { obtenus, totaux };
   }
@@ -119,13 +97,12 @@
     exercises.forEach(ex => {
       ex.questions.forEach(q => {
         const c = corr[ex.exerciceIndex]?.[q.questionIndex];
-        const status = c?.status;
-        if (status) {
+        if (c?.status) {
           const pts = q.points || 1;
           let earned = 0;
-          if (status === 'TB') earned = pts;
-          else if (status === 'TB-') earned = pts / 2;
-          const weights = CW && CW[ex.exerciceIndex] ? CW[ex.exerciceIndex] : null;
+          if (c.status === 'TB') earned = pts;
+          else if (c.status === 'TB-') earned = pts / 2;
+          const weights = CW?.[ex.exerciceIndex];
           if (weights) {
             Object.entries(weights).forEach(([comp, pct]) => {
               const key = normalizeCompetence(comp);
@@ -152,12 +129,7 @@
       const c = we[key].correct, t = we[key].total;
       if (t > 0) {
         const pct = c / t * 100;
-        result[key] = {
-          correct: Math.round(c * 10) / 10,
-          total: Math.round(t * 10) / 10,
-          pourcentage: pct,
-          level: levelFromPct(pct)
-        };
+        result[key] = { correct: Math.round(c * 10) / 10, total: Math.round(t * 10) / 10, pourcentage: pct, level: levelFromPct(pct) };
       }
     });
     return result;
@@ -170,11 +142,9 @@
   }
 
   function getStudentComment(studentId) {
-    const corr = getCorrections()[studentId];
-    return corr?.commentaire || '';
+    return getCorrections()[studentId]?.commentaire || '';
   }
 
-  // --- Class statistics ---
   function classStats() {
     const students = window.__getStudentList ? window.__getStudentList() : [];
     const scores = [];
@@ -186,268 +156,246 @@
     if (scores.length === 0) return null;
     scores.sort((a, b) => a - b);
     const sum = scores.reduce((a, b) => a + b, 0);
-    const avg = sum / scores.length;
     const med = scores.length % 2 === 0
       ? (scores[scores.length / 2 - 1] + scores[scores.length / 2]) / 2
       : scores[Math.floor(scores.length / 2)];
     return {
       count: scores.length,
-      moyenne: Math.round(avg * 10) / 10,
-      min: scores[0],
-      max: scores[scores.length - 1],
+      moyenne: Math.round(sum / scores.length * 10) / 10,
+      min: scores[0], max: scores[scores.length - 1],
       mediane: Math.round(med * 10) / 10,
       total: globalScore(students.find(s => isStudentCorrected(s.id)).id).total
     };
   }
 
-  // --- PDF Generation ---
+  function classCompetencyAverages() {
+    const students = window.__getStudentList ? window.__getStudentList() : [];
+    const avgs = {};
+    students.forEach(s => {
+      if (!isStudentCorrected(s.id)) return;
+      const sc = competencyScores(s.id);
+      Object.keys(sc).forEach(k => {
+        if (!avgs[k]) avgs[k] = { sum: 0, count: 0 };
+        avgs[k].sum += sc[k].pourcentage;
+        avgs[k].count++;
+      });
+    });
+    return avgs;
+  }
+
+  // --- PDF Generation (layout fidèle au gazoil) ---
   function generatePDF(studentIds, fileName) {
-    if (!window.jspdf) { alert('jsPDF non chargé. Réessayez.'); return; }
+    if (!window.jspdf) { alert('jsPDF non chargé. Réessayez dans quelques secondes.'); return; }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210, pageHeight = 297, margin = 15;
-    const contentWidth = pageWidth - 2 * margin;
+    const PW = 210, PH = 297, M = 15;
+    const CW = PW - 2 * M;
     const exercises = window.__getExercises ? window.__getExercises() : [];
     const cfg = getConfig();
     const stats = cfg.showStats !== false ? classStats() : null;
+    const compAvgs = cfg.showStats !== false ? classCompetencyAverages() : {};
+    const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    function fmt(n) { return n % 1 === 0 ? String(n) : n.toFixed(1); }
+    function checkPage(y, need) { if (y + need > PH - 15) { doc.addPage(); return M; } return y; }
 
     studentIds.forEach((sid, idx) => {
       if (idx > 0) doc.addPage();
-      let y = margin;
       const students = window.__getStudentList ? window.__getStudentList() : [];
       const student = students.find(s => s.id === sid);
-      const studentName = student ? (student.nom || `${student.prenom || ''} ${student.nom || ''}`.trim()) : sid;
+      const studentName = student ? `${student.nom || ''} ${student.prenom || ''}`.trim() : sid;
       const g = globalScore(sid);
       const pct = g.total > 0 ? g.correct / g.total * 100 : 0;
       const comment = getStudentComment(sid);
       const comps = competencyScores(sid);
 
-      // === EN-TÊTE (bandeau bleu) ===
+      // ========== EN-TÊTE (bandeau bleu 35mm) ==========
       doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, pageWidth, 32, 'F');
+      doc.rect(0, 0, PW, 35, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text("BILAN D'ÉVALUATION — Mathématiques", pageWidth / 2, 13, { align: 'center' });
+      doc.text("BILAN D'ÉVALUATION", PW / 2, 15, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      const sub = (cfg.titre || 'Évaluation') + (cfg.classe ? ' — ' + cfg.classe : '');
+      doc.text('Mathématiques — ' + sub, PW / 2, 25, { align: 'center' });
+
+      let y = 45;
+
+      // ========== ENCADRÉ ÉLÈVE (25mm) ==========
+      doc.setFillColor(...colors.light);
+      doc.roundedRect(M, y, CW, 20, 3, 3, 'F');
+      doc.setTextColor(...colors.dark);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(studentName, M + 8, y + 10);
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      const subtitle = cfg.titre || 'Évaluation';
-      const classeText = cfg.classe ? ` — ${cfg.classe}` : '';
-      doc.text(subtitle + classeText, pageWidth / 2, 22, { align: 'center' });
-      // Date
-      doc.setFontSize(9);
-      const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-      doc.text(today, pageWidth / 2, 29, { align: 'center' });
-      y = 40;
+      if (cfg.classe) doc.text('Classe : ' + cfg.classe, M + 8, y + 17);
+      doc.setFontSize(10);
+      doc.text(today, PW - M - 8, y + 10, { align: 'right' });
+      y += 30;
 
-      // === ENCADRÉ ÉLÈVE ===
-      doc.setFillColor(...colors.light);
-      doc.roundedRect(margin, y, contentWidth, 16, 3, 3, 'F');
-      doc.setTextColor(...colors.dark);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(studentName, margin + 8, y + 10);
-      y += 24;
-
-      // === NOTE GLOBALE ===
+      // ========== NOTE GLOBALE (barre colorée 22mm) ==========
       if (cfg.showNote !== false && g.total > 0) {
-        const noteColor = levelColor(pct);
-        doc.setFillColor(...noteColor);
-        doc.roundedRect(margin, y, contentWidth, 20, 3, 3, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        const noteText = `${g.correct % 1 === 0 ? g.correct : g.correct.toFixed(1)} / ${g.total}`;
-        doc.text(noteText, margin + 10, y + 14);
-        // Niveau à droite
         const lvl = levelFromPct(pct);
-        doc.setFontSize(12);
-        doc.text(lvl.code + ' — ' + lvl.label, pageWidth - margin - 8, y + 14, { align: 'right' });
-        y += 28;
+        doc.setFillColor(...lvl.color);
+        doc.roundedRect(M, y, CW, 22, 3, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${fmt(g.correct)} / ${g.total}`, M + 15, y + 15);
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'normal');
+        doc.text(lvl.code + ' — ' + lvl.label, PW - M - 10, y + 15, { align: 'right' });
+        y += 30;
       }
 
-      // === COMMENTAIRE ===
+      // ========== APPRÉCIATION ==========
       if (cfg.showComment !== false && comment) {
+        y = checkPage(y, 30);
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(12);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('APPRÉCIATION', margin, y);
-        y += 5;
-        doc.setFillColor(245, 247, 250);
-        const lines = doc.splitTextToSize(comment, contentWidth - 16);
-        const boxH = Math.max(14, 8 + lines.length * 5);
-        doc.roundedRect(margin, y, contentWidth, boxH, 3, 3, 'F');
-        // Barre bleue à gauche
-        doc.setFillColor(...colors.primary);
-        doc.rect(margin, y, 2.5, boxH, 'F');
+        doc.text('APPRÉCIATION', M, y);
+        y += 6;
+
+        doc.setFillColor(...colors.light);
+        const lines = doc.splitTextToSize(comment, CW - 16);
+        const boxH = Math.max(20, 10 + lines.length * 5);
+        doc.roundedRect(M, y, CW, boxH, 3, 3, 'F');
+        // Barre bleue gauche
+        doc.setDrawColor(...colors.primary);
+        doc.setLineWidth(1);
+        doc.line(M, y, M, y + boxH);
         doc.setTextColor(...colors.dark);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(lines, margin + 8, y + 7);
-        y += boxH + 8;
+        doc.text(lines, M + 8, y + 8);
+        y += boxH + 10;
       }
 
-      // === COMPÉTENCES ===
+      // ========== COMPÉTENCES ÉVALUÉES (barres pleines comme gazoil) ==========
       if (cfg.showCompetences !== false && Object.keys(comps).length > 0) {
+        y = checkPage(y, 20 + Object.keys(comps).length * 14);
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(12);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('COMPÉTENCES ÉVALUÉES', margin, y);
-        y += 7;
+        doc.text('COMPÉTENCES ÉVALUÉES', M, y);
+        y += 8;
 
-        const compKeys = Object.keys(comps);
-        compKeys.forEach(key => {
+        Object.keys(comps).forEach(key => {
+          y = checkPage(y, 14);
           const comp = comps[key];
-          const barWidth = contentWidth;
-          const barHeight = 10;
-
-          // Background bar (grey)
-          doc.setFillColor(230, 230, 230);
-          doc.roundedRect(margin, y, barWidth, barHeight, 2, 2, 'F');
-
-          // Filled bar (colored by level)
-          const fillWidth = Math.max(0, barWidth * (comp.pourcentage / 100));
-          if (fillWidth > 0) {
-            doc.setFillColor(...comp.level.color);
-            doc.roundedRect(margin, y, fillWidth, barHeight, 2, 2, 'F');
-          }
-
-          // Competence name (left)
+          // Barre pleine colorée (toute la largeur)
+          doc.setFillColor(...comp.level.color);
+          doc.roundedRect(M, y, CW, 10, 2, 2, 'F');
+          // Nom à gauche
           doc.setTextColor(255, 255, 255);
-          doc.setFontSize(9);
+          doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
-          const niceName = niceCompetence(key);
-          // Draw on the bar or next to it
-          if (fillWidth > 40) {
-            doc.text(niceName, margin + 4, y + 7);
-          } else {
-            doc.setTextColor(...colors.dark);
-            doc.text(niceName, margin + 4, y + 7);
-          }
-
-          // Score + level (right)
-          const scoreText = `${comp.correct}/${comp.total} (${Math.round(comp.pourcentage)}%) — ${comp.level.code}`;
-          doc.setTextColor(...colors.dark);
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          doc.text(scoreText, pageWidth - margin - 4, y + 7, { align: 'right' });
-
-          y += barHeight + 3;
+          doc.text(niceCompetence(key), M + 5, y + 7);
+          // Niveau + score à droite
+          doc.text(`${comp.level.code} — ${fmt(comp.correct)}/${fmt(comp.total)} (${Math.round(comp.pourcentage)}%)`, PW - M - 5, y + 7, { align: 'right' });
+          y += 12;
         });
         y += 5;
       }
 
-      // === DÉTAIL PAR EXERCICE ===
+      // ========== DÉTAIL PAR EXERCICE ==========
       if (cfg.showExercises !== false && exercises.length > 0) {
-        if (y > pageHeight - 60) { doc.addPage(); y = margin; }
+        y = checkPage(y, 20 + exercises.length * 8);
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(12);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('DÉTAIL PAR EXERCICE', margin, y);
-        y += 6;
+        doc.text('DÉTAIL PAR EXERCICE', M, y);
+        y += 7;
 
-        // Table header
-        const colWidths = [12, contentWidth - 12 - 30 - 30, 30, 30];
-        const colX = [margin, margin + 12, margin + contentWidth - 60, margin + contentWidth - 30];
+        // En-tête tableau
         doc.setFillColor(...colors.primary);
-        doc.rect(margin, y, contentWidth, 8, 'F');
+        doc.rect(M, y, CW, 8, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text('#', colX[0] + 4, y + 6);
-        doc.text('Exercice', colX[1] + 2, y + 6);
-        doc.text('Score', colX[2] + 2, y + 6);
-        doc.text('Niveau', colX[3] + 2, y + 6);
+        doc.text('#', M + 4, y + 6);
+        doc.text('Exercice', M + 14, y + 6);
+        doc.text('Score', PW - M - 40, y + 6);
+        doc.text('Niveau', PW - M - 14, y + 6);
         y += 8;
 
         exercises.forEach((ex, i) => {
-          if (y > pageHeight - 30) { doc.addPage(); y = margin; }
+          y = checkPage(y, 8);
           const sc = exerciseScore(sid, i);
           const exPct = sc.totaux > 0 ? sc.obtenus / sc.totaux * 100 : 0;
-          const lvl = sc.totaux > 0 ? levelFromPct(exPct) : { code: '-', color: colors.light };
-          const rowColor = i % 2 === 0 ? [250, 250, 250] : [240, 243, 247];
-          doc.setFillColor(...rowColor);
-          doc.rect(margin, y, contentWidth, 7, 'F');
+          const lvl = sc.totaux > 0 ? levelFromPct(exPct) : { code: '-', color: [150, 150, 150] };
+
+          doc.setFillColor(i % 2 === 0 ? 250 : 240, i % 2 === 0 ? 250 : 243, i % 2 === 0 ? 250 : 247);
+          doc.rect(M, y, CW, 7, 'F');
           doc.setTextColor(...colors.dark);
-          doc.setFontSize(8);
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.text(String(i + 1), colX[0] + 4, y + 5);
+          doc.text(String(i + 1), M + 4, y + 5.5);
           doc.setFont('helvetica', 'normal');
-          const title = (ex.titre || `Exercice ${i + 1}`).substring(0, 50);
-          doc.text(title, colX[1] + 2, y + 5);
-          doc.text(`${sc.obtenus % 1 === 0 ? sc.obtenus : sc.obtenus.toFixed(1)}/${sc.totaux}`, colX[2] + 2, y + 5);
+          doc.text((ex.titre || `Exercice ${i + 1}`).substring(0, 60), M + 14, y + 5.5);
+          doc.text(`${fmt(sc.obtenus)}/${sc.totaux}`, PW - M - 40, y + 5.5);
           doc.setTextColor(...lvl.color);
           doc.setFont('helvetica', 'bold');
-          doc.text(lvl.code, colX[3] + 2, y + 5);
+          doc.text(lvl.code, PW - M - 14, y + 5.5);
           y += 7;
         });
         y += 8;
       }
 
-      // === STATS CLASSE ===
+      // ========== STATISTIQUES CLASSE ==========
       if (cfg.showStats !== false && stats) {
-        if (y > pageHeight - 45) { doc.addPage(); y = margin; }
+        y = checkPage(y, 35);
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(12);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('STATISTIQUES CLASSE', margin, y);
+        doc.text('STATISTIQUES CLASSE', M, y);
         y += 7;
 
-        doc.setFillColor(245, 247, 250);
-        doc.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F');
+        doc.setFillColor(...colors.light);
+        doc.roundedRect(M, y, CW, 24, 3, 3, 'F');
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-
-        const statItems = [
-          `Moyenne: ${stats.moyenne}/${stats.total}`,
-          `Min: ${stats.min}`,
-          `Médiane: ${stats.mediane}`,
-          `Max: ${stats.max}`,
-          `Élèves corrigés: ${stats.count}`
-        ];
-        const spacing = contentWidth / statItems.length;
-        statItems.forEach((item, i) => {
-          doc.text(item, margin + 6 + i * spacing, y + 9);
-        });
-
-        // Competency averages
-        const allStudents = window.__getStudentList ? window.__getStudentList() : [];
-        const compAvgs = {};
-        let nCorr = 0;
-        allStudents.forEach(s => {
-          if (!isStudentCorrected(s.id)) return;
-          nCorr++;
-          const sc = competencyScores(s.id);
-          Object.keys(sc).forEach(k => {
-            if (!compAvgs[k]) compAvgs[k] = { sum: 0, count: 0 };
-            compAvgs[k].sum += sc[k].pourcentage;
-            compAvgs[k].count++;
-          });
-        });
-
+        doc.text(`Moyenne : ${fmt(stats.moyenne)}/${stats.total}`, M + 6, y + 8);
+        doc.text(`Min : ${fmt(stats.min)}`, M + 70, y + 8);
+        doc.text(`Médiane : ${fmt(stats.mediane)}`, M + 105, y + 8);
+        doc.text(`Max : ${fmt(stats.max)}`, M + 145, y + 8);
+        // Compétences moyennes
         if (Object.keys(compAvgs).length > 0) {
-          const avgText = Object.keys(compAvgs).map(k => {
+          let x = M + 6;
+          doc.setFontSize(9);
+          Object.keys(compAvgs).forEach(k => {
             const avg = Math.round(compAvgs[k].sum / compAvgs[k].count);
-            return `${niceCompetence(k)}: ${avg}%`;
-          }).join('   ');
-          doc.setFontSize(8);
-          doc.text(avgText, margin + 6, y + 17);
+            const lvl = levelFromPct(avg);
+            doc.setTextColor(...lvl.color);
+            doc.setFont('helvetica', 'bold');
+            const txt = `${niceCompetence(k)}: ${avg}%`;
+            doc.text(txt, x, y + 18);
+            x += doc.getTextWidth(txt) + 10;
+          });
         }
-        y += 30;
+        y += 32;
       }
 
-      // === SIGNATURES ===
+      // ========== SIGNATURES ==========
       if (cfg.showSignatures !== false) {
-        y = Math.max(y, pageHeight - 30);
+        y = Math.max(y + 10, PH - 30);
         doc.setDrawColor(...colors.dark);
         doc.setLineWidth(0.3);
-        doc.line(margin, y, margin + 65, y);
+        // Signature élève
+        doc.line(M, y, M + 65, y);
         doc.setFontSize(9);
         doc.setTextColor(...colors.dark);
-        doc.text('Signature élève', margin + 32.5, y + 6, { align: 'center' });
-        doc.line(pageWidth - margin - 65, y, pageWidth - margin, y);
-        doc.text('Signature parents', pageWidth - margin - 32.5, y + 6, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.text('Signature élève', M + 32.5, y + 6, { align: 'center' });
+        // Signature parents
+        doc.line(PW - M - 65, y, PW - M, y);
+        doc.text('Signature parents', PW - M - 32.5, y + 6, { align: 'center' });
       }
     });
 
@@ -457,17 +405,14 @@
   // --- Config Modal ---
   function showConfigModal(mode) {
     const cfg = getConfig();
-    // Try to detect evaluation title from page
     let detectedTitle = '';
     const h1 = document.querySelector('h1');
     if (h1) detectedTitle = h1.textContent.trim();
 
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center';
-
     const modal = document.createElement('div');
     modal.style.cssText = 'background:white;border-radius:12px;padding:24px;max-width:480px;width:90%;font-family:sans-serif;color:#333;box-shadow:0 20px 60px rgba(0,0,0,.3)';
-
     modal.innerHTML = `
       <h3 style="margin:0 0 16px;font-size:18px;color:#2980b9">📄 Générer les bilans PDF</h3>
       <div style="margin-bottom:12px">
@@ -482,84 +427,44 @@
       </div>
       <div style="font-size:13px;font-weight:600;margin-bottom:8px">Contenu du bilan :</div>
       <div id="bpdf-options" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" data-key="showNote" ${cfg.showNote !== false ? 'checked' : ''}> Note globale + niveau
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" data-key="showComment" ${cfg.showComment !== false ? 'checked' : ''}> Commentaire / Appréciation
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" data-key="showCompetences" ${cfg.showCompetences !== false ? 'checked' : ''}> Compétences (barres colorées)
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" data-key="showExercises" ${cfg.showExercises !== false ? 'checked' : ''}> Détail par exercice (tableau)
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" data-key="showStats" ${cfg.showStats !== false ? 'checked' : ''}> Statistiques classe
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" data-key="showSignatures" ${cfg.showSignatures !== false ? 'checked' : ''}> Zones de signature
-        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showNote" ${cfg.showNote !== false ? 'checked' : ''}> Note globale + niveau</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showComment" ${cfg.showComment !== false ? 'checked' : ''}> Appréciation</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showCompetences" ${cfg.showCompetences !== false ? 'checked' : ''}> Compétences (barres colorées)</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showExercises" ${cfg.showExercises !== false ? 'checked' : ''}> Détail par exercice</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showStats" ${cfg.showStats !== false ? 'checked' : ''}> Statistiques classe</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showSignatures" ${cfg.showSignatures !== false ? 'checked' : ''}> Zones de signature</label>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="bpdf-cancel" style="padding:8px 16px;background:#eee;border:none;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
         <button id="bpdf-generate" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">📥 Générer PDF</button>
-      </div>
-    `;
-
+      </div>`;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-
-    // Close on overlay click
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-
     modal.querySelector('#bpdf-cancel').addEventListener('click', () => overlay.remove());
     modal.querySelector('#bpdf-generate').addEventListener('click', () => {
-      // Save config
-      const newCfg = {
-        titre: modal.querySelector('#bpdf-titre').value.trim(),
-        classe: modal.querySelector('#bpdf-classe').value.trim()
-      };
-      modal.querySelectorAll('#bpdf-options input[type=checkbox]').forEach(cb => {
-        newCfg[cb.dataset.key] = cb.checked;
-      });
+      const newCfg = { titre: modal.querySelector('#bpdf-titre').value.trim(), classe: modal.querySelector('#bpdf-classe').value.trim() };
+      modal.querySelectorAll('#bpdf-options input[type=checkbox]').forEach(cb => { newCfg[cb.dataset.key] = cb.checked; });
       saveConfig(newCfg);
-
-      // Gather student IDs
       const students = window.__getStudentList ? window.__getStudentList() : [];
       let ids = [];
-      if (mode === 'all') {
-        ids = students.filter(s => isStudentCorrected(s.id)).map(s => s.id);
-      } else if (mode === 'single') {
-        const currentId = window.__getStudentId ? window.__getStudentId() : null;
-        if (currentId) ids = [currentId];
-      }
-
-      if (ids.length === 0) {
-        alert('Aucun élève corrigé trouvé.');
-        return;
-      }
-
+      if (mode === 'all') ids = students.filter(s => isStudentCorrected(s.id)).map(s => s.id);
+      else if (mode === 'single') { const cid = window.__getStudentId ? window.__getStudentId() : null; if (cid) ids = [cid]; }
+      if (ids.length === 0) { alert('Aucun élève corrigé trouvé.'); return; }
       overlay.remove();
-
-      // Generate
       let fName;
       if (mode === 'single') {
         const s = students.find(st => st.id === ids[0]);
-        const name = s ? (s.nom || '').replace(/\s+/g, '_') : 'eleve';
-        fName = `Bilan_${name}.pdf`;
+        fName = `Bilan_${(s?.nom || 'eleve').replace(/\s+/g, '_')}.pdf`;
       } else {
-        const classe = newCfg.classe ? '_' + newCfg.classe.replace(/\s+/g, '_') : '';
-        fName = `Bilans${classe}.pdf`;
+        fName = `Bilans${newCfg.classe ? '_' + newCfg.classe.replace(/\s+/g, '_') : ''}.pdf`;
       }
-
       generatePDF(ids, fName);
     });
   }
 
   // --- Button injection ---
   function injectButtons() {
-    // 1. Replace "Imprimer bilans individuels" button in overview
     document.querySelectorAll('button').forEach(btn => {
       if (btn.textContent.includes('Imprimer bilans individuels') && !btn.dataset.bpdfInjected) {
         btn.dataset.bpdfInjected = '1';
@@ -568,17 +473,10 @@
         pdfBtn.innerHTML = '📥 Bilans PDF';
         pdfBtn.title = 'Générer les bilans individuels en PDF pour tous les élèves corrigés';
         pdfBtn.style.cssText = btn.style.cssText;
-        pdfBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          showConfigModal('all');
-        });
+        pdfBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); showConfigModal('all'); });
         btn.parentElement.insertBefore(pdfBtn, btn.nextSibling);
       }
     });
-
-    // 2. Add PDF button in student summary modal (Résumé)
-    // Look for the print button in the summary
     document.querySelectorAll('button').forEach(btn => {
       if ((btn.textContent.includes('Imprimer ce bilan') || btn.textContent.includes('🖨️ Imprimer')) &&
           btn.closest('.fixed, dialog, [role="dialog"]') && !btn.dataset.bpdfSingle) {
@@ -587,31 +485,19 @@
         pdfBtn.textContent = '📥 PDF';
         pdfBtn.title = 'Générer le bilan PDF de cet élève';
         pdfBtn.style.cssText = 'padding:10px 20px;background:#2980b9;color:white;border:none;border-radius:5px;cursor:pointer;margin-left:8px;font-weight:600';
-        pdfBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          showConfigModal('single');
-        });
+        pdfBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); showConfigModal('single'); });
         btn.parentElement.insertBefore(pdfBtn, btn.nextSibling);
       }
     });
   }
 
-  // --- Init ---
-  const observer = new MutationObserver(() => {
-    injectButtons();
-  });
-
+  const observer = new MutationObserver(() => { injectButtons(); });
   function init() {
     const app = document.getElementById('app') || document.getElementById('appMathalea');
     if (!app) { setTimeout(init, 200); return; }
     observer.observe(app, { childList: true, subtree: true });
     setTimeout(injectButtons, 1000);
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
