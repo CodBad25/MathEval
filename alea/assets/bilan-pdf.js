@@ -7,6 +7,10 @@
   jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
   document.head.appendChild(jspdfScript);
 
+  const qrScript = document.createElement('script');
+  qrScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+  document.head.appendChild(qrScript);
+
   const CONFIG_KEY = 'bilanConfig';
   const colors = {
     primary: [41, 128, 185], success: [39, 174, 96], warning: [230, 126, 34],
@@ -138,6 +142,28 @@
     return { bins, labels, max: Math.max(...bins) };
   }
 
+  // --- QR Code helper ---
+  function makeQRDataURL(text, size) {
+    if (!window.qrcode) return null;
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      const modules = qr.getModuleCount();
+      const cellSize = Math.floor(size / modules);
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = cellSize * modules;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#000000';
+      for (let r = 0; r < modules; r++)
+        for (let c = 0; c < modules; c++)
+          if (qr.isDark(r, c)) ctx.fillRect(c*cellSize, r*cellSize, cellSize, cellSize);
+      return canvas.toDataURL('image/png');
+    } catch { return null; }
+  }
+
   // ===================== PDF (strict 1 page / élève) =====================
   function generatePDF(ids, fileName) {
     if (!window.jspdf) { alert('jsPDF non chargé.'); return; }
@@ -231,7 +257,7 @@
         y += bh + 4;
       }
 
-      // ── COMPÉTENCES (barres avec couleur unique par compétence + badge niveau) ──
+      // ── COMPÉTENCES (barres colorées par compétence) ──
       if (cfg.showCompetences!==false && compKeys.length>0) {
         doc.setTextColor(...colors.dark);
         doc.setFontSize(9); doc.setFont('helvetica','bold');
@@ -240,32 +266,25 @@
         compKeys.forEach(k => {
           const c = comps[k];
           const cc = compColor(k);
-          // Barre de fond (couleur de la compétence)
+          // Barre de fond gris clair
+          doc.setFillColor(230, 230, 230);
+          doc.roundedRect(M, y, W, 7, 1.5, 1.5, 'F');
+          // Barre de progression (couleur de la compétence)
+          const filledW = Math.max(8, (c.pct / 100) * W);
           doc.setFillColor(...cc);
-          doc.roundedRect(M, y, W, 8, 2, 2, 'F');
-          // Icône : petit cercle blanc avec lettre
-          const iconR = 3;
-          doc.setFillColor(255,255,255);
-          doc.circle(M + iconR + 1.5, y + 4, iconR, 'F');
-          doc.setTextColor(...cc);
-          doc.setFontSize(6); doc.setFont('helvetica','bold');
-          doc.text(compLetterMap[k]||k.charAt(0).toUpperCase(), M + iconR + 1.5, y + 5.2, {align:'center'});
-          // Nom de la compétence
+          doc.roundedRect(M, y, filledW, 7, 1.5, 1.5, 'F');
+          // Nom de la compétence (blanc sur la barre)
           doc.setTextColor(255,255,255);
-          doc.setFontSize(8); doc.setFont('helvetica','bold');
-          doc.text(niceComp(k), M + iconR*2 + 4, y+5.5);
-          // Badge niveau + score à droite
-          const badgeText = `${c.lvl.code} — ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)`;
-          // Fond blanc semi-transparent pour le badge
-          const tw = doc.getTextWidth(badgeText) + 6;
-          doc.setFillColor(255,255,255,0.3);
-          doc.roundedRect(PW - M - tw - 1, y + 1, tw + 2, 6, 1, 1, 'F');
-          doc.setTextColor(255,255,255);
-          doc.setFontSize(7); doc.setFont('helvetica','bold');
-          doc.text(badgeText, PW-M-3, y+5.5, {align:'right'});
-          y += 9;
+          doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+          doc.text(niceComp(k), M+3, y+5);
+          // Score à droite (sur fond gris si la barre n'atteint pas)
+          const scoreText = `${c.lvl.code} — ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)`;
+          doc.setTextColor(...colors.dark);
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+          doc.text(scoreText, PW-M-2, y+5, {align:'right'});
+          y += 8;
         });
-        y += 3;
+        y += 2;
       }
 
       // ── DÉTAIL PAR EXERCICE ──
@@ -414,15 +433,27 @@
         y += statsH + 4;
       }
 
-      // ── SIGNATURES (toujours en bas de page) ──
+      // ── QR CODE + SIGNATURES (bas de page) ──
+      const qrUrl = window.location.href.replace('v=correction', 'v=eleve');
+      const qrImg = makeQRDataURL(qrUrl, 256);
+      const sy = 270;
+
+      if (qrImg) {
+        const qrSize = 22;
+        const qrX = PW/2 - qrSize/2;
+        const qrY = sy - qrSize - 4;
+        doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize);
+        doc.setFontSize(5.5); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+        doc.text('Refaire les exercices', PW/2, qrY + qrSize + 3, {align:'center'});
+      }
+
       if (cfg.showSignatures!==false) {
-        const sy = 275;
         doc.setDrawColor(...colors.dark); doc.setLineWidth(0.3);
-        doc.line(M, sy, M+60, sy);
-        doc.setFontSize(8); doc.setTextColor(...colors.dark); doc.setFont('helvetica','normal');
-        doc.text('Signature élève', M+30, sy+5, {align:'center'});
-        doc.line(PW-M-60, sy, PW-M, sy);
-        doc.text('Signature parents', PW-M-30, sy+5, {align:'center'});
+        doc.line(M, sy, M+55, sy);
+        doc.setFontSize(7); doc.setTextColor(...colors.dark); doc.setFont('helvetica','normal');
+        doc.text('Signature élève', M+27, sy+4, {align:'center'});
+        doc.line(PW-M-55, sy, PW-M, sy);
+        doc.text('Signature parents', PW-M-27, sy+4, {align:'center'});
       }
     });
 
