@@ -32,3 +32,6 @@ __pycache__/
 
 # Source maps (dev only, not needed in production)
 **/*.map
+
+# Local Netlify folder
+.netlify
