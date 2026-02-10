@@ -426,13 +426,10 @@
 
     // Signatures (positionnées en bas de la demi-page, avec espace pour signer)
     if (cfg.showSignatures!==false) {
-      const sigY = Math.min(y + 3, bottomY - 10);
-      doc.setDrawColor(...C.dark); doc.setLineWidth(0.2);
-      doc.line(M, sigY, M+50, sigY);
-      doc.setFontSize(5.5); doc.setTextColor(...C.dark); doc.setFont('helvetica','normal');
-      doc.text('Signature élève', M+25, sigY+3, {align:'center'});
-      doc.line(PW-M-50, sigY, PW-M, sigY);
-      doc.text('Signature parents', PW-M-25, sigY+3, {align:'center'});
+      const sigY = Math.min(y + 3, bottomY - 6);
+      doc.setFontSize(5.5); doc.setTextColor(150,150,150); doc.setFont('helvetica','normal');
+      doc.text('Signature élève', M+25, sigY, {align:'center'});
+      doc.text('Signature parents', PW-M-25, sigY, {align:'center'});
     }
   }
 
@@ -447,10 +444,15 @@
     const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
     const dist = stats ? scoreDistribution(stats) : null;
     const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    // Build student URL with exercise UUIDs and seeds
+    // Build student URL with exercise UUIDs and seeds (alea= param for seed)
     const seeds = JSON.parse(localStorage.getItem('mathalea_exercices_seeds') || '{}');
-    const exParams = exs.map((e, i) => `uuid=${e.uuid}${seeds[i] ? ',s=' + seeds[i] : ''}`).join('&');
-    const qrUrl = window.location.origin + '/alea/index.html?v=eleve&' + exParams;
+    const qrUrlObj = new URL(window.location.origin + '/alea/index.html');
+    exs.forEach((e, i) => {
+      qrUrlObj.searchParams.append('uuid', e.uuid);
+      if (seeds[i]) qrUrlObj.searchParams.append('alea', seeds[i]);
+    });
+    qrUrlObj.searchParams.set('v', 'eleve');
+    const qrUrl = qrUrlObj.toString();
     const qrImg = makeQRDataURL(qrUrl, 200);
 
     for (let i = 0; i < ids.length; i++) {
