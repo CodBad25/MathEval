@@ -426,7 +426,7 @@
 
     // Signatures (positionnées en bas de la demi-page, avec espace pour signer)
     if (cfg.showSignatures!==false) {
-      const sigY = bottomY - 8;
+      const sigY = Math.min(y + 3, bottomY - 10);
       doc.setDrawColor(...C.dark); doc.setLineWidth(0.2);
       doc.line(M, sigY, M+50, sigY);
       doc.setFontSize(5.5); doc.setTextColor(...C.dark); doc.setFont('helvetica','normal');
@@ -447,7 +447,10 @@
     const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
     const dist = stats ? scoreDistribution(stats) : null;
     const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    const qrUrl = window.location.href.replace('v=correction', 'v=eleve');
+    // Build student URL with exercise UUIDs and seeds
+    const seeds = JSON.parse(localStorage.getItem('mathalea_exercices_seeds') || '{}');
+    const exParams = exs.map((e, i) => `uuid=${e.uuid}${seeds[i] ? ',s=' + seeds[i] : ''}`).join('&');
+    const qrUrl = window.location.origin + '/alea/index.html?v=eleve&' + exParams;
     const qrImg = makeQRDataURL(qrUrl, 200);
 
     for (let i = 0; i < ids.length; i++) {
