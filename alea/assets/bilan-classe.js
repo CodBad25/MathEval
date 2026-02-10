@@ -480,24 +480,26 @@
 
     let y = 0;
 
-    // === PAGE 1 ===
+    // === PAGE 1 : Stats + Graphiques ===
 
-    // En-tête
+    // En-tête (bandeau plus grand)
     doc.setFillColor(...C.primary);
-    doc.rect(0, 0, PW, 18, 'F');
+    doc.rect(0, 0, PW, 24, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-    doc.text('BILAN DE CLASSE — Mathématiques', PW / 2, 8, { align: 'center' });
-    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-    doc.text(`${titre}${classe ? ' — ' + classe : ''} • ${date} • ${stats.n} corrigés / ${totalStudents} élèves`, PW / 2, 14.5, { align: 'center' });
-    y = 24;
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+    doc.text('BILAN DE CLASSE — Mathématiques', PW / 2, 10, { align: 'center' });
+    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+    doc.text(`${titre}${classe ? ' — ' + classe : ''} • ${date}`, PW / 2, 17.5, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text(`${stats.n} corrigés / ${totalStudents} élèves`, PW / 2, 22, { align: 'center' });
+    y = 30;
 
     // Stats globales
-    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
     doc.text('STATISTIQUES GLOBALES', M, y);
-    y += 4;
+    y += 6;
 
-    const boxW = (W - 9) / 4, boxH = 16;
+    const boxW = (W - 12) / 4, boxH = 22;
     const statBoxes = [
       { label: `Moyenne (${fmt(avgSur20)}/20)`, val: `${fmt(stats.avg)}/${stats.total}`, color: C.primary },
       { label: 'Médiane', val: fmt(stats.med), color: C.dark },
@@ -505,248 +507,242 @@
       { label: 'Maximum', val: fmt(stats.max), color: C.success },
     ];
     statBoxes.forEach((b, i) => {
-      const bx = M + i * (boxW + 3);
+      const bx = M + i * (boxW + 4);
       doc.setFillColor(...C.light);
-      doc.roundedRect(bx, y, boxW, boxH, 2, 2, 'F');
-      doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(...b.color);
-      doc.text(b.val, bx + boxW / 2, y + 7.5, { align: 'center' });
-      doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
-      doc.text(b.label, bx + boxW / 2, y + 13, { align: 'center' });
+      doc.roundedRect(bx, y, boxW, boxH, 2.5, 2.5, 'F');
+      doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...b.color);
+      doc.text(b.val, bx + boxW / 2, y + 10.5, { align: 'center' });
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+      doc.text(b.label, bx + boxW / 2, y + 18, { align: 'center' });
     });
-    y += boxH + 4;
+    y += boxH + 6;
 
     // Niveaux
-    const lvlBoxW = (W - 9) / 4;
+    const lvlBoxW = (W - 12) / 4, lvlBoxH = 18;
     const levels = [
-      { code: 'TBM', count: lvlC.TBM, color: C.success },
-      { code: 'MS', count: lvlC.MS, color: C.primary },
-      { code: 'MF', count: lvlC.MF, color: C.warning },
-      { code: 'MI', count: lvlC.MI, color: C.danger },
+      { code: 'TBM', label: 'Très Bonne Maîtrise', count: lvlC.TBM, color: C.success },
+      { code: 'MS', label: 'Maîtrise Satisfaisante', count: lvlC.MS, color: C.primary },
+      { code: 'MF', label: 'Maîtrise Fragile', count: lvlC.MF, color: C.warning },
+      { code: 'MI', label: 'Maîtrise Insuffisante', count: lvlC.MI, color: C.danger },
     ];
     levels.forEach((lv, i) => {
-      const bx = M + i * (lvlBoxW + 3);
-      doc.setDrawColor(...lv.color);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(bx, y, lvlBoxW, 12, 2, 2, 'S');
-      doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lv.color);
-      doc.text(String(lv.count), bx + lvlBoxW / 2, y + 6, { align: 'center' });
-      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-      doc.text(lv.code, bx + lvlBoxW / 2, y + 10.5, { align: 'center' });
+      const bx = M + i * (lvlBoxW + 4);
+      doc.setDrawColor(...lv.color); doc.setLineWidth(0.6);
+      doc.roundedRect(bx, y, lvlBoxW, lvlBoxH, 2.5, 2.5, 'S');
+      doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lv.color);
+      doc.text(String(lv.count), bx + lvlBoxW / 2, y + 8.5, { align: 'center' });
+      doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(lv.code, bx + lvlBoxW / 2, y + 14.5, { align: 'center' });
     });
-    y += 16;
+    y += lvlBoxH + 8;
 
-    // Histogramme
-    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+    // Histogramme + Compétences côte à côte
+    const chartH = 65;
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
     doc.text('RÉPARTITION DES NOTES', M, y);
-    y += 4;
+    if (compKeys.length > 0) {
+      doc.text('COMPÉTENCES DE LA CLASSE', M + W / 2 + 8, y);
+    }
+    y += 6;
 
     if (dist && dist.max > 0) {
-      const histX = M, histW = W / 2 - 5, histH = 40;
-      const nbBins = dist.bins.length, barGap = 3;
+      const histX = M, histW = W / 2 - 8;
+      const nbBins = dist.bins.length, barGap = 4;
       const barW = (histW - (nbBins - 1) * barGap) / nbBins;
 
       for (let i = 0; i < nbBins; i++) {
         const x = histX + i * (barW + barGap);
-        const h = (dist.bins[i] / dist.max) * (histH - 10);
+        const h = (dist.bins[i] / dist.max) * (chartH - 16);
         const midPct = ((i + 0.5) / nbBins) * 100;
         doc.setFillColor(...levelFromPct(midPct).color);
-        if (h > 0) doc.roundedRect(x, y + histH - 8 - h, barW, h, 1, 1, 'F');
+        if (h > 0) doc.roundedRect(x, y + chartH - 12 - h, barW, h, 1.5, 1.5, 'F');
         if (dist.bins[i] > 0) {
-          doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
-          doc.text(String(dist.bins[i]), x + barW / 2, y + histH - 10 - h, { align: 'center' });
+          doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+          doc.text(String(dist.bins[i]), x + barW / 2, y + chartH - 15 - h, { align: 'center' });
         }
-        doc.setFontSize(5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
-        doc.text(dist.labels[i], x + barW / 2, y + histH - 2, { align: 'center' });
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+        doc.text(dist.labels[i], x + barW / 2, y + chartH - 3, { align: 'center' });
       }
-
-      // Compétences à droite
-      if (compKeys.length > 0) {
-        const cx = M + W / 2 + 5, cw = W / 2 - 5;
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
-        doc.text('COMPÉTENCES', cx, y - 4);
-        const barH = 6, gap = Math.min(3, (histH - compKeys.length * barH) / Math.max(1, compKeys.length));
-        compKeys.forEach((k, i) => {
-          const avg = Math.round(cAvg[k].s / cAvg[k].n);
-          const cc = compColor(k);
-          const by = y + i * (barH + gap);
-          doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cc);
-          doc.text(`${niceComp(k)}`, cx, by + 4.5);
-          const labelW = 26, fillAreaW = cw - labelW - 14;
-          doc.setFillColor(220, 220, 220);
-          doc.roundedRect(cx + labelW, by + 0.5, fillAreaW, barH - 1, 1, 1, 'F');
-          doc.setFillColor(...cc);
-          doc.roundedRect(cx + labelW, by + 0.5, Math.max(1, (avg / 100) * fillAreaW), barH - 1, 1, 1, 'F');
-          const lvl = levelFromPct(avg);
-          doc.setFontSize(6.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lvl.color);
-          doc.text(`${lvl.code} ${avg}%`, cx + cw - 1, by + 4.5, { align: 'right' });
-        });
-      }
-      y += histH + 4;
     }
 
-    // Exercices
-    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
-    doc.text('TAUX DE RÉUSSITE PAR EXERCICE', M, y);
-    y += 4;
+    // Compétences à droite
+    if (compKeys.length > 0) {
+      const cx = M + W / 2 + 8, cw = W / 2 - 8;
+      const barH = 10, gap = Math.min(5, (chartH - compKeys.length * barH) / Math.max(1, compKeys.length));
+      compKeys.forEach((k, i) => {
+        const avg = Math.round(cAvg[k].s / cAvg[k].n);
+        const cc = compColor(k);
+        const by = y + i * (barH + gap);
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cc);
+        doc.text(niceComp(k), cx, by + 6);
+        const labelW = 30, fillAreaW = cw - labelW - 18;
+        doc.setFillColor(220, 220, 220);
+        doc.roundedRect(cx + labelW, by + 1, fillAreaW, barH - 2, 1.5, 1.5, 'F');
+        doc.setFillColor(...cc);
+        doc.roundedRect(cx + labelW, by + 1, Math.max(1, (avg / 100) * fillAreaW), barH - 2, 1.5, 1.5, 'F');
+        const lvl = levelFromPct(avg);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lvl.color);
+        doc.text(`${lvl.code} ${avg}%`, cx + cw - 1, by + 6, { align: 'right' });
+      });
+    }
+    y += chartH + 6;
 
-    // Table header
-    const colX = [M, M + 8, M + 8 + W * 0.32, M + 8 + W * 0.32 + 18, M + 8 + W * 0.32 + 18 + W * 0.28, M + 8 + W * 0.32 + 18 + W * 0.28 + 16];
-    doc.setFillColor(...C.dark);
-    doc.roundedRect(M, y, W, 6, 1.5, 1.5, 'F');
-    doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-    doc.text('#', colX[0] + 3, y + 4);
-    doc.text('Exercice', colX[1], y + 4);
-    doc.text('Pts', colX[2] + 4, y + 4);
-    doc.text('Réussite classe', colX[3], y + 4);
-    doc.text('Niv.', colX[4] + 3, y + 4);
+    // === PAGE 2 : Exercices + Acquis ===
+    doc.addPage();
+    y = M;
+
+    // Exercices
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+    doc.text('TAUX DE RÉUSSITE PAR EXERCICE', M, y);
     y += 7;
 
     const exData = exs.map((ex, i) => {
       const cs = exClassScore(i);
-      const cw = getCW();
+      const cw2 = getCW();
       let exComps = [];
-      const w = cw?.[ex.exerciceIndex];
+      const w = cw2?.[ex.exerciceIndex];
       if (w) exComps = Object.keys(w).map(c => normalizeComp(c));
       else if (ex.competencesExercice) exComps = ex.competencesExercice.map(c => normalizeComp(c));
       return { idx: i, titre: ex.titre || `Exercice ${i + 1}`, totalPts: ex.questions.reduce((s, q) => s + q.points, 0), pct: cs.pct, lvl: levelFromPct(cs.pct), comps: exComps };
     });
 
+    // Table header
+    const exRowH = 10;
+    doc.setFillColor(...C.dark);
+    doc.roundedRect(M, y, W, exRowH, 2, 2, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+    doc.text('#', M + 5, y + 6.5);
+    doc.text('Exercice', M + 14, y + 6.5);
+    doc.text('Pts', M + W * 0.42, y + 6.5);
+    doc.text('Réussite classe', M + W * 0.50, y + 6.5);
+    doc.text('Niveau', M + W * 0.82, y + 6.5);
+    y += exRowH + 1;
+
     exData.forEach((e, i) => {
-      if (y > PH - 20) { doc.addPage(); y = 15; }
-      if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(M, y - 1, W, 7, 'F'); }
-      doc.setFontSize(6.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
-      doc.text(String(e.idx + 1), colX[0] + 3, y + 3.5);
+      if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(M, y, W, exRowH, 'F'); }
+      doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+      doc.text(String(e.idx + 1), M + 5, y + 6.5);
       doc.setFont('helvetica', 'normal');
       let title = e.titre;
-      while (doc.getTextWidth(title) > W * 0.30 && title.length > 5) title = title.slice(0, -1);
+      doc.setFontSize(9);
+      while (doc.getTextWidth(title) > W * 0.28 && title.length > 5) title = title.slice(0, -1);
       if (title !== e.titre) title += '…';
-      doc.text(title, colX[1], y + 3.5);
-      doc.text(String(e.totalPts), colX[2] + 6, y + 3.5);
+      doc.text(title, M + 14, y + 6.5);
+      doc.text(String(e.totalPts), M + W * 0.42 + 3, y + 6.5);
       // Progress bar
-      const barX = colX[3], barW2 = W * 0.25, barH2 = 3.5;
+      const barX = M + W * 0.50, barW2 = W * 0.27, barH2 = 5;
       doc.setFillColor(220, 220, 220);
-      doc.roundedRect(barX, y + 0.5, barW2, barH2, 1, 1, 'F');
+      doc.roundedRect(barX, y + 2, barW2, barH2, 1.5, 1.5, 'F');
       doc.setFillColor(...e.lvl.color);
-      doc.roundedRect(barX, y + 0.5, Math.max(1, (e.pct / 100) * barW2), barH2, 1, 1, 'F');
-      doc.setFontSize(5.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...e.lvl.color);
-      doc.text(`${Math.round(e.pct)}%`, barX + barW2 + 2, y + 3.5);
-      doc.setFontSize(6.5);
-      doc.text(e.lvl.code, colX[4] + 3, y + 3.5);
-      y += 7;
+      doc.roundedRect(barX, y + 2, Math.max(1, (e.pct / 100) * barW2), barH2, 1.5, 1.5, 'F');
+      doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...e.lvl.color);
+      doc.text(`${Math.round(e.pct)}%`, barX + barW2 + 3, y + 6.5);
+      doc.setFontSize(10);
+      doc.text(e.lvl.code, M + W * 0.84, y + 6.5);
+      y += exRowH;
     });
-    y += 3;
+    y += 8;
 
     // Acquis analysis
-    if (y > PH - 50) { doc.addPage(); y = 15; }
-    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
     doc.text('ANALYSE DES ACQUIS', M, y);
-    y += 5;
+    y += 7;
 
-    const thirdW = (W - 6) / 3;
+    const thirdW = (W - 8) / 3;
     const sections = [
       { title: 'Acquis (≥70%)', items: exData.filter(e => e.pct >= 70), color: C.success },
       { title: 'À renforcer (30-70%)', items: exData.filter(e => e.pct >= 30 && e.pct < 70), color: C.warning },
       { title: 'Non acquis (<30%)', items: exData.filter(e => e.pct < 30), color: C.danger },
     ];
     const maxItems = Math.max(...sections.map(s => s.items.length), 1);
-    const sectionH = Math.max(12, 7 + maxItems * 5);
+    const sectionH = Math.max(20, 12 + maxItems * 7);
 
     sections.forEach((sec, si) => {
-      const sx = M + si * (thirdW + 3);
-      doc.setFillColor(...sec.color); doc.setGlobalAlpha?.(0.1);
-      doc.setDrawColor(...sec.color); doc.setLineWidth(0.4);
-      doc.roundedRect(sx, y, thirdW, sectionH, 2, 2, 'S');
-      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
-      doc.text(sec.title, sx + 3, y + 5);
-      doc.setFontSize(6); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dark);
+      const sx = M + si * (thirdW + 4);
+      doc.setDrawColor(...sec.color); doc.setLineWidth(0.5);
+      doc.roundedRect(sx, y, thirdW, sectionH, 2.5, 2.5, 'S');
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
+      doc.text(sec.title, sx + 4, y + 7);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dark);
       sec.items.forEach((e, ei) => {
-        doc.text(`Ex ${e.idx + 1} — ${Math.round(e.pct)}%`, sx + 3, y + 10 + ei * 4.5);
+        doc.text(`Ex ${e.idx + 1} — ${e.titre}`, sx + 4, y + 14 + ei * 6);
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
+        doc.text(`(${Math.round(e.pct)}%)`, sx + thirdW - 4, y + 14 + ei * 6, { align: 'right' });
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dark);
       });
       if (!sec.items.length) {
         doc.setTextColor(180, 180, 180); doc.setFont('helvetica', 'italic');
-        doc.text('Aucun', sx + 3, y + 10);
+        doc.text('Aucun', sx + 4, y + 14);
       }
     });
-    y += sectionH + 5;
 
-    // === PAGE: Tableau élèves ===
+    // === PAGE 3+ : Tableau élèves ===
     doc.addPage();
     y = 0;
 
     doc.setFillColor(...C.primary);
-    doc.rect(0, 0, PW, 14, 'F');
+    doc.rect(0, 0, PW, 20, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-    doc.text('RÉCAPITULATIF PAR ÉLÈVE', PW / 2, 6, { align: 'center' });
-    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-    doc.text(`${titre}${classe ? ' — ' + classe : ''} • ${stats.n} élèves corrigés`, PW / 2, 11, { align: 'center' });
-    y = 18;
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text('RÉCAPITULATIF PAR ÉLÈVE', PW / 2, 8, { align: 'center' });
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text(`${titre}${classe ? ' — ' + classe : ''} • ${stats.n} élèves corrigés`, PW / 2, 15, { align: 'center' });
+    y = 25;
 
     // Table header
-    const tM = 8, tW = PW - 2 * tM;
-    const nameW = 42, noteW = 18, sur20W = 14, nivW = 12;
-    const compColW = compKeys.length > 0 ? (tW - 8 - nameW - noteW - sur20W - nivW) / compKeys.length : 0;
-    const rowH = 6;
+    const tM = 10, tW = PW - 2 * tM;
+    const nameW = 50, noteW = 22, sur20W = 16, nivW = 16;
+    const compColW = compKeys.length > 0 ? (tW - 10 - nameW - noteW - sur20W - nivW) / compKeys.length : 0;
+    const rowH = 8.5;
 
-    doc.setFillColor(...C.dark);
-    doc.roundedRect(tM, y, tW, rowH + 1, 1.5, 1.5, 'F');
-    doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-    let tx = tM + 2;
-    doc.text('#', tx, y + 4.5); tx += 8;
-    doc.text('Nom Prénom', tx, y + 4.5); tx += nameW;
-    doc.text('Note', tx, y + 4.5); tx += noteW;
-    doc.text('/20', tx, y + 4.5); tx += sur20W;
-    doc.text('Niv.', tx, y + 4.5); tx += nivW;
-    compKeys.forEach(k => {
-      doc.text(niceComp(k).substring(0, 5), tx + compColW / 2, y + 4.5, { align: 'center' });
-      tx += compColW;
-    });
-    y += rowH + 2;
+    function drawTableHeader(yPos) {
+      doc.setFillColor(...C.dark);
+      doc.roundedRect(tM, yPos, tW, rowH + 1, 2, 2, 'F');
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+      let hx = tM + 3;
+      doc.text('#', hx, yPos + 6); hx += 10;
+      doc.text('Nom Prénom', hx, yPos + 6); hx += nameW;
+      doc.text('Note', hx, yPos + 6); hx += noteW;
+      doc.text('/20', hx, yPos + 6); hx += sur20W;
+      doc.text('Niveau', hx, yPos + 6); hx += nivW;
+      compKeys.forEach(k => {
+        doc.text(niceComp(k).substring(0, 6), hx + compColW / 2, yPos + 6, { align: 'center' });
+        hx += compColW;
+      });
+      return yPos + rowH + 2;
+    }
+
+    y = drawTableHeader(y);
 
     rows.forEach((r, i) => {
-      if (y > PH - 15) {
+      if (y > PH - 18) {
         doc.addPage();
-        y = 12;
-        // Repeat header
-        doc.setFillColor(...C.dark);
-        doc.roundedRect(tM, y, tW, rowH + 1, 1.5, 1.5, 'F');
-        doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-        let hx = tM + 2;
-        doc.text('#', hx, y + 4.5); hx += 8;
-        doc.text('Nom Prénom', hx, y + 4.5); hx += nameW;
-        doc.text('Note', hx, y + 4.5); hx += noteW;
-        doc.text('/20', hx, y + 4.5); hx += sur20W;
-        doc.text('Niv.', hx, y + 4.5); hx += nivW;
-        compKeys.forEach(k => {
-          doc.text(niceComp(k).substring(0, 5), hx + compColW / 2, y + 4.5, { align: 'center' });
-          hx += compColW;
-        });
-        y += rowH + 2;
+        y = drawTableHeader(12);
       }
 
-      if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(tM, y - 0.5, tW, rowH, 'F'); }
+      if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(tM, y - 1, tW, rowH, 'F'); }
 
-      tx = tM + 2;
-      doc.setFontSize(6); doc.setTextColor(...C.dark);
+      let tx = tM + 3;
+      doc.setFontSize(8); doc.setTextColor(...C.dark);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(r.rang), tx + 2, y + 4, { align: 'center' }); tx += 8;
+      doc.text(String(r.rang), tx + 3, y + 5, { align: 'center' }); tx += 10;
       doc.setFont('helvetica', 'bold');
       let name = `${r.nom} ${r.prenom}`;
-      while (doc.getTextWidth(name) > nameW - 2 && name.length > 5) name = name.slice(0, -1);
-      doc.text(name, tx, y + 4); tx += nameW;
+      while (doc.getTextWidth(name) > nameW - 3 && name.length > 5) name = name.slice(0, -1);
+      doc.text(name, tx, y + 5); tx += nameW;
       doc.setFont('helvetica', 'normal');
-      doc.text(`${fmt(r.score)}/${r.total}`, tx, y + 4); tx += noteW;
-      doc.text(fmt(r.sur20), tx, y + 4); tx += sur20W;
+      doc.text(`${fmt(r.score)}/${r.total}`, tx, y + 5); tx += noteW;
+      doc.text(fmt(r.sur20), tx, y + 5); tx += sur20W;
       doc.setTextColor(...r.lvl.color); doc.setFont('helvetica', 'bold');
-      doc.text(r.lvl.code, tx, y + 4); tx += nivW;
+      doc.text(r.lvl.code, tx, y + 5); tx += nivW;
       compKeys.forEach(k => {
         const sc = r.comps[k];
         if (sc) {
           doc.setTextColor(...sc.lvl.color); doc.setFont('helvetica', 'bold');
-          doc.text(sc.lvl.code, tx + compColW / 2, y + 4, { align: 'center' });
+          doc.text(sc.lvl.code, tx + compColW / 2, y + 5, { align: 'center' });
         } else {
           doc.setTextColor(200, 200, 200);
-          doc.text('—', tx + compColW / 2, y + 4, { align: 'center' });
+          doc.text('—', tx + compColW / 2, y + 5, { align: 'center' });
         }
         tx += compColW;
       });
@@ -754,18 +750,18 @@
     });
 
     // Ligne moyenne
-    y += 1;
+    y += 2;
     doc.setFillColor(...C.dark);
-    doc.rect(tM, y - 0.5, tW, rowH + 1, 'F');
-    tx = tM + 2;
-    doc.setFontSize(6.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-    doc.text('Moyenne', tx, y + 4.5); tx += 8 + nameW;
-    doc.text(`${fmt(stats.avg)}/${stats.total}`, tx, y + 4.5); tx += noteW;
-    doc.text(fmt(avgSur20), tx, y + 4.5); tx += sur20W;
-    doc.text(levelFromPct(stats.avg / stats.total * 100).code, tx, y + 4.5); tx += nivW;
+    doc.roundedRect(tM, y - 1, tW, rowH + 1, 2, 2, 'F');
+    let tx = tM + 3;
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+    doc.text('Moyenne', tx, y + 5.5); tx += 10 + nameW;
+    doc.text(`${fmt(stats.avg)}/${stats.total}`, tx, y + 5.5); tx += noteW;
+    doc.text(fmt(avgSur20), tx, y + 5.5); tx += sur20W;
+    doc.text(levelFromPct(stats.avg / stats.total * 100).code, tx, y + 5.5); tx += nivW;
     compKeys.forEach(k => {
       const avg = Math.round(cAvg[k].s / cAvg[k].n);
-      doc.text(`${avg}%`, tx + compColW / 2, y + 4.5, { align: 'center' });
+      doc.text(`${avg}%`, tx + compColW / 2, y + 5.5, { align: 'center' });
       tx += compColW;
     });
 
