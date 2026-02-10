@@ -444,15 +444,8 @@
     const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
     const dist = stats ? scoreDistribution(stats) : null;
     const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    // Build student URL with exercise UUIDs and seeds (alea= param for seed)
-    const seeds = JSON.parse(localStorage.getItem('mathalea_exercices_seeds') || '{}');
-    const qrUrlObj = new URL(window.location.origin + '/alea/index.html');
-    exs.forEach((e, i) => {
-      qrUrlObj.searchParams.append('uuid', e.uuid);
-      if (seeds[i]) qrUrlObj.searchParams.append('alea', seeds[i]);
-    });
-    qrUrlObj.searchParams.set('v', 'eleve');
-    const qrUrl = qrUrlObj.toString();
+    // QR code: use configured correction URL (static PDF)
+    const qrUrl = cfg.correctionUrl || (window.location.origin + '/alea/corrections/bilan-capytale-5A.pdf');
     const qrImg = makeQRDataURL(qrUrl, 200);
 
     for (let i = 0; i < ids.length; i++) {
@@ -498,6 +491,12 @@
         <input id="bpdf-classe" type="text" value="${cfg.classe||''}" placeholder="Ex: 4ème C"
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;box-sizing:border-box">
       </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">URL du QR code (correction)</label>
+        <input id="bpdf-qrurl" type="text" value="${cfg.correctionUrl||window.location.origin+'/alea/corrections/bilan-capytale-5A.pdf'}"
+          placeholder="URL vers la correction PDF"
+          style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box;color:#666">
+      </div>
       <div style="font-size:13px;font-weight:600;margin-bottom:8px">Contenu du bilan :</div>
       <div id="bpdf-options" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showNote" ${cfg.showNote!==false?'checked':''}> Note globale + niveau</label>
@@ -515,7 +514,7 @@
     ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
     md.querySelector('#bpdf-cancel').addEventListener('click', () => ov.remove());
     md.querySelector('#bpdf-generate').addEventListener('click', () => {
-      const nc = { titre: md.querySelector('#bpdf-titre').value.trim(), classe: md.querySelector('#bpdf-classe').value.trim() };
+      const nc = { titre: md.querySelector('#bpdf-titre').value.trim(), classe: md.querySelector('#bpdf-classe').value.trim(), correctionUrl: md.querySelector('#bpdf-qrurl').value.trim() };
       md.querySelectorAll('#bpdf-options input[type=checkbox]').forEach(cb => { nc[cb.dataset.key]=cb.checked; });
       saveConfig(nc);
       const sts = getStudents(); let ids=[];
