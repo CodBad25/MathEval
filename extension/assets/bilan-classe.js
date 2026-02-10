@@ -775,6 +775,7 @@
 
   // ===================== Button injection =====================
   function injectButton() {
+    // Inject next to "Bilans PDF" button (added by bilan-pdf.js)
     document.querySelectorAll('button').forEach(btn => {
       if (btn.textContent.includes('Bilans PDF') && !btn.dataset.bcInjected) {
         btn.dataset.bcInjected = '1';
@@ -785,20 +786,6 @@
         b.style.cssText = btn.style.cssText || '';
         b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showHTMLPanel(); });
         btn.parentElement.insertBefore(b, btn.nextSibling);
-      }
-      // Also try next to "Imprimer bilans individuels" if Bilans PDF not found yet
-      if (btn.textContent.includes('Imprimer bilans individuels') && !btn.dataset.bcInjected2) {
-        btn.dataset.bcInjected2 = '1';
-        if (!btn.parentElement.querySelector('[data-bc-injected]')) {
-          const b = document.createElement('button');
-          b.className = btn.className;
-          b.innerHTML = '📊 Bilan classe';
-          b.dataset.bcInjected = '1';
-          b.title = 'Afficher le bilan de la classe';
-          b.style.cssText = btn.style.cssText || '';
-          b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showHTMLPanel(); });
-          btn.parentElement.insertBefore(b, btn.nextSibling);
-        }
       }
     });
   }
