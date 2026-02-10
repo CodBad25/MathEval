@@ -484,22 +484,22 @@
 
     // En-tête (bandeau plus grand)
     doc.setFillColor(...C.primary);
-    doc.rect(0, 0, PW, 22, 'F');
+    doc.rect(0, 0, PW, 24, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(17); doc.setFont('helvetica', 'bold');
-    doc.text('BILAN DE CLASSE — Mathématiques', PW / 2, 9, { align: 'center' });
+    doc.text('BILAN DE CLASSE — Mathématiques', PW / 2, 10, { align: 'center' });
     doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-    doc.text(`${titre}${classe ? ' — ' + classe : ''} • ${date}`, PW / 2, 15.5, { align: 'center' });
+    doc.text(`${titre}${classe ? ' — ' + classe : ''} • ${date}`, PW / 2, 17, { align: 'center' });
     doc.setFontSize(8);
-    doc.text(`${stats.n} corrigés / ${totalStudents} élèves`, PW / 2, 20, { align: 'center' });
-    y = 28;
+    doc.text(`${stats.n} corrigés / ${totalStudents} élèves`, PW / 2, 21.5, { align: 'center' });
+    y = 30;
 
     // Stats globales
     doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
     doc.text('STATISTIQUES GLOBALES', M, y);
     y += 6;
 
-    const boxW = (W - 12) / 4, boxH = 19;
+    const boxW = (W - 12) / 4, boxH = 20;
     const statBoxes = [
       { label: `Moyenne (${fmt(avgSur20)}/20)`, val: `${fmt(stats.avg)}/${stats.total}`, color: C.primary },
       { label: 'Médiane', val: fmt(stats.med), color: C.dark },
@@ -511,14 +511,14 @@
       doc.setFillColor(...C.light);
       doc.roundedRect(bx, y, boxW, boxH, 2.5, 2.5, 'F');
       doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(...b.color);
-      doc.text(b.val, bx + boxW / 2, y + 9.5, { align: 'center' });
+      doc.text(b.val, bx + boxW / 2, y + 10, { align: 'center' });
       doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
-      doc.text(b.label, bx + boxW / 2, y + 16, { align: 'center' });
+      doc.text(b.label, bx + boxW / 2, y + 17, { align: 'center' });
     });
-    y += boxH + 5;
+    y += boxH + 6;
 
     // Niveaux
-    const lvlBoxW = (W - 12) / 4, lvlBoxH = 15;
+    const lvlBoxW = (W - 12) / 4, lvlBoxH = 16;
     const levels = [
       { code: 'TBM', label: 'Très Bonne Maîtrise', count: lvlC.TBM, color: C.success },
       { code: 'MS', label: 'Maîtrise Satisfaisante', count: lvlC.MS, color: C.primary },
@@ -530,14 +530,14 @@
       doc.setDrawColor(...lv.color); doc.setLineWidth(0.6);
       doc.roundedRect(bx, y, lvlBoxW, lvlBoxH, 2.5, 2.5, 'S');
       doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lv.color);
-      doc.text(String(lv.count), bx + lvlBoxW / 2, y + 7.5, { align: 'center' });
+      doc.text(String(lv.count), bx + lvlBoxW / 2, y + 8, { align: 'center' });
       doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text(lv.code, bx + lvlBoxW / 2, y + 13, { align: 'center' });
+      doc.text(lv.code, bx + lvlBoxW / 2, y + 13.5, { align: 'center' });
     });
-    y += lvlBoxH + 6;
+    y += lvlBoxH + 7;
 
     // Histogramme + Compétences côte à côte
-    const chartH = 54;
+    const chartH = 57;
     doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
     doc.text('RÉPARTITION DES NOTES', M, y);
     if (compKeys.length > 0) {
@@ -585,7 +585,7 @@
         doc.text(`${lvl.code} ${avg}%`, cx + cw - 1, by + 6, { align: 'right' });
       });
     }
-    y += chartH + 7;
+    y += chartH + 8;
 
     // Exercices (suite page 1)
     doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
@@ -603,46 +603,46 @@
     });
 
     // Table header
-    const exRowH = 8.5;
+    const exRowH = 9;
     doc.setFillColor(...C.dark);
     doc.roundedRect(M, y, W, exRowH, 2, 2, 'F');
     doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-    doc.text('#', M + 5, y + 5.5);
-    doc.text('Exercice', M + 14, y + 5.5);
-    doc.text('Pts', M + W * 0.42, y + 5.5);
-    doc.text('Réussite classe', M + W * 0.50, y + 5.5);
-    doc.text('Niveau', M + W * 0.82, y + 5.5);
+    doc.text('#', M + 5, y + 6);
+    doc.text('Exercice', M + 14, y + 6);
+    doc.text('Pts', M + W * 0.42, y + 6);
+    doc.text('Réussite classe', M + W * 0.50, y + 6);
+    doc.text('Niveau', M + W * 0.82, y + 6);
     y += exRowH + 1;
 
     exData.forEach((e, i) => {
       if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(M, y, W, exRowH, 'F'); }
       doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
-      doc.text(String(e.idx + 1), M + 5, y + 5.5);
+      doc.text(String(e.idx + 1), M + 5, y + 6);
       doc.setFont('helvetica', 'normal');
       let title = e.titre;
       doc.setFontSize(8.5);
       while (doc.getTextWidth(title) > W * 0.28 && title.length > 5) title = title.slice(0, -1);
       if (title !== e.titre) title += '…';
-      doc.text(title, M + 14, y + 5.5);
-      doc.text(String(e.totalPts), M + W * 0.42 + 3, y + 5.5);
+      doc.text(title, M + 14, y + 6);
+      doc.text(String(e.totalPts), M + W * 0.42 + 3, y + 6);
       // Progress bar
       const barX = M + W * 0.50, barW2 = W * 0.27, barH2 = 5;
       doc.setFillColor(220, 220, 220);
-      doc.roundedRect(barX, y + 1.5, barW2, barH2, 1.5, 1.5, 'F');
+      doc.roundedRect(barX, y + 2, barW2, barH2, 1.5, 1.5, 'F');
       doc.setFillColor(...e.lvl.color);
-      doc.roundedRect(barX, y + 1.5, Math.max(1, (e.pct / 100) * barW2), barH2, 1.5, 1.5, 'F');
+      doc.roundedRect(barX, y + 2, Math.max(1, (e.pct / 100) * barW2), barH2, 1.5, 1.5, 'F');
       doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...e.lvl.color);
-      doc.text(`${Math.round(e.pct)}%`, barX + barW2 + 3, y + 5.5);
+      doc.text(`${Math.round(e.pct)}%`, barX + barW2 + 3, y + 6);
       doc.setFontSize(9);
-      doc.text(e.lvl.code, M + W * 0.84, y + 5.5);
+      doc.text(e.lvl.code, M + W * 0.84, y + 6);
       y += exRowH;
     });
-    y += 6;
+    y += 7;
 
     // Acquis analysis
-    doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...C.dark);
     doc.text('ANALYSE DES ACQUIS', M, y);
-    y += 6;
+    y += 7;
 
     const thirdW = (W - 8) / 3;
     const sections = [
@@ -651,7 +651,7 @@
       { title: 'Non acquis (<30%)', items: exData.filter(e => e.pct < 30), color: C.danger },
     ];
     const maxItems = Math.max(...sections.map(s => s.items.length), 1);
-    const sectionH = Math.max(18, 12 + maxItems * 6);
+    const sectionH = Math.max(20, 13 + maxItems * 6);
 
     sections.forEach((sec, si) => {
       const sx = M + si * (thirdW + 4);
