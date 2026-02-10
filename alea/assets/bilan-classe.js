@@ -655,7 +655,7 @@
       { title: 'Non acquis (<30%)', items: exData.filter(e => e.pct < 30), color: C.danger },
     ];
     const maxItems = Math.max(...sections.map(s => s.items.length), 1);
-    const sectionH = Math.max(20, 12 + maxItems * 7);
+    const sectionH = Math.max(22, 14 + maxItems * 7);
 
     sections.forEach((sec, si) => {
       const sx = M + si * (thirdW + 4);
@@ -663,12 +663,19 @@
       doc.roundedRect(sx, y, thirdW, sectionH, 2.5, 2.5, 'S');
       doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
       doc.text(sec.title, sx + 4, y + 7);
-      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dark);
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dark);
       sec.items.forEach((e, ei) => {
-        doc.text(`Ex ${e.idx + 1} — ${e.titre}`, sx + 4, y + 14 + ei * 6);
+        const pctTxt = `(${Math.round(e.pct)}%)`;
         doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
-        doc.text(`(${Math.round(e.pct)}%)`, sx + thirdW - 4, y + 14 + ei * 6, { align: 'right' });
+        const pctW = doc.getTextWidth(pctTxt) + 2;
+        doc.text(pctTxt, sx + thirdW - 4, y + 14 + ei * 7, { align: 'right' });
         doc.setFont('helvetica', 'normal'); doc.setTextColor(...C.dark);
+        const maxTitleW = thirdW - 8 - pctW;
+        const fullTxt = `Ex ${e.idx + 1} — ${e.titre}`;
+        const lines = doc.splitTextToSize(fullTxt, maxTitleW);
+        let displayTxt = lines[0];
+        if (lines.length > 1) displayTxt = displayTxt.replace(/\s+$/, '') + '…';
+        doc.text(displayTxt, sx + 4, y + 14 + ei * 7);
       });
       if (!sec.items.length) {
         doc.setTextColor(180, 180, 180); doc.setFont('helvetica', 'italic');
