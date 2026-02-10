@@ -245,6 +245,7 @@
       if (hasComment) {
         const appX = M + noteW + 2;
         const appW = W - noteW - 2;
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal');
         const lines = doc.splitTextToSize(comment, appW - 6);
         const maxLines = 5;
         const displayLines = lines.slice(0, maxLines);
@@ -263,6 +264,7 @@
         y += noteH + 2;
       }
     } else if (cfg.showComment!==false && comment) {
+      doc.setFontSize(6.5); doc.setFont('helvetica','normal');
       const lines = doc.splitTextToSize(comment, W - 6);
       const displayLines = lines.slice(0, 4);
       const bh = Math.max(8, 4 + displayLines.length * 2.8);
