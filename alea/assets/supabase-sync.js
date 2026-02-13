@@ -314,6 +314,11 @@
             background:#fff;color:#4caf50;cursor:pointer;font-size:11px;width:100%">
             Sauvegarder comme nouvelle \u00e9valuation</button>` : ''}
         </div>
+        <div style="border-top:1px solid #eee;padding-top:10px;margin-bottom:10px">
+          <button id="s-import-json" style="padding:7px 14px;border:1px solid #2980b9;border-radius:6px;
+            background:#fff;color:#2980b9;cursor:pointer;font-size:12px;font-weight:600;width:100%">
+            \uD83D\uDCC2 Importer un fichier JSON</button>
+        </div>
         <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
           <button id="s-out" style="padding:5px 11px;border:1px solid #aaa;border-radius:6px;
             background:#fff;color:#888;cursor:pointer;font-size:11px">D\u00e9connexion</button>
@@ -379,6 +384,43 @@
           toast('Nouvelle \u00e9valuation cr\u00e9\u00e9e !', 'success');
           viewEvals();
         } catch (err) { toast('Erreur: ' + err.message, 'error'); }
+      };
+
+      // Import JSON
+      const impBtn = $('#s-import-json', b);
+      if (impBtn) impBtn.onclick = () => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = '.json';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              const data = JSON.parse(ev.target.result);
+              if (!data.corrections || !data.students || !data.evaluationData) {
+                toast('Fichier invalide (corrections, students ou evaluationData manquant)', 'error');
+                return;
+              }
+              const nbStudents = data.students.filter(s => s.nom).length;
+              const nbCorrected = Object.keys(data.corrections).length;
+              if (!confirm('Importer les donn\u00e9es ?\n\n\u2022 ' + nbStudents + ' \u00e9l\u00e8ve(s)\n\u2022 ' + nbCorrected + ' correction(s)\n\u2022 ' + data.evaluationData.length + ' exercice(s)\n\n\u26a0\ufe0f Les donn\u00e9es locales seront remplac\u00e9es.')) return;
+              localStorage.setItem('studentCorrections', JSON.stringify(data.corrections));
+              localStorage.setItem('studentsList', JSON.stringify(data.students));
+              localStorage.setItem('evaluationData', JSON.stringify(data.evaluationData));
+              if (data.competencesPersonnalisees) localStorage.setItem('competencesPersonnalisees', JSON.stringify(data.competencesPersonnalisees));
+              if (data.competencesActivees) localStorage.setItem('competencesActivees', JSON.stringify(data.competencesActivees));
+              if (data.modeEvaluation) {
+                try { const cfg = JSON.parse(localStorage.getItem('evaluationConfig') || '{}'); cfg.modeEvaluation = data.modeEvaluation; localStorage.setItem('evaluationConfig', JSON.stringify(cfg)); } catch(_){}
+              }
+              closeModal();
+              toast(nbCorrected + ' corrections import\u00e9es ! Rechargement\u2026', 'success');
+              setTimeout(() => location.reload(), 1000);
+            } catch (err) { toast('Erreur: ' + err.message, 'error'); }
+          };
+          reader.readAsText(file);
+        };
+        input.click();
       };
 
       $('#s-out', b).onclick = async () => {
