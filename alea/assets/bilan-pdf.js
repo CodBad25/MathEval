@@ -606,6 +606,51 @@
         btn.remove();
       }
     });
+    // Ajouter "Importer JSON" à côté de "Exporter JSON"
+    document.querySelectorAll('button').forEach(btn => {
+      if (btn.textContent.includes('Exporter JSON') && !btn.dataset.bpdfImportInjected) {
+        btn.dataset.bpdfImportInjected = '1';
+        const b = document.createElement('button');
+        b.className = btn.className;
+        b.innerHTML = '📂 Importer JSON';
+        b.style.cssText = btn.style.cssText;
+        b.addEventListener('click', e => {
+          e.stopPropagation(); e.preventDefault();
+          const input = document.createElement('input');
+          input.type = 'file'; input.accept = '.json';
+          input.onchange = (ev) => {
+            const file = ev.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (r) => {
+              try {
+                const data = JSON.parse(r.target.result);
+                if (!data.corrections || !data.students || !data.evaluationData) {
+                  alert('Fichier invalide (corrections, students ou evaluationData manquant)');
+                  return;
+                }
+                const nbS = data.students.filter(s => s.nom).length;
+                const nbC = Object.keys(data.corrections).length;
+                if (!confirm('Importer ?\n\n\u2022 ' + nbS + ' \u00e9l\u00e8ve(s)\n\u2022 ' + nbC + ' correction(s)\n\u2022 ' + data.evaluationData.length + ' exercice(s)\n\n\u26a0\ufe0f Les donn\u00e9es locales seront remplac\u00e9es.')) return;
+                localStorage.setItem('studentCorrections', JSON.stringify(data.corrections));
+                localStorage.setItem('studentsList', JSON.stringify(data.students));
+                localStorage.setItem('evaluationData', JSON.stringify(data.evaluationData));
+                if (data.competencesPersonnalisees) localStorage.setItem('competencesPersonnalisees', JSON.stringify(data.competencesPersonnalisees));
+                if (data.competencesActivees) localStorage.setItem('competencesActivees', JSON.stringify(data.competencesActivees));
+                if (data.modeEvaluation) {
+                  try { const cfg = JSON.parse(localStorage.getItem('evaluationConfig') || '{}'); cfg.modeEvaluation = data.modeEvaluation; localStorage.setItem('evaluationConfig', JSON.stringify(cfg)); } catch(_){}
+                }
+                alert(nbC + ' corrections import\u00e9es ! La page va se recharger.');
+                location.reload();
+              } catch (err) { alert('Erreur: ' + err.message); }
+            };
+            reader.readAsText(file);
+          };
+          input.click();
+        });
+        btn.parentElement.insertBefore(b, btn.nextSibling);
+      }
+    });
     document.querySelectorAll('button').forEach(btn => {
       if ((btn.textContent.includes('Imprimer ce bilan')||btn.textContent.includes('🖨️ Imprimer')) && btn.closest('.fixed,dialog,[role="dialog"]') && !btn.dataset.bpdfSingle) {
         btn.dataset.bpdfSingle = '1';
