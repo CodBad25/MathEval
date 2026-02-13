@@ -558,6 +558,20 @@
     obs.observe(app, { childList:true, subtree:true });
     setTimeout(injectButtons, 1000);
   }
+  // Expose global function for single-student PDF generation from console
+  window.__generateBilanPDF = function(studentId) {
+    if (!studentId) { console.error('Usage: __generateBilanPDF("student_11")'); return; }
+    if (!window.jspdf) { console.error('jsPDF pas encore chargé, réessayez dans 2s'); return; }
+    const sts = getStudents();
+    const stu = sts.find(s => s.id === studentId);
+    if (!stu) { console.error('Élève non trouvé:', studentId); return; }
+    const name = `${stu.nom||''} ${stu.prenom||''}`.trim();
+    const fn = `Bilan_${(stu.nom||'eleve').replace(/\s+/g,'_')}.pdf`;
+    console.log(`Génération du bilan PDF pour ${name}...`);
+    generatePDF([studentId], fn);
+    console.log(`✅ PDF téléchargé: ${fn}`);
+  };
+
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
