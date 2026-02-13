@@ -589,6 +589,13 @@
   // ===================== Injection boutons =====================
   function injectButtons() {
     document.querySelectorAll('button').forEach(btn => {
+      // Supprimer l'ancien bouton "Imprimer bilan classe"
+      if (btn.textContent.includes('Imprimer bilan classe') && !btn.dataset.bpdfOldRemoved) {
+        btn.dataset.bpdfOldRemoved = '1';
+        btn.remove();
+        return;
+      }
+      // Remplacer "Imprimer bilans individuels" par "Bilans PDF"
       if (btn.textContent.includes('Imprimer bilans individuels') && !btn.dataset.bpdfInjected) {
         btn.dataset.bpdfInjected = '1';
         const b = document.createElement('button');
@@ -596,6 +603,7 @@
         b.title = 'Générer les bilans PDF'; b.style.cssText = btn.style.cssText;
         b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showConfigModal('all'); });
         btn.parentElement.insertBefore(b, btn.nextSibling);
+        btn.remove();
       }
     });
     document.querySelectorAll('button').forEach(btn => {
