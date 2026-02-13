@@ -277,6 +277,7 @@
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      window.__blockAutoAdvance = true;
       const exIndex = getExIndex();
       if (window.__setEval) {
         window.__setEval(exIndex, qIndex, 'TB-');
