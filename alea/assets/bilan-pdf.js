@@ -11,6 +11,10 @@
   qrScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
   document.head.appendChild(qrScript);
 
+  const jszipScript = document.createElement('script');
+  jszipScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  document.head.appendChild(jszipScript);
+
   const CONFIG_KEY = 'bilanConfig';
   const C = {
     primary: [41, 128, 185], success: [39, 174, 96], warning: [230, 126, 34],
@@ -471,6 +475,43 @@
     doc.save(fileName);
   }
 
+  // ===================== Single PDF as blob (for ZIP) =====================
+  function generateSinglePDFBlob(sid) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p','mm','a4');
+    const PH = 297, halfH = PH / 2;
+    const cfg = getConfig(), exs = getExercises();
+    const stats = cfg.showStats!==false ? classStats() : null;
+    const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
+    const dist = stats ? scoreDistribution(stats) : null;
+    const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    const qrUrl = cfg.correctionUrl || (window.location.origin + '/alea/corrections/bilan-capytale-5A.pdf');
+    const qrImg = makeQRDataURL(qrUrl, 200);
+    renderStudent(doc, sid, 0, halfH, cfg, exs, stats, cAvg, dist, date, qrImg);
+    return doc.output('arraybuffer');
+  }
+
+  // ===================== ZIP (1 PDF par élève) =====================
+  async function generateZIP(ids, zipName) {
+    if (!window.JSZip) { alert('JSZip non chargé. Rechargez la page.'); return; }
+    if (!window.jspdf) { alert('jsPDF non chargé.'); return; }
+    const zip = new JSZip();
+    const sts = getStudents();
+    ids.forEach(sid => {
+      const stu = sts.find(s => s.id === sid);
+      const nom = (stu?.nom||'').replace(/\s+/g,'_');
+      const prenom = (stu?.prenom||'').replace(/\s+/g,'_');
+      const fname = `Bilan_${nom}${prenom ? '_'+prenom : ''}.pdf`;
+      zip.file(fname, generateSinglePDFBlob(sid));
+    });
+    const blob = await zip.generateAsync({type:'blob'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = zipName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   // ===================== Config Modal =====================
   function showConfigModal(mode) {
     const cfg = getConfig();
@@ -506,24 +547,42 @@
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showStats" ${cfg.showStats!==false?'checked':''}> Statistiques classe</label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-key="showSignatures" ${cfg.showSignatures!==false?'checked':''}> Zones de signature</label>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
         <button id="bpdf-cancel" style="padding:8px 16px;background:#eee;border:none;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
-        <button id="bpdf-generate" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">📥 Générer PDF</button>
+        <button id="bpdf-zip" style="padding:8px 16px;background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" title="1 PDF par élève dans un ZIP (pour envoi Classroom)">📦 ZIP individuels</button>
+        <button id="bpdf-generate" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">📥 PDF groupé</button>
       </div>`;
     ov.appendChild(md); document.body.appendChild(ov);
     ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
     md.querySelector('#bpdf-cancel').addEventListener('click', () => ov.remove());
-    md.querySelector('#bpdf-generate').addEventListener('click', () => {
+
+    // Fonction commune pour récupérer config + IDs
+    function getModalData() {
       const nc = { titre: md.querySelector('#bpdf-titre').value.trim(), classe: md.querySelector('#bpdf-classe').value.trim(), correctionUrl: md.querySelector('#bpdf-qrurl').value.trim() };
       md.querySelectorAll('#bpdf-options input[type=checkbox]').forEach(cb => { nc[cb.dataset.key]=cb.checked; });
       saveConfig(nc);
       const sts = getStudents(); let ids=[];
       if (mode==='all') ids = sts.filter(s=>isCorrected(s.id)).map(s=>s.id);
       else { const cid = window.__getStudentId?.(); if(cid) ids=[cid]; }
+      return { nc, ids, sts };
+    }
+
+    // PDF groupé (2/page)
+    md.querySelector('#bpdf-generate').addEventListener('click', () => {
+      const { nc, ids, sts } = getModalData();
       if (!ids.length) { alert('Aucun élève corrigé.'); return; }
       ov.remove();
       const fn = mode==='single' ? `Bilan_${(sts.find(s=>s.id===ids[0])?.nom||'eleve').replace(/\s+/g,'_')}.pdf` : `Bilans${nc.classe?'_'+nc.classe.replace(/\s+/g,'_'):''}.pdf`;
       generatePDF(ids, fn);
+    });
+
+    // ZIP individuels (1 PDF/élève)
+    md.querySelector('#bpdf-zip').addEventListener('click', () => {
+      const { nc, ids } = getModalData();
+      if (!ids.length) { alert('Aucun élève corrigé.'); return; }
+      ov.remove();
+      const zipName = `Bilans_individuels${nc.classe?'_'+nc.classe.replace(/\s+/g,'_'):''}.zip`;
+      generateZIP(ids, zipName);
     });
   }
 
