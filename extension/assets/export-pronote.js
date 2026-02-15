@@ -284,19 +284,37 @@
   window.__exportCSVPronote = showPronoteModal;
 
   // --- Injection bouton ---
+  let pronoteButtonInjected = false;
+
   function injectPronoteButton() {
-    document.querySelectorAll('button').forEach(btn => {
-      if (btn.textContent.includes('Bilans PDF') && !btn.dataset.pronoteInjected) {
-        btn.dataset.pronoteInjected = '1';
-        const b = document.createElement('button');
-        b.className = btn.className;
-        b.innerHTML = '📊 Export Pronote';
-        b.title = 'Tableau de compétences à copier-coller dans Pronote';
-        b.style.cssText = btn.style.cssText;
-        b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showPronoteModal(); });
-        btn.parentElement.insertBefore(b, btn.nextSibling);
-      }
-    });
+    if (pronoteButtonInjected) return;
+    // Chercher un bouton d'ancrage : "Bilans PDF", "Bilan classe", ou "Exporter JSON"
+    const anchors = ['Bilans PDF', 'Bilan classe', 'Exporter JSON'];
+    let anchorBtn = null;
+    for (const text of anchors) {
+      document.querySelectorAll('button').forEach(btn => {
+        if (!anchorBtn && btn.textContent.includes(text)) anchorBtn = btn;
+      });
+      if (anchorBtn) break;
+    }
+    if (!anchorBtn || !anchorBtn.parentElement) return;
+
+    // Vérifier qu'on n'a pas déjà injecté
+    const existing = anchorBtn.parentElement.querySelector('[data-pronote-btn]');
+    if (existing) { pronoteButtonInjected = true; return; }
+
+    const b = document.createElement('button');
+    b.className = anchorBtn.className;
+    b.innerHTML = '📊 Export Pronote';
+    b.title = 'Tableau de compétences à copier-coller dans Pronote';
+    b.style.cssText = anchorBtn.style.cssText;
+    b.setAttribute('data-pronote-btn', '1');
+    b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showPronoteModal(); });
+    // Insérer après le dernier bouton du groupe
+    const parent = anchorBtn.parentElement;
+    parent.appendChild(b);
+    pronoteButtonInjected = true;
+    console.log('✅ Bouton Export Pronote injecté');
   }
 
   const obs = new MutationObserver(() => { injectPronoteButton(); });
@@ -304,7 +322,10 @@
     const app = document.getElementById('app') || document.getElementById('appMathalea');
     if (!app) { setTimeout(init, 200); return; }
     obs.observe(app, { childList: true, subtree: true });
+    // Essayer plusieurs fois avec des délais croissants
     setTimeout(injectPronoteButton, 1500);
+    setTimeout(injectPronoteButton, 3000);
+    setTimeout(injectPronoteButton, 5000);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
