@@ -1,5 +1,46 @@
 # Changelog - Correcteur Universel DNB
 
+## 2026-02-15 - Export Pronote : tableau de compétences copiable
+
+### Fonctionnalité ajoutée
+
+Nouveau bouton **"Export Pronote"** dans la vue d'ensemble (à côté de "Bilans PDF") permettant d'exporter les résultats d'une évaluation vers Pronote par simple copier-coller.
+
+### Fonctionnement
+
+- Une modale s'ouvre avec un tableau reproduisant le format Pronote :
+  - **Nom** (NOM Prénom), **Classe**, **Note** (score brut), **Compétences** (A/B/C/D)
+- Les compétences affichées s'adaptent automatiquement à celles de l'évaluation en cours
+- Les élèves absents (non corrigés) affichent **ABS**
+- Seuls les vrais élèves apparaissent (les lignes sans nom/prénom sont filtrées)
+
+### Niveaux de maîtrise → Pronote
+
+| Niveau | Code | Lettre Pronote | Seuil |
+|--------|------|----------------|-------|
+| Très bonne maîtrise | TBM | **A** | ≥ 75% |
+| Maîtrise satisfaisante | MS | **B** | ≥ 50% |
+| Maîtrise fragile | MF | **C** | ≥ 25% |
+| Maîtrise insuffisante | MI | **D** | < 25% |
+
+### Boutons disponibles
+
+- **Copier notes + compétences** : copie les données brutes (sans en-tête) au format tab-separated, prêt à coller dans Pronote
+- **Copier tout le tableau** : copie avec Nom, Classe, Note et compétences
+- **Télécharger CSV** : fichier CSV (UTF-8 BOM, séparateur point-virgule)
+
+### Fichiers ajoutés
+
+- `alea/assets/export-pronote.js` — script principal (chargé par `alea/index.html`)
+- `extension/assets/export-pronote.js` — copie pour l'entrée extension
+
+### Fichiers modifiés
+
+- `alea/index.html` — ajout du script `export-pronote.js`
+- `extension/index.html` — ajout du script `export-pronote.js`
+
+---
+
 ## 2026-01-18 - Préservation des valeurs aléatoires MathALÉA
 
 ### Problème résolu
