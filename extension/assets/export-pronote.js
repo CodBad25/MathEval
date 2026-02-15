@@ -127,8 +127,8 @@
       if (corrected) {
         const g = globalScore(s.id);
         if (g.total > 0) {
-          const sur20 = Math.round(g.correct / g.total * 20 * 10) / 10;
-          noteText = sur20.toString().replace('.', ',');
+          const note = Math.round(g.correct * 10) / 10;
+          noteText = note.toString().replace('.', ',');
         }
       }
 
@@ -182,11 +182,11 @@
       </div>
       <p style="margin:0 0 12px;color:#666;font-size:13px">
         Sélectionnez les cellules du tableau ci-dessous et collez-les directement dans Pronote.
-        Le bouton <b>Copier</b> copie uniquement les colonnes de compétences (A/B/C/D).
+        Le bouton <b>Copier</b> copie les notes et les compétences (A/B/C/D).
       </p>
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <button id="pronote-copy-comps" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">
-          📋 Copier les compétences
+          📋 Copier notes + compétences
         </button>
         <button id="pronote-copy-all" style="padding:8px 16px;background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">
           📋 Copier tout le tableau
@@ -205,22 +205,25 @@
     // Fermer
     document.getElementById('pronote-close').addEventListener('click', () => overlay.remove());
 
-    // Copier uniquement les compétences (A/B/C/D) — tab-separated pour coller dans un tableur
+    // Copier notes + compétences (A/B/C/D) — tab-separated pour coller dans un tableur
     document.getElementById('pronote-copy-comps').addEventListener('click', () => {
       const lines = [];
-      // En-tête compétences
-      lines.push(compHeaders.join('\t'));
+      // En-tête
+      lines.push(['Note', ...compHeaders].join('\t'));
       // Données
       sorted.forEach(s => {
-        if (!isCorrected(s.id)) {
-          lines.push(comps.map(() => '').join('\t'));
-          return;
+        const corrected = isCorrected(s.id);
+        let note = '';
+        if (corrected) {
+          const g = globalScore(s.id);
+          if (g.total > 0) note = (Math.round(g.correct * 10) / 10).toString().replace('.', ',');
         }
-        const sc = compScores(s.id);
-        lines.push(comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '').join('\t'));
+        const sc = corrected ? compScores(s.id) : {};
+        const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
+        lines.push([note, ...levels].join('\t'));
       });
       navigator.clipboard.writeText(lines.join('\n')).then(() => {
-        showCopyFeedback('pronote-copy-comps', 'Compétences copiées !');
+        showCopyFeedback('pronote-copy-comps', 'Notes + compétences copiées !');
       });
     });
 
