@@ -209,9 +209,7 @@
     // Copier notes + compétences (A/B/C/D) — tab-separated pour coller dans un tableur
     document.getElementById('pronote-copy-comps').addEventListener('click', () => {
       const lines = [];
-      // En-tête
-      lines.push(['Note', ...compHeaders].join('\t'));
-      // Données
+      // Données uniquement (sans en-tête, pour coller directement dans Pronote)
       sorted.forEach(s => {
         const corrected = isCorrected(s.id);
         if (!corrected) {
