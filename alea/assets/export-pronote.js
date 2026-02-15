@@ -102,8 +102,10 @@
     const cfg = getBilanConfig();
     const classe = cfg.classe || '';
 
-    // Trier les élèves par nom
-    const sorted = [...students].sort((a, b) => (a.nom || '').toUpperCase().localeCompare((b.nom || '').toUpperCase(), 'fr'));
+    // Ne garder que les élèves corrigés, triés par nom
+    const sorted = [...students]
+      .filter(s => isCorrected(s.id))
+      .sort((a, b) => (a.nom || '').toUpperCase().localeCompare((b.nom || '').toUpperCase(), 'fr'));
 
     // Construire le tableau
     const compHeaders = comps.map(c => COMP_LABELS[c] || c.charAt(0).toUpperCase() + c.slice(1));
@@ -121,38 +123,28 @@
     sorted.forEach((s, i) => {
       const bg = i % 2 === 0 ? '#fff' : '#f8f9fa';
       const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
-      const corrected = isCorrected(s.id);
-
+      const g = globalScore(s.id);
       let noteText = '';
-      if (corrected) {
-        const g = globalScore(s.id);
-        if (g.total > 0) {
-          const note = Math.round(g.correct * 10) / 10;
-          noteText = note.toString().replace('.', ',');
-        }
+      if (g.total > 0) {
+        const note = Math.round(g.correct * 10) / 10;
+        noteText = note.toString().replace('.', ',');
       }
 
       tableHTML += `<tr style="background:${bg}">`;
       tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;font-weight:500">${nom}</td>`;
       tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center">${classe}</td>`;
-      tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;font-weight:600">${corrected ? noteText : ''}</td>`;
+      tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;font-weight:600">${noteText}</td>`;
 
-      if (corrected) {
-        const sc = compScores(s.id);
-        comps.forEach(c => {
-          if (sc[c]) {
-            const letter = levelToLetter(sc[c].pct);
-            const color = levelToColor(letter);
-            tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;font-weight:bold;color:${color}">${letter}</td>`;
-          } else {
-            tableHTML += '<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center"></td>';
-          }
-        });
-      } else {
-        comps.forEach(() => {
-          tableHTML += '<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;color:#999">ABS</td>';
-        });
-      }
+      const sc = compScores(s.id);
+      comps.forEach(c => {
+        if (sc[c]) {
+          const letter = levelToLetter(sc[c].pct);
+          const color = levelToColor(letter);
+          tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;font-weight:bold;color:${color}">${letter}</td>`;
+        } else {
+          tableHTML += '<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center"></td>';
+        }
+      });
       tableHTML += '</tr>';
     });
 
@@ -212,13 +204,9 @@
       lines.push(['Note', ...compHeaders].join('\t'));
       // Données
       sorted.forEach(s => {
-        const corrected = isCorrected(s.id);
-        let note = '';
-        if (corrected) {
-          const g = globalScore(s.id);
-          if (g.total > 0) note = (Math.round(g.correct * 10) / 10).toString().replace('.', ',');
-        }
-        const sc = corrected ? compScores(s.id) : {};
+        const g = globalScore(s.id);
+        const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
+        const sc = compScores(s.id);
         const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
         lines.push([note, ...levels].join('\t'));
       });
@@ -233,13 +221,9 @@
       lines.push(['Nom', 'Classe', 'Note', ...compHeaders].join('\t'));
       sorted.forEach(s => {
         const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
-        const corrected = isCorrected(s.id);
-        let note = '';
-        if (corrected) {
-          const g = globalScore(s.id);
-          if (g.total > 0) note = (Math.round(g.correct / g.total * 20 * 10) / 10).toString().replace('.', ',');
-        }
-        const sc = corrected ? compScores(s.id) : {};
+        const g = globalScore(s.id);
+        const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
+        const sc = compScores(s.id);
         const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
         lines.push([nom, classe, note, ...levels].join('\t'));
       });
@@ -255,13 +239,9 @@
       lines.push(['Nom', 'Classe', 'Note', ...compHeaders].join(sep));
       sorted.forEach(s => {
         const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
-        const corrected = isCorrected(s.id);
-        let note = '';
-        if (corrected) {
-          const g = globalScore(s.id);
-          if (g.total > 0) note = (Math.round(g.correct / g.total * 20 * 10) / 10).toString().replace('.', ',');
-        }
-        const sc = corrected ? compScores(s.id) : {};
+        const g = globalScore(s.id);
+        const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
+        const sc = compScores(s.id);
         const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
         lines.push([nom, classe, note, ...levels].join(sep));
       });
