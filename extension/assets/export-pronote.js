@@ -102,9 +102,9 @@
     const cfg = getBilanConfig();
     const classe = cfg.classe || '';
 
-    // Ne garder que les élèves corrigés, triés par nom
+    // Ne garder que les vrais élèves (qui ont un nom), triés par nom
     const sorted = [...students]
-      .filter(s => isCorrected(s.id))
+      .filter(s => s.nom && s.nom.trim())
       .sort((a, b) => (a.nom || '').toUpperCase().localeCompare((b.nom || '').toUpperCase(), 'fr'));
 
     // Construire le tableau
