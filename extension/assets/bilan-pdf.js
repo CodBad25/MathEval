@@ -49,6 +49,8 @@
         padding: 6px 3px !important;
         word-break: break-word !important;
       }
+      /* Masquer la recherche Svelte native (remplacée par la nôtre) */
+      #bpdf-native-search { display: none !important; }
       /* Masquer la grille d'élèves */
       #bpdf-student-grid { display: none !important; }
       /* Panneau mobile navigation */
@@ -810,6 +812,17 @@
         if (parent && !parent.id) parent.id = 'bpdf-overview-header';
       }
     });
+    // Taguer la barre de recherche Svelte native pour la masquer en mobile
+    if (!document.getElementById('bpdf-native-search')) {
+      document.querySelectorAll('input').forEach(inp => {
+        if (document.getElementById('bpdf-native-search')) return;
+        const ph = inp.getAttribute('placeholder') || '';
+        if (ph.includes('Rechercher') && !inp.classList.contains('bpdf-mobile-search')) {
+          let wrapper = inp.parentElement;
+          if (wrapper) wrapper.id = 'bpdf-native-search';
+        }
+      });
+    }
     // Taguer la ligne de stats (terminé/en cours/non commencé) pour CSS mobile
     document.querySelectorAll('span').forEach(sp => {
       if (sp.textContent === 'terminé(s)' && !sp.dataset.bpdfTagged) {
