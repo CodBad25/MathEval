@@ -14,6 +14,15 @@
         justify-content: center !important;
         gap: 8px !important;
       }
+      #bpdf-stats-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+      }
+      #bpdf-stats-box {
+        flex-wrap: wrap !important;
+        overflow: hidden !important;
+      }
       #bpdf-toolbar {
         display: flex !important;
         flex-wrap: nowrap !important;
@@ -623,6 +632,18 @@
         if (!h1.id) h1.id = 'bpdf-overview-title';
         const parent = h1.parentElement;
         if (parent && !parent.id) parent.id = 'bpdf-overview-header';
+      }
+    });
+    // Taguer la ligne de stats (terminé/en cours/non commencé) pour CSS mobile
+    document.querySelectorAll('span').forEach(sp => {
+      if (sp.textContent === 'terminé(s)' && !sp.dataset.bpdfTagged) {
+        sp.dataset.bpdfTagged = '1';
+        // Remonter au conteneur flex qui contient les 3 stats
+        let row = sp.parentElement?.parentElement;
+        if (row && !row.id) row.id = 'bpdf-stats-row';
+        // Taguer aussi le bloc global des stats
+        let box = row?.parentElement;
+        if (box && !box.id) box.id = 'bpdf-stats-box';
       }
     });
     document.querySelectorAll('button').forEach(btn => {
