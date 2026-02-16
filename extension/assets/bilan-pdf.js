@@ -17,51 +17,34 @@
         padding: 0 !important;
       }
 
-      /* ── Bandeau Mode/Réinitialiser : compact sur une ligne à côté de "Correction" ── */
-      #bpdf-mode-bar {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 4px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-      }
-      /* Le groupe Mode: Classique/DNB — rendre compact */
-      #bpdf-mode-bar > *:first-child {
-        flex-shrink: 0 !important;
-        padding: 4px 6px !important;
-        font-size: 11px !important;
-      }
-      #bpdf-mode-bar > *:first-child button {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
-      }
-      /* Le bouton Réinitialiser — petit icône seulement */
-      #bpdf-mode-bar > *:last-child,
-      #bpdf-mode-bar > button:last-child {
-        padding: 4px 8px !important;
-        font-size: 0 !important;
-        min-width: 0 !important;
-        flex-shrink: 0 !important;
-      }
-      /* Garder l'emoji visible via ::first-letter ou contenu emoji */
-      #bpdf-mode-bar > *:last-child *,
-      #bpdf-mode-bar > button:last-child * {
-        font-size: 16px !important;
-      }
-      /* Conteneur Correction + Mode sur la même ligne */
+      /* ── Bandeau Mode original masqué (déplacé par JS dans la ligne Correction) ── */
+      #bpdf-mode-bar { display: none !important; }
+
+      /* ── Ligne Correction + Mode fusionnée ── */
       #bpdf-correction-row {
         display: flex !important;
         align-items: center !important;
-        justify-content: space-between !important;
         gap: 6px !important;
         padding: 4px 8px !important;
+        flex-wrap: nowrap !important;
       }
-      #bpdf-correction-row > h2,
-      #bpdf-correction-row > [class*="text-"] {
-        margin: 0 !important;
-        font-size: 16px !important;
+      #bpdf-correction-row .bpdf-mode-compact {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-left: auto;
+      }
+      #bpdf-correction-row .bpdf-mode-compact button {
+        padding: 3px 8px !important;
+        font-size: 11px !important;
+        border-radius: 4px !important;
+      }
+      #bpdf-correction-row .bpdf-reset-btn {
+        padding: 3px 6px !important;
+        font-size: 14px !important;
+        line-height: 1 !important;
+        min-width: 0 !important;
+        border-radius: 4px !important;
       }
 
       /* ── Stats : row compact ── */
@@ -73,7 +56,7 @@
         gap: 8px !important;
         overflow: hidden !important;
         padding: 8px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 2px !important;
       }
       #bpdf-stats-row {
         flex-direction: column !important;
@@ -82,23 +65,29 @@
         font-size: 11px !important;
       }
 
-      /* ── Compétences : ligne horizontale compacte ── */
+      /* ── Compétences : grille 2 colonnes avec icône + nom complet ── */
       #bpdf-competences-section { display: none !important; }
       #bpdf-competences-compact {
-        display: flex !important;
-        flex-wrap: wrap !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
         gap: 4px !important;
-        padding: 2px 0 6px !important;
+        padding: 0 8px 4px !important;
       }
       #bpdf-competences-compact .bpdf-comp-chip {
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        gap: 3px;
-        padding: 2px 8px;
-        border-radius: 10px;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 8px;
         font-size: 11px;
         font-weight: 600;
         color: white;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      #bpdf-competences-compact .bpdf-comp-chip .bpdf-comp-icon {
+        font-size: 14px;
+        flex-shrink: 0;
       }
 
       /* ── Toolbar compact ── */
@@ -892,8 +881,8 @@
         }
       });
     }
-    // Taguer le bandeau Mode/Réinitialiser
-    if (!document.getElementById('bpdf-mode-bar')) {
+    // Taguer le bandeau Mode/Réinitialiser et créer la ligne compacte Correction + Mode
+    if (!document.getElementById('bpdf-mode-bar') && window.innerWidth <= 768) {
       document.querySelectorAll('button').forEach(btn => {
         if (document.getElementById('bpdf-mode-bar')) return;
         if (btn.textContent.trim().includes('initialiser')) {
@@ -903,6 +892,49 @@
             const texts = Array.from(allBtns).map(b => b.textContent);
             if (texts.some(t => t.includes('Classique')) && texts.some(t => t.includes('initialiser'))) {
               el.id = 'bpdf-mode-bar';
+              // Créer la ligne fusionnée Correction + Mode
+              if (!document.getElementById('bpdf-correction-row')) {
+                // Trouver le texte "Correction"
+                let corrEl = null;
+                document.querySelectorAll('h2, h3, span, div, p').forEach(e => {
+                  if (!corrEl && e.textContent.trim() === 'Correction' && e.children.length <= 1) corrEl = e;
+                });
+                // Trouver le conteneur qui contient l'icône ↪ + "Correction"
+                let corrParent = corrEl ? corrEl.closest('[class*="flex"]') || corrEl.parentElement : null;
+                if (corrParent) {
+                  const row = document.createElement('div');
+                  row.id = 'bpdf-correction-row';
+                  // Cloner le texte Correction avec son icône
+                  row.innerHTML = '<span style="font-size:16px;font-weight:600;display:flex;align-items:center;gap:4px">\u21aa Correction</span>';
+                  // Créer les boutons Mode compacts qui déclenchent les vrais boutons
+                  const modeDiv = document.createElement('div');
+                  modeDiv.className = 'bpdf-mode-compact';
+                  allBtns.forEach(origBtn => {
+                    const text = origBtn.textContent.trim();
+                    if (text.includes('Classique') || text.includes('DNB')) {
+                      const b = document.createElement('button');
+                      b.textContent = text.includes('Classique') ? 'Classique' : 'DNB';
+                      b.style.cssText = origBtn.style.cssText || '';
+                      b.className = origBtn.className;
+                      b.addEventListener('click', () => origBtn.click());
+                      modeDiv.appendChild(b);
+                    }
+                    if (text.includes('initialiser')) {
+                      const b = document.createElement('button');
+                      b.className = 'bpdf-reset-btn';
+                      b.textContent = '\ud83d\uddd1\ufe0f';
+                      b.title = 'R\u00e9initialiser';
+                      b.style.cssText = 'background:#e74c3c;color:white;border:none;cursor:pointer';
+                      b.addEventListener('click', () => origBtn.click());
+                      modeDiv.appendChild(b);
+                    }
+                  });
+                  row.appendChild(modeDiv);
+                  // Insérer avant le bandeau original et masquer "Correction" original
+                  corrParent.parentElement.insertBefore(row, corrParent);
+                  corrParent.style.display = 'none';
+                }
+              }
               return;
             }
             el = el.parentElement;
@@ -910,28 +942,25 @@
         }
       });
     }
-    // Taguer la section compétences et créer la version compacte mobile
+    // Taguer la section compétences et créer la version compacte mobile (grille 2 colonnes avec icônes)
     if (!document.getElementById('bpdf-competences-section')) {
       document.querySelectorAll('span, p, div').forEach(el => {
         if (document.getElementById('bpdf-competences-section')) return;
         if (el.textContent.trim() === 'Compétences:' || el.textContent.trim() === 'Compétences :') {
-          // Le conteneur parent qui englobe "Compétences:" et les badges
           let section = el.parentElement;
           if (section && !section.id) {
             section.id = 'bpdf-competences-section';
-            // Créer la version compacte
             if (!document.getElementById('bpdf-competences-compact') && window.innerWidth <= 768) {
-              const compColors = {
-                modeliser: '#9b59b6', calculer: '#3498db', raisonner: '#2ecc71',
-                communiquer: '#e67e22', representer: '#e74c3c', chercher: '#f1c40f'
-              };
-              const compAbr = {
-                modeliser: 'Mo', calculer: 'Ca', raisonner: 'Ra',
-                communiquer: 'Co', representer: 'Re', chercher: 'Ch'
+              const compData = {
+                modeliser:   { color: '#9b59b6', icon: '\ud83c\udfd7\ufe0f', name: 'Mod\u00e9liser' },
+                calculer:    { color: '#3498db', icon: '\ud83e\uddee',       name: 'Calculer' },
+                raisonner:   { color: '#2ecc71', icon: '\ud83e\udde9',       name: 'Raisonner' },
+                communiquer: { color: '#e67e22', icon: '\ud83d\udcac',       name: 'Communiquer' },
+                representer: { color: '#e74c3c', icon: '\ud83c\udfa8',       name: 'Repr\u00e9senter' },
+                chercher:    { color: '#f1c40f', icon: '\ud83d\udd0d',       name: 'Chercher' }
               };
               const compact = document.createElement('div');
               compact.id = 'bpdf-competences-compact';
-              // Extraire les compétences depuis les badges existants
               section.querySelectorAll('[class*="rounded"], [class*="badge"], span[style]').forEach(badge => {
                 const text = badge.textContent.trim();
                 const match = text.match(/(\S+?)\.{0,3}\s+(\d+)%/);
@@ -939,16 +968,16 @@
                   const chip = document.createElement('span');
                   chip.className = 'bpdf-comp-chip';
                   const compName = match[1].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                  let bgColor = '#999';
-                  let abr = match[1];
-                  Object.keys(compAbr).forEach(k => {
+                  let bgColor = '#999', icon = '', fullName = match[1];
+                  Object.keys(compData).forEach(k => {
                     if (compName.startsWith(k.substring(0, 4))) {
-                      bgColor = compColors[k];
-                      abr = compAbr[k];
+                      bgColor = compData[k].color;
+                      icon = compData[k].icon;
+                      fullName = compData[k].name;
                     }
                   });
                   chip.style.background = bgColor;
-                  chip.textContent = abr + ' ' + match[2] + '%';
+                  chip.innerHTML = '<span class="bpdf-comp-icon">' + icon + '</span> ' + fullName + ' ' + match[2] + '%';
                   compact.appendChild(chip);
                 }
               });
