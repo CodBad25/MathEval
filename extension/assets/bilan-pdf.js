@@ -16,25 +16,22 @@
         gap: 4px !important;
         padding: 0 !important;
       }
-      /* Masquer le bandeau Mode/Réinitialiser */
-      #bpdf-mode-bar { display: none !important; }
-      /* Masquer la barre de recherche Svelte native (on a la nôtre) */
-      #bpdf-native-search { display: none !important; }
-      /* Stats compactes */
-      #bpdf-stats-row {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 2px !important;
-        font-size: 12px !important;
-      }
+      /* Stats : terminé/en cours/non commencé à DROITE de Min/Méd/Max */
       #bpdf-stats-box {
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
         gap: 8px !important;
         overflow: hidden !important;
         padding: 8px !important;
         margin-bottom: 4px !important;
+      }
+      #bpdf-stats-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+        font-size: 11px !important;
       }
       /* Toolbar compact */
       #bpdf-toolbar {
@@ -813,46 +810,6 @@
         if (parent && !parent.id) parent.id = 'bpdf-overview-header';
       }
     });
-    // Taguer le bandeau Mode/Réinitialiser pour le masquer en mobile
-    if (!document.getElementById('bpdf-mode-bar')) {
-      document.querySelectorAll('button').forEach(btn => {
-        if (document.getElementById('bpdf-mode-bar')) return;
-        if (btn.textContent.trim().includes('initialiser')) {
-          // Le bouton Réinitialiser — remonter jusqu'au conteneur qui contient aussi Mode:Classique/DNB
-          let el = btn.parentElement;
-          // Remonter max 3 niveaux pour trouver le conteneur englobant
-          for (let i = 0; i < 3 && el; i++) {
-            const allBtns = el.querySelectorAll('button');
-            const texts = Array.from(allBtns).map(b => b.textContent);
-            if (texts.some(t => t.includes('Classique')) && texts.some(t => t.includes('initialiser'))) {
-              el.id = 'bpdf-mode-bar';
-              return;
-            }
-            el = el.parentElement;
-          }
-        }
-      });
-    }
-    // Taguer la barre de recherche Svelte native pour la masquer en mobile
-    if (!document.getElementById('bpdf-native-search')) {
-      document.querySelectorAll('input').forEach(inp => {
-        if (document.getElementById('bpdf-native-search')) return;
-        const ph = inp.getAttribute('placeholder') || '';
-        if (ph.includes('Rechercher') && !inp.classList.contains('bpdf-mobile-search')) {
-          // Remonter pour trouver un conteneur visible avec l'icône de recherche
-          let wrapper = inp.parentElement;
-          for (let i = 0; i < 2 && wrapper; i++) {
-            if (wrapper.querySelector('svg') || wrapper.querySelector('input')) {
-              wrapper.id = 'bpdf-native-search';
-              return;
-            }
-            wrapper = wrapper.parentElement;
-          }
-          // Fallback : tagger le parent direct
-          if (inp.parentElement) inp.parentElement.id = 'bpdf-native-search';
-        }
-      });
-    }
     // Taguer la ligne de stats (terminé/en cours/non commencé) pour CSS mobile
     document.querySelectorAll('span').forEach(sp => {
       if (sp.textContent === 'terminé(s)' && !sp.dataset.bpdfTagged) {
