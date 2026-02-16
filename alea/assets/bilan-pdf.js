@@ -8,8 +8,8 @@
   mobileStyle.textContent = `
     @media (max-width: 768px) {
       body { overflow-x: hidden !important; }
-      /* Masquer le titre "Vue d'ensemble" */
-      #bpdf-overview-title { display: none !important; }
+      /* Masquer le titre "Vue d'ensemble" — sélecteur générique pour éviter le flash */
+      #appMathalea h1 { display: none !important; }
       #bpdf-overview-header {
         flex-wrap: wrap !important;
         justify-content: center !important;
@@ -895,21 +895,11 @@
         btn.dataset.bpdfHidden = '1';
         btn.style.display = 'none';
       }
-      // Masquer le bouton Sync flottant (remplacé par un bouton dans la correction-row)
+      // Masquer le bouton Sync flottant et stocker la référence pour le recréer dans la correction-row
       if (txt.includes('Sync') && btn.style.position === 'fixed' && !btn.dataset.bpdfHidden) {
         btn.dataset.bpdfHidden = '1';
         btn.style.display = 'none';
-        // Ajouter un bouton Sync compact dans la correction-row (à côté des boutons Mode)
-        const modeCompact = document.querySelector('#bpdf-correction-row .bpdf-mode-compact');
-        if (modeCompact && !document.getElementById('bpdf-sync-toolbar-btn')) {
-          const syncBtn = document.createElement('button');
-          syncBtn.id = 'bpdf-sync-toolbar-btn';
-          syncBtn.textContent = '\u2601\ufe0f';
-          syncBtn.title = 'Synchroniser';
-          syncBtn.style.cssText = 'background:#3498db;color:white;border:none;cursor:pointer;padding:3px 6px;font-size:14px;line-height:1;min-width:0;border-radius:4px';
-          syncBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); btn.click(); });
-          modeCompact.appendChild(syncBtn);
-        }
+        window._bpdfSyncOrigBtn = btn;
       }
     });
   }
@@ -966,7 +956,7 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h11</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h12</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
@@ -1002,6 +992,19 @@
           }
         }
       });
+    }
+    // Créer le bouton Sync dans la correction-row si le bouton flottant a été masqué
+    if (window._bpdfSyncOrigBtn && !document.getElementById('bpdf-sync-toolbar-btn')) {
+      const modeCompact = document.querySelector('#bpdf-correction-row .bpdf-mode-compact');
+      if (modeCompact) {
+        const syncBtn = document.createElement('button');
+        syncBtn.id = 'bpdf-sync-toolbar-btn';
+        syncBtn.textContent = '\u2601\ufe0f';
+        syncBtn.title = 'Synchroniser';
+        syncBtn.style.cssText = 'background:#3498db;color:white;border:none;cursor:pointer;padding:3px 6px;font-size:14px;line-height:1;min-width:0;border-radius:4px';
+        syncBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); window._bpdfSyncOrigBtn.click(); });
+        modeCompact.appendChild(syncBtn);
+      }
     }
     // Taguer la section compétences et créer la version compacte mobile (grille 2 colonnes avec icônes)
     if (!document.getElementById('bpdf-competences-section')) {
