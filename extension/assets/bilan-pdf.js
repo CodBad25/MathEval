@@ -23,7 +23,6 @@
         position: fixed !important;
         left: -9999px !important;
         opacity: 0 !important;
-        pointer-events: none !important;
         height: 0 !important;
         overflow: hidden !important;
       }
@@ -956,7 +955,7 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h12</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h13</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
