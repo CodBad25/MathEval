@@ -35,7 +35,10 @@
     'showCorrections', 'preferenceCorrections'
   ];
 
-  let sb = null, user = null;
+  /* ── Réutilise auth-global.js si disponible ────────── */
+  const auth = window.__supabaseAuth;
+  let sb = auth?.client || null;
+  let user = auth?.user || null;
 
   /* ── Helpers ──────────────────────────────────────── */
   const getActId = () => localStorage.getItem(ACT_KEY);
@@ -44,7 +47,7 @@
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const esc = s => s.replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
-  /* ── SDK ──────────────────────────────────────────── */
+  /* ── SDK (fallback si auth-global.js absent) ───────── */
   function loadSDK() {
     return new Promise((ok, ko) => {
       if (window.supabase) return ok();
@@ -57,6 +60,7 @@
   }
 
   function initClient() {
+    if (auth?.client) { sb = auth.client; return true; }
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true }
     });
@@ -65,6 +69,7 @@
 
   /* ── Auth ─────────────────────────────────────────── */
   async function doSignIn(email, pwd) {
+    if (auth) { const d = await auth.doSignIn(email, pwd); user = auth.user; return d; }
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
     if (error) throw error;
     user = data.user;
@@ -72,18 +77,21 @@
   }
 
   async function doSignUp(email, pwd) {
+    if (auth) return auth.doSignUp(email, pwd);
     const { data, error } = await sb.auth.signUp({ email, password: pwd });
     if (error) throw error;
     return data;
   }
 
   async function doSignOut() {
+    if (auth) { await auth.doSignOut(); user = null; setActId(null); return; }
     await sb.auth.signOut();
     user = null;
     setActId(null);
   }
 
   async function getUser() {
+    if (auth) { user = await auth.getUser(); return user; }
     if (!sb) return null;
     try {
       const { data: { user: u } } = await sb.auth.getUser();
@@ -144,8 +152,9 @@
     if (error) throw error;
   }
 
-  /* ── Toast ────────────────────────────────────────── */
+  /* ── Toast (réutilise auth-global si disponible) ──── */
   function toast(msg, type = 'info') {
+    if (auth?.toast) return auth.toast(msg, type);
     const colors = { info: '#2196f3', success: '#4caf50', error: '#f44336', warning: '#ff9800' };
     const t = document.createElement('div');
     Object.assign(t.style, {
@@ -488,9 +497,15 @@
   /* ── Init ─────────────────────────────────────────── */
   async function init() {
     try {
-      await loadSDK();
-      initClient();
-      await getUser();
+      // Réutilise le client de auth-global.js s'il existe
+      if (auth?.client) {
+        sb = auth.client;
+        user = auth.user;
+      } else {
+        await loadSDK();
+        initClient();
+        await getUser();
+      }
     } catch (e) {
       console.warn('[Supabase Sync]', e);
     }

@@ -608,8 +608,8 @@
     const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
     const dist = stats ? scoreDistribution(stats) : null;
     const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    // QR code: use configured correction URL (static PDF)
-    const qrUrl = cfg.correctionUrl || (window.location.origin + '/alea/corrections/bilan-capytale-5A.pdf');
+    // QR code: pointe vers la page correction actuelle
+    const qrUrl = cfg.correctionUrl || window.location.href;
     const qrImg = makeQRDataURL(qrUrl, 200);
 
     for (let i = 0; i < ids.length; i++) {
@@ -645,7 +645,7 @@
     const cAvg = cfg.showStats!==false ? classCompAvgs() : {};
     const dist = stats ? scoreDistribution(stats) : null;
     const date = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    const qrUrl = cfg.correctionUrl || (window.location.origin + '/alea/corrections/bilan-capytale-5A.pdf');
+    const qrUrl = cfg.correctionUrl || window.location.href;
     const qrImg = makeQRDataURL(qrUrl, 200);
     renderStudent(doc, sid, 0, halfH, cfg, exs, stats, cAvg, dist, date, qrImg);
     return doc.output('arraybuffer');
@@ -694,8 +694,8 @@
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">URL du QR code (correction)</label>
-        <input id="bpdf-qrurl" type="text" value="${cfg.correctionUrl||window.location.origin+'/alea/corrections/bilan-capytale-5A.pdf'}"
-          placeholder="URL vers la correction PDF"
+        <input id="bpdf-qrurl" type="text" value="${cfg.correctionUrl||window.location.href}"
+          placeholder="URL vers la page correction (auto = URL actuelle)"
           style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box;color:#666">
       </div>
       <div style="font-size:13px;font-weight:600;margin-bottom:8px">Contenu du bilan :</div>
