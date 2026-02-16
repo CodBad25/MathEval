@@ -15,20 +15,18 @@
         gap: 8px !important;
       }
       #bpdf-toolbar {
-        flex-wrap: wrap !important;
-        gap: 4px !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
         justify-content: center !important;
-        padding: 0 4px !important;
+        padding: 0 2px !important;
       }
       #bpdf-toolbar button {
-        font-size: 11px !important;
-        padding: 6px 8px !important;
+        flex: 1 1 0 !important;
         min-width: 0 !important;
-      }
-      #bpdf-toolbar button svg,
-      #bpdf-toolbar button img {
-        width: 16px !important;
-        height: 16px !important;
+        font-size: 10px !important;
+        padding: 8px 4px !important;
+        word-break: break-word !important;
       }
     }
   `;
