@@ -43,8 +43,9 @@
       #bpdf-correction-row .bpdf-mode-compact {
         display: flex;
         align-items: center;
-        gap: 3px;
-        margin-left: auto !important;
+        gap: 4px;
+        flex: 1;
+        justify-content: center;
       }
       #bpdf-correction-row .bpdf-mode-compact button {
         padding: 3px 8px !important;
@@ -128,16 +129,7 @@
       }
       /* Masquer la recherche Svelte native (remplacée par la nôtre) */
       #bpdf-native-search { display: none !important; }
-      /* Masquer le bouton flottant "Commentaires TB-" sur la vue d'ensemble */
-      #tb-partial-floating { display: none !important; }
-      /* Bouton Sync plus discret et petit */
-      #supabase-sync-btn {
-        transform: scale(0.7) !important;
-        transform-origin: bottom left !important;
-        opacity: 0.7 !important;
-        left: 4px !important;
-        bottom: 4px !important;
-      }
+      /* Boutons flottants masqués/réduits via JS (tagFloatingButtons) */
       /* Masquer la grille d'élèves */
       #bpdf-student-grid { display: none !important; }
       /* Espace entre toolbar et mobile-nav */
@@ -892,15 +884,24 @@
     }
   });
 
-  // Taguer les boutons flottants (body-level, hors MutationObserver)
+  // Masquer/réduire les boutons flottants (body-level, hors MutationObserver)
   function tagFloatingButtons() {
     if (window.innerWidth > 768) return;
     document.querySelectorAll('button').forEach(btn => {
-      if (btn.textContent.includes('Sync') && btn.style.position === 'fixed' && !btn.id) {
-        btn.id = 'supabase-sync-btn';
+      const txt = btn.textContent || '';
+      // Masquer "Commentaires TB-"
+      if (txt.includes('Commentaires TB') && !btn.dataset.bpdfHidden) {
+        btn.dataset.bpdfHidden = '1';
+        btn.style.display = 'none';
       }
-      if (btn.textContent.includes('Commentaires TB') && !btn.id) {
-        btn.id = 'tb-partial-floating';
+      // Réduire le bouton Sync
+      if (txt.includes('Sync') && btn.style.position === 'fixed' && !btn.dataset.bpdfShrunk) {
+        btn.dataset.bpdfShrunk = '1';
+        btn.style.transform = 'scale(0.65)';
+        btn.style.transformOrigin = 'bottom left';
+        btn.style.opacity = '0.6';
+        btn.style.left = '4px';
+        btn.style.bottom = '4px';
       }
     });
   }
@@ -957,7 +958,7 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v13h05</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v13h15</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
