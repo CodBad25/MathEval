@@ -13,8 +13,9 @@
       #bpdf-overview-header {
         flex-wrap: wrap !important;
         justify-content: center !important;
-        gap: 4px !important;
+        gap: 0 !important;
         padding: 0 !important;
+        margin: 0 !important;
       }
 
       /* ── Bandeau Mode original masqué (déplacé par JS dans la ligne Correction) ── */
@@ -24,15 +25,15 @@
       #bpdf-correction-row {
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
-        padding: 4px 8px !important;
+        justify-content: space-between !important;
+        padding: 2px 8px !important;
+        margin: 0 !important;
         flex-wrap: nowrap !important;
       }
       #bpdf-correction-row .bpdf-mode-compact {
         display: flex;
         align-items: center;
         gap: 3px;
-        margin-left: auto;
       }
       #bpdf-correction-row .bpdf-mode-compact button {
         padding: 3px 8px !important;
@@ -47,21 +48,28 @@
         border-radius: 4px !important;
       }
 
+      /* ── Réduire marges globales du conteneur stats ── */
+      #bpdf-stats-box-wrapper {
+        padding: 4px !important;
+        margin: 0 8px 2px !important;
+        gap: 2px !important;
+      }
+
       /* ── Stats : row compact ── */
       #bpdf-stats-box {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: flex-start !important;
-        gap: 8px !important;
+        gap: 6px !important;
         overflow: hidden !important;
-        padding: 8px !important;
-        margin-bottom: 2px !important;
+        padding: 6px !important;
+        margin: 0 !important;
       }
       #bpdf-stats-row {
         flex-direction: column !important;
         align-items: flex-start !important;
-        gap: 2px !important;
+        gap: 1px !important;
         font-size: 11px !important;
       }
 
@@ -70,15 +78,16 @@
       #bpdf-competences-compact {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 4px !important;
-        padding: 0 8px 4px !important;
+        gap: 3px !important;
+        padding: 0 0 2px !important;
+        margin: 0 !important;
       }
       #bpdf-competences-compact .bpdf-comp-chip {
         display: flex;
         align-items: center;
-        gap: 4px;
-        padding: 4px 8px;
-        border-radius: 8px;
+        gap: 3px;
+        padding: 3px 6px;
+        border-radius: 6px;
         font-size: 11px;
         font-weight: 600;
         color: white;
@@ -86,7 +95,7 @@
         overflow: hidden;
       }
       #bpdf-competences-compact .bpdf-comp-chip .bpdf-comp-icon {
-        font-size: 14px;
+        font-size: 13px;
         flex-shrink: 0;
       }
 
@@ -94,16 +103,16 @@
       #bpdf-toolbar {
         display: flex !important;
         flex-wrap: nowrap !important;
-        gap: 4px !important;
+        gap: 3px !important;
         justify-content: center !important;
         padding: 0 2px !important;
-        margin-bottom: 4px !important;
+        margin: 0 0 2px !important;
       }
       #bpdf-toolbar button {
         flex: 1 1 0 !important;
         min-width: 0 !important;
         font-size: 9px !important;
-        padding: 5px 2px !important;
+        padding: 4px 2px !important;
         word-break: break-word !important;
       }
       /* Masquer la recherche Svelte native (remplacée par la nôtre) */
@@ -113,7 +122,7 @@
       /* Panneau mobile navigation */
       #bpdf-mobile-nav {
         display: block !important;
-        padding: 4px 8px;
+        padding: 2px 8px;
       }
       #bpdf-mobile-nav .bpdf-mobile-search {
         width: 100%; padding: 8px 12px;
@@ -999,6 +1008,9 @@
         // Taguer aussi le bloc global des stats
         let box = row?.parentElement;
         if (box && !box.id) box.id = 'bpdf-stats-box';
+        // Taguer le wrapper parent (la boîte avec bordure/fond bleu clair)
+        let wrapper = box?.parentElement;
+        if (wrapper && !wrapper.id) wrapper.id = 'bpdf-stats-box-wrapper';
       }
     });
     document.querySelectorAll('button').forEach(btn => {
