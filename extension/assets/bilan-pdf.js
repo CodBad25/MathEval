@@ -8,12 +8,19 @@
   mobileStyle.textContent = `
     @media (max-width: 768px) {
       body { overflow-x: hidden !important; }
+      /* Masquer le titre "Vue d'ensemble" */
       #bpdf-overview-title { display: none !important; }
       #bpdf-overview-header {
         flex-wrap: wrap !important;
         justify-content: center !important;
-        gap: 8px !important;
+        gap: 4px !important;
+        padding: 0 !important;
       }
+      /* Masquer le bandeau Mode/Réinitialiser */
+      #bpdf-mode-bar { display: none !important; }
+      /* Masquer la barre de recherche Svelte native (on a la nôtre) */
+      #bpdf-native-search { display: none !important; }
+      /* Stats compactes */
       #bpdf-stats-row {
         flex-direction: column !important;
         align-items: flex-start !important;
@@ -26,37 +33,43 @@
         flex-wrap: wrap !important;
         gap: 8px !important;
         overflow: hidden !important;
+        padding: 8px !important;
+        margin-bottom: 4px !important;
       }
+      /* Toolbar compact */
       #bpdf-toolbar {
         display: flex !important;
         flex-wrap: nowrap !important;
         gap: 6px !important;
         justify-content: center !important;
         padding: 0 2px !important;
+        margin-bottom: 4px !important;
       }
       #bpdf-toolbar button {
         flex: 1 1 0 !important;
         min-width: 0 !important;
         font-size: 10px !important;
-        padding: 8px 4px !important;
+        padding: 6px 3px !important;
         word-break: break-word !important;
       }
+      /* Masquer la grille d'élèves */
       #bpdf-student-grid { display: none !important; }
+      /* Panneau mobile navigation */
       #bpdf-mobile-nav {
         display: block !important;
-        padding: 8px;
+        padding: 4px 8px;
       }
       #bpdf-mobile-nav .bpdf-mobile-search {
         width: 100%; padding: 8px 12px;
         border: 1px solid #ddd; border-radius: 8px;
-        font-size: 14px; margin-bottom: 8px;
+        font-size: 14px; margin-bottom: 6px;
         box-sizing: border-box;
         background: #fff;
       }
       #bpdf-mobile-nav .bpdf-nav-row {
         display: flex; align-items: center;
         justify-content: space-between;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
       #bpdf-mobile-nav .bpdf-nav-btn {
         background: #3498db; color: white;
@@ -798,6 +811,29 @@
         if (!h1.id) h1.id = 'bpdf-overview-title';
         const parent = h1.parentElement;
         if (parent && !parent.id) parent.id = 'bpdf-overview-header';
+      }
+    });
+    // Taguer le bandeau Mode/Réinitialiser pour le masquer en mobile
+    document.querySelectorAll('button').forEach(btn => {
+      if ((btn.textContent.includes('Classique') || btn.textContent.includes('DNB')) && !btn.dataset.bpdfModeTagged) {
+        btn.dataset.bpdfModeTagged = '1';
+        // Remonter au conteneur flex du bandeau Mode + Réinitialiser
+        let bar = btn.closest('[class*="flex"]');
+        if (bar && bar.querySelector('button') && !bar.id) {
+          // Vérifier qu'on a bien le bon conteneur (avec Classique + DNB + Réinitialiser)
+          const btns = bar.querySelectorAll('button');
+          const texts = Array.from(btns).map(b => b.textContent);
+          if (texts.some(t => t.includes('initialiser'))) {
+            bar.id = 'bpdf-mode-bar';
+          }
+        }
+      }
+    });
+    // Taguer la barre de recherche Svelte native pour la masquer en mobile
+    document.querySelectorAll('input[placeholder]').forEach(inp => {
+      if (inp.placeholder.includes('Rechercher un') && !inp.id && !inp.classList.contains('bpdf-mobile-search')) {
+        const wrapper = inp.parentElement;
+        if (wrapper && !wrapper.id) wrapper.id = 'bpdf-native-search';
       }
     });
     // Taguer la ligne de stats (terminé/en cours/non commencé) pour CSS mobile
