@@ -27,8 +27,9 @@
         align-items: center !important;
         justify-content: space-between !important;
         padding: 2px 8px !important;
-        margin: 0 !important;
+        margin: 4px 0 0 !important;
         flex-wrap: nowrap !important;
+        clear: both !important;
       }
       #bpdf-correction-row .bpdf-mode-compact {
         display: flex;
@@ -48,11 +49,11 @@
         border-radius: 4px !important;
       }
 
-      /* ── Réduire marges globales du conteneur stats ── */
+      /* ── Réduire marges globales du conteneur stats (boîte bleu clair) ── */
       #bpdf-stats-box-wrapper {
-        padding: 4px !important;
-        margin: 0 8px 2px !important;
-        gap: 2px !important;
+        padding: 4px 6px !important;
+        margin: 2px 8px !important;
+        gap: 0 !important;
       }
 
       /* ── Stats : row compact ── */
@@ -63,7 +64,7 @@
         align-items: flex-start !important;
         gap: 6px !important;
         overflow: hidden !important;
-        padding: 6px !important;
+        padding: 2px !important;
         margin: 0 !important;
       }
       #bpdf-stats-row {
@@ -119,22 +120,24 @@
       #bpdf-native-search { display: none !important; }
       /* Masquer la grille d'élèves */
       #bpdf-student-grid { display: none !important; }
+      /* Espace entre toolbar et mobile-nav */
+      #bpdf-toolbar + * { margin-top: 0 !important; }
       /* Panneau mobile navigation */
       #bpdf-mobile-nav {
         display: block !important;
-        padding: 2px 8px;
+        padding: 0 8px;
       }
       #bpdf-mobile-nav .bpdf-mobile-search {
-        width: 100%; padding: 8px 12px;
+        width: 100%; padding: 6px 10px;
         border: 1px solid #ddd; border-radius: 8px;
-        font-size: 14px; margin-bottom: 6px;
+        font-size: 13px; margin-bottom: 4px;
         box-sizing: border-box;
         background: #fff;
       }
       #bpdf-mobile-nav .bpdf-nav-row {
         display: flex; align-items: center;
         justify-content: space-between;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
       }
       #bpdf-mobile-nav .bpdf-nav-btn {
         background: #3498db; color: white;
