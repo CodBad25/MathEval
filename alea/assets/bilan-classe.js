@@ -88,17 +88,25 @@
       const d = corr[ex.exerciceIndex]?.[q.questionIndex];
       if (d?.status) {
         const pts = q.points || 1;
-        let earned = d.status === 'TB' ? pts : d.status === 'TB-' ? pts / 2 : 0;
+        const hasCompStatus = d.compStatus && Object.keys(d.compStatus).length > 0;
         const w = cw?.[ex.exerciceIndex];
         if (w) Object.entries(w).forEach(([comp, pct]) => {
           const k = normalizeComp(comp);
-          if (!we[k]) we[k] = { c: 0, t: 0 }; we[k].t += pts * pct; we[k].c += earned * pct;
+          if (!we[k]) we[k] = { c: 0, t: 0 }; we[k].t += pts * pct;
+          const compSt = hasCompStatus ? (d.compStatus[k] || d.status) : d.status;
+          const earned = compSt === 'TB' ? pts : compSt === 'TB-' ? pts / 2 : 0;
+          we[k].c += earned * pct;
         });
         else {
           const cs = ex.detailParQuestion ? q.competences : ex.competencesExercice;
           if (!cs || !cs.length) return;
           const sh = 1 / cs.length;
-          cs.forEach(comp => { const k = normalizeComp(comp); if (!we[k]) we[k] = { c: 0, t: 0 }; we[k].t += pts * sh; we[k].c += earned * sh; });
+          cs.forEach(comp => {
+            const k = normalizeComp(comp); if (!we[k]) we[k] = { c: 0, t: 0 }; we[k].t += pts * sh;
+            const compSt = hasCompStatus ? (d.compStatus[k] || d.status) : d.status;
+            const earned = compSt === 'TB' ? pts : compSt === 'TB-' ? pts / 2 : 0;
+            we[k].c += earned * sh;
+          });
         }
       }
     }));

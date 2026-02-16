@@ -8,6 +8,98 @@
   const PRESET_KEY = 'tbMinusPresetComments';
   let activePopover = null;
 
+  // === Scoring par compétence ===
+  const compEmojiMap = {
+    modeliser:'🏗️', calculer:'🧮', raisonner:'🧩',
+    communiquer:'💬', representer:'🎨', chercher:'🔍'
+  };
+  const compColorMap = {
+    modeliser:'#9b59b6', calculer:'#3498db', raisonner:'#2ecc71',
+    communiquer:'#e67e22', representer:'#e74c3c', chercher:'#f1c40f'
+  };
+  function normalizeComp(n) { return n ? n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : n; }
+  function niceComp(k) {
+    return { modeliser:'Modéliser', calculer:'Calculer', raisonner:'Raisonner', communiquer:'Communiquer', representer:'Représenter', chercher:'Chercher' }[k] || k.charAt(0).toUpperCase()+k.slice(1);
+  }
+
+  // Get competencies for a specific question
+  function getQuestionCompetences(exIndex, qIndex) {
+    const exs = window.__getExercises ? window.__getExercises() : [];
+    const ex = exs[exIndex];
+    if (!ex) return [];
+    let cw;
+    try { cw = JSON.parse(localStorage.getItem('competencyWeights') || 'null'); } catch { cw = null; }
+    if (cw && cw[ex.exerciceIndex]) {
+      return Object.keys(cw[ex.exerciceIndex]).map(c => normalizeComp(c));
+    }
+    if (ex.detailParQuestion) {
+      const q = ex.questions[qIndex];
+      if (q && q.competences && q.competences.length) return q.competences.map(c => normalizeComp(c));
+    }
+    if (ex.competencesExercice && ex.competencesExercice.length) {
+      return ex.competencesExercice.map(c => normalizeComp(c));
+    }
+    return [];
+  }
+
+  // Get compStatus for a student/exercise/question
+  function getCompStatus(exIndex, qIndex) {
+    const sid = window.__getStudentId ? window.__getStudentId() : null;
+    if (!sid) return {};
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      return corr[sid]?.[exIndex]?.[qIndex]?.compStatus || {};
+    } catch { return {}; }
+  }
+
+  // Save a single competency status
+  function saveCompStatus(exIndex, qIndex, comp, status) {
+    const sid = window.__getStudentId ? window.__getStudentId() : null;
+    if (!sid) return;
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      if (!corr[sid] || !corr[sid][exIndex] || !corr[sid][exIndex][qIndex]) return;
+      const qData = corr[sid][exIndex][qIndex];
+      if (!qData.compStatus) qData.compStatus = {};
+      qData.compStatus[comp] = status;
+      // Recalculate global status from compStatus
+      const comps = getQuestionCompetences(exIndex, qIndex);
+      const statuses = comps.map(c => qData.compStatus[c]).filter(Boolean);
+      if (statuses.length > 0) {
+        if (statuses.every(s => s === 'TB')) qData.status = 'TB';
+        else if (statuses.every(s => s === 'TF')) qData.status = 'TF';
+        else qData.status = 'TB-';
+        // Recalculate points
+        const exs = window.__getExercises ? window.__getExercises() : [];
+        const ex = exs[exIndex];
+        if (ex) {
+          const q = ex.questions[qIndex];
+          const pts = q ? q.points || 1 : 1;
+          qData.pointsObtenus = qData.status === 'TB' ? pts : qData.status === 'TB-' ? pts / 2 : 0;
+        }
+      }
+      localStorage.setItem('studentCorrections', JSON.stringify(corr));
+      // Update Svelte UI
+      if (window.__setEval) window.__setEval(exIndex, qIndex, qData.status);
+    } catch { /* ignore */ }
+  }
+
+  // Sync compStatus when global status changes (set all comps to same status)
+  function syncCompStatusFromGlobal(exIndex, qIndex, globalStatus) {
+    const sid = window.__getStudentId ? window.__getStudentId() : null;
+    if (!sid) return;
+    const comps = getQuestionCompetences(exIndex, qIndex);
+    if (comps.length === 0) return;
+    try {
+      const corr = JSON.parse(localStorage.getItem('studentCorrections') || '{}');
+      if (!corr[sid]?.[exIndex]?.[qIndex]) return;
+      const qData = corr[sid][exIndex][qIndex];
+      if (!qData.compStatus) qData.compStatus = {};
+      comps.forEach(c => { qData.compStatus[c] = globalStatus; });
+      localStorage.setItem('studentCorrections', JSON.stringify(corr));
+    } catch { /* ignore */ }
+  }
+
   // === Backup/Restore : sauvegarde les données TB- dans studentCorrections ===
   // Comme ça l'export JSON natif les embarque, et l'import les restaure.
   function backupTBData() {
@@ -282,6 +374,7 @@
       if (window.__setEval) {
         window.__setEval(exIndex, qIndex, 'TB-');
       }
+      syncCompStatusFromGlobal(exIndex, qIndex, 'TB-');
       setTimeout(() => updateButtonStyles(), 50);
       showPopover(btn, exIndex, qIndex);
     });
@@ -399,6 +492,101 @@
     updateExerciseScore();
   }
 
+  // Create competency toggle button (▼) and panel for a question
+  function createCompToggle(qIndex) {
+    const exIndex = getExIndex();
+    const comps = getQuestionCompetences(exIndex, qIndex);
+    if (comps.length === 0) return null;
+
+    const wrapper = document.createElement('div');
+    wrapper.dataset.compToggle = qIndex;
+    wrapper.style.cssText = 'display:inline-flex;align-items:center;position:relative';
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'px-1 py-1 rounded text-xs transition-all';
+    toggleBtn.style.cssText = 'background:none;border:1px solid #cbd5e1;color:#64748b;cursor:pointer;font-size:11px;line-height:1;margin-left:4px;min-width:22px;text-align:center';
+    toggleBtn.textContent = '▼';
+    toggleBtn.title = 'Scoring par compétence';
+    wrapper.appendChild(toggleBtn);
+
+    // Create panel (hidden by default)
+    const panel = document.createElement('div');
+    panel.style.cssText = 'display:none;position:absolute;top:100%;left:-200px;z-index:100;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:280px;margin-top:4px';
+    panel.dataset.compPanel = qIndex;
+
+    function renderPanel() {
+      const currentExIndex = getExIndex();
+      const currentComps = getQuestionCompetences(currentExIndex, qIndex);
+      const compSt = getCompStatus(currentExIndex, qIndex);
+      panel.innerHTML = '';
+      currentComps.forEach(comp => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:3px 0;gap:8px';
+
+        const label = document.createElement('span');
+        label.style.cssText = 'font-size:12px;font-weight:600;color:' + (compColorMap[comp] || '#666') + ';white-space:nowrap';
+        label.textContent = (compEmojiMap[comp] || '') + ' ' + niceComp(comp);
+        row.appendChild(label);
+
+        const btns = document.createElement('div');
+        btns.style.cssText = 'display:flex;gap:3px';
+
+        ['TB', 'TB-', 'TF'].forEach(st => {
+          const b = document.createElement('button');
+          b.textContent = st;
+          const isActive = compSt[comp] === st;
+          const colors = {
+            'TB': { bg: isActive ? '#22c55e' : '#f0fdf4', color: isActive ? '#fff' : '#16a34a', border: '#86efac' },
+            'TB-': { bg: isActive ? '#84cc16' : '#f7fee7', color: isActive ? '#fff' : '#65a30d', border: '#bef264' },
+            'TF': { bg: isActive ? '#ef4444' : '#fef2f2', color: isActive ? '#fff' : '#dc2626', border: '#fca5a5' }
+          };
+          const c = colors[st];
+          b.style.cssText = `padding:2px 8px;border:1px solid ${c.border};border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;background:${c.bg};color:${c.color};transition:all .15s`;
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            saveCompStatus(currentExIndex, qIndex, comp, st);
+            renderPanel();
+            setTimeout(() => updateButtonStyles(), 50);
+          });
+          btns.appendChild(b);
+        });
+        row.appendChild(btns);
+        panel.appendChild(row);
+      });
+    }
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = panel.style.display !== 'none';
+      // Close other open panels
+      document.querySelectorAll('[data-comp-panel]').forEach(p => { p.style.display = 'none'; });
+      document.querySelectorAll('[data-comp-toggle]').forEach(w => {
+        const btn = w.querySelector('button');
+        if (btn) { btn.textContent = '▼'; btn.style.background = 'none'; btn.style.color = '#64748b'; }
+      });
+      if (!isVisible) {
+        renderPanel();
+        panel.style.display = 'block';
+        toggleBtn.textContent = '▲';
+        toggleBtn.style.background = '#e0f2fe';
+        toggleBtn.style.color = '#0284c7';
+      }
+    });
+
+    // Close panel on outside click
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target) && !panel.contains(e.target)) {
+        panel.style.display = 'none';
+        toggleBtn.textContent = '▼';
+        toggleBtn.style.background = 'none';
+        toggleBtn.style.color = '#64748b';
+      }
+    });
+
+    wrapper.appendChild(panel);
+    return wrapper;
+  }
+
   // Inject TB- buttons into the page
   function injectButtons() {
     const tbButtons = document.querySelectorAll('button[title^="Tout Bon"]');
@@ -408,6 +596,24 @@
       const tfBtn = parent.querySelector('button[title^="Tout Faux"]');
       if (!tfBtn) return;
       parent.insertBefore(createTBMinusBtn(idx), tfBtn);
+      // Add competency toggle button (after TF button)
+      if (!parent.querySelector('[data-comp-toggle="' + idx + '"]')) {
+        const compToggle = createCompToggle(idx);
+        if (compToggle) parent.appendChild(compToggle);
+      }
+      // Hook TB/TF native buttons to sync compStatus
+      if (!tbBtn.dataset.compHooked) {
+        tbBtn.dataset.compHooked = '1';
+        tbBtn.addEventListener('click', () => {
+          setTimeout(() => syncCompStatusFromGlobal(getExIndex(), idx, 'TB'), 50);
+        });
+      }
+      if (tfBtn && !tfBtn.dataset.compHooked) {
+        tfBtn.dataset.compHooked = '1';
+        tfBtn.addEventListener('click', () => {
+          setTimeout(() => syncCompStatusFromGlobal(getExIndex(), idx, 'TF'), 50);
+        });
+      }
     });
 
     const rapidTBBtns = document.querySelectorAll('button[title="Marquer toutes les questions comme Tout Bon"]');
