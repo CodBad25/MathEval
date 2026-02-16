@@ -132,8 +132,9 @@
       /* Boutons flottants masqués/réduits via JS (tagFloatingButtons) */
       /* Masquer la grille d'élèves */
       #bpdf-student-grid { display: none !important; }
-      /* Espace entre toolbar et mobile-nav */
-      #bpdf-toolbar + * { margin-top: 0 !important; }
+      /* Réduire espaces autour de la toolbar */
+      #bpdf-toolbar + * { margin-top: 0 !important; padding-top: 0 !important; }
+      #bpdf-stats-box-wrapper + * { margin-top: 0 !important; padding-top: 0 !important; }
       /* Panneau mobile navigation */
       #bpdf-mobile-nav {
         display: block !important;
@@ -894,14 +895,21 @@
         btn.dataset.bpdfHidden = '1';
         btn.style.display = 'none';
       }
-      // Réduire le bouton Sync
-      if (txt.includes('Sync') && btn.style.position === 'fixed' && !btn.dataset.bpdfShrunk) {
-        btn.dataset.bpdfShrunk = '1';
-        btn.style.transform = 'scale(0.65)';
-        btn.style.transformOrigin = 'bottom left';
-        btn.style.opacity = '0.6';
-        btn.style.left = '4px';
-        btn.style.bottom = '4px';
+      // Masquer le bouton Sync flottant (remplacé par un bouton dans la toolbar)
+      if (txt.includes('Sync') && btn.style.position === 'fixed' && !btn.dataset.bpdfHidden) {
+        btn.dataset.bpdfHidden = '1';
+        btn.style.display = 'none';
+        // Ajouter un bouton Sync compact dans la toolbar s'il n'existe pas
+        const toolbar = document.getElementById('bpdf-toolbar');
+        if (toolbar && !document.getElementById('bpdf-sync-toolbar-btn')) {
+          const syncBtn = document.createElement('button');
+          syncBtn.id = 'bpdf-sync-toolbar-btn';
+          syncBtn.className = toolbar.querySelector('button')?.className || '';
+          syncBtn.innerHTML = '\u2601\ufe0f Sync';
+          syncBtn.style.cssText = toolbar.querySelector('button')?.style.cssText || '';
+          syncBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); btn.click(); });
+          toolbar.appendChild(syncBtn);
+        }
       }
     });
   }
@@ -958,7 +966,7 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v13h15</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v13h10</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
