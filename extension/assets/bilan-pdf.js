@@ -3,6 +3,21 @@
   'use strict';
   if (!new URLSearchParams(window.location.search).get('v')?.includes('correction')) return;
 
+  // ── Mobile responsive fixes ──
+  const mobileStyle = document.createElement('style');
+  mobileStyle.textContent = `
+    @media (max-width: 768px) {
+      body { overflow-x: hidden !important; }
+      #bpdf-overview-title { display: none !important; }
+      #bpdf-overview-header {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+      }
+    }
+  `;
+  document.head.appendChild(mobileStyle);
+
   const jspdfScript = document.createElement('script');
   jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
   document.head.appendChild(jspdfScript);
@@ -588,6 +603,14 @@
 
   // ===================== Injection boutons =====================
   function injectButtons() {
+    // Taguer le titre "Vue d'ensemble" et son conteneur pour le CSS mobile
+    document.querySelectorAll('h1').forEach(h1 => {
+      if (h1.textContent.includes('Vue d\u2019ensemble') || h1.textContent.includes('Vue d\'ensemble')) {
+        if (!h1.id) h1.id = 'bpdf-overview-title';
+        const parent = h1.parentElement;
+        if (parent && !parent.id) parent.id = 'bpdf-overview-header';
+      }
+    });
     document.querySelectorAll('button').forEach(btn => {
       // Supprimer l'ancien bouton "Imprimer bilan classe"
       if (btn.textContent.includes('Imprimer bilan classe') && !btn.dataset.bpdfOldRemoved) {
