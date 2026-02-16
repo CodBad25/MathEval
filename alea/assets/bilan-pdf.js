@@ -18,9 +18,13 @@
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 2px !important;
+        font-size: 12px !important;
       }
       #bpdf-stats-box {
+        display: flex !important;
+        flex-direction: row !important;
         flex-wrap: wrap !important;
+        gap: 8px !important;
         overflow: hidden !important;
       }
       #bpdf-toolbar {
@@ -37,7 +41,40 @@
         padding: 8px 4px !important;
         word-break: break-word !important;
       }
+      #bpdf-student-grid { display: none !important; }
+      #bpdf-mobile-nav {
+        display: block !important;
+        padding: 8px;
+      }
+      #bpdf-mobile-nav .bpdf-mobile-search {
+        width: 100%; padding: 8px 12px;
+        border: 1px solid #ddd; border-radius: 8px;
+        font-size: 14px; margin-bottom: 8px;
+        box-sizing: border-box;
+        background: #fff;
+      }
+      #bpdf-mobile-nav .bpdf-nav-row {
+        display: flex; align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      #bpdf-mobile-nav .bpdf-nav-btn {
+        background: #3498db; color: white;
+        border: none; border-radius: 6px;
+        padding: 6px 14px; font-size: 16px; cursor: pointer;
+      }
+      #bpdf-mobile-nav .bpdf-nav-btn:disabled {
+        background: #bdc3c7; cursor: default;
+      }
+      #bpdf-mobile-nav .bpdf-nav-indicator {
+        font-size: 13px; color: #666; font-weight: 500;
+      }
+      #bpdf-mobile-nav .bpdf-card-zone > * {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
     }
+    #bpdf-mobile-nav { display: none; }
   `;
   document.head.appendChild(mobileStyle);
 
@@ -624,6 +661,135 @@
     });
   }
 
+  // ===================== Mobile navigation panel =====================
+  function createMobileNav() {
+    if (window.innerWidth > 768) return;
+    if (document.getElementById('bpdf-mobile-nav')) {
+      // Refresh card if grid changed
+      refreshMobileCard();
+      return;
+    }
+
+    const grid = document.getElementById('bpdf-student-grid');
+    if (!grid || !grid.children.length) return;
+
+    const cards = Array.from(grid.children);
+    let currentIdx = 0;
+    let filteredIndices = cards.map((_, i) => i);
+
+    const nav = document.createElement('div');
+    nav.id = 'bpdf-mobile-nav';
+
+    // Search bar
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.className = 'bpdf-mobile-search';
+    search.placeholder = 'Rechercher un \u00e9l\u00e8ve...';
+    nav.appendChild(search);
+
+    // Nav row
+    const navRow = document.createElement('div');
+    navRow.className = 'bpdf-nav-row';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'bpdf-nav-btn';
+    prevBtn.textContent = '\u2190';
+    prevBtn.title = 'Pr\u00e9c\u00e9dent';
+
+    const indicator = document.createElement('span');
+    indicator.className = 'bpdf-nav-indicator';
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'bpdf-nav-btn';
+    nextBtn.textContent = '\u2192';
+    nextBtn.title = 'Suivant';
+
+    navRow.appendChild(prevBtn);
+    navRow.appendChild(indicator);
+    navRow.appendChild(nextBtn);
+    nav.appendChild(navRow);
+
+    // Card zone
+    const cardZone = document.createElement('div');
+    cardZone.className = 'bpdf-card-zone';
+    nav.appendChild(cardZone);
+
+    function showCard(idx) {
+      if (filteredIndices.length === 0) {
+        cardZone.innerHTML = '<p style="text-align:center;color:#999;padding:16px">Aucun \u00e9l\u00e8ve trouv\u00e9</p>';
+        indicator.textContent = '0/0';
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        return;
+      }
+      currentIdx = idx;
+      cardZone.innerHTML = '';
+      const original = cards[filteredIndices[idx]];
+      const clone = original.cloneNode(true);
+      // Re-route click to original card (cloneNode doesn't copy JS listeners)
+      clone.addEventListener('click', () => original.click());
+      // Also re-route clicks on child buttons/links
+      clone.querySelectorAll('button, a, [role="button"]').forEach((el, i) => {
+        const origEl = original.querySelectorAll('button, a, [role="button"]')[i];
+        if (origEl) el.addEventListener('click', (e) => { e.stopPropagation(); origEl.click(); });
+      });
+      cardZone.appendChild(clone);
+      indicator.textContent = `\u00c9l\u00e8ve ${idx + 1}/${filteredIndices.length}`;
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === filteredIndices.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentIdx > 0) showCard(currentIdx - 1);
+    });
+    nextBtn.addEventListener('click', () => {
+      if (currentIdx < filteredIndices.length - 1) showCard(currentIdx + 1);
+    });
+
+    // Search filter
+    search.addEventListener('input', () => {
+      const q = search.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (!q) {
+        filteredIndices = cards.map((_, i) => i);
+      } else {
+        filteredIndices = cards.map((c, i) => {
+          const text = c.textContent.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return text.includes(q) ? i : -1;
+        }).filter(i => i >= 0);
+      }
+      showCard(0);
+    });
+
+    // Insert before the grid
+    grid.parentElement.insertBefore(nav, grid);
+    showCard(0);
+
+    // Store refresh function for MutationObserver re-calls
+    nav._bpdfRefresh = function() {
+      const newCards = Array.from(grid.children);
+      if (newCards.length !== cards.length) {
+        cards.length = 0;
+        cards.push(...newCards);
+        filteredIndices = cards.map((_, i) => i);
+        search.value = '';
+        showCard(0);
+      }
+    };
+  }
+
+  function refreshMobileCard() {
+    const nav = document.getElementById('bpdf-mobile-nav');
+    if (nav && nav._bpdfRefresh) nav._bpdfRefresh();
+  }
+
+  // Handle resize: show/hide mobile nav
+  window.addEventListener('resize', () => {
+    const nav = document.getElementById('bpdf-mobile-nav');
+    if (window.innerWidth <= 768) {
+      if (!nav) createMobileNav();
+    }
+  });
+
   // ===================== Injection boutons =====================
   function injectButtons() {
     // Taguer le titre "Vue d'ensemble" et son conteneur pour le CSS mobile
@@ -711,6 +877,15 @@
         btn.parentElement.insertBefore(b, btn.nextSibling);
       }
     });
+    // Taguer la grille d'élèves pour le CSS mobile
+    document.querySelectorAll('[class*="grid"]').forEach(g => {
+      if (g.className.includes('grid-cols-1') && g.className.includes('md:grid-cols-2') && !g.id) {
+        g.id = 'bpdf-student-grid';
+      }
+    });
+    // Créer le panneau mobile de navigation
+    createMobileNav();
+
     document.querySelectorAll('button').forEach(btn => {
       if ((btn.textContent.includes('Imprimer ce bilan')||btn.textContent.includes('🖨️ Imprimer')) && btn.closest('.fixed,dialog,[role="dialog"]') && !btn.dataset.bpdfSingle) {
         btn.dataset.bpdfSingle = '1';
