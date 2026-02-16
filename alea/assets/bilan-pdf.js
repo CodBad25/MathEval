@@ -14,6 +14,22 @@
         justify-content: center !important;
         gap: 8px !important;
       }
+      #bpdf-toolbar {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        justify-content: center !important;
+        padding: 0 4px !important;
+      }
+      #bpdf-toolbar button {
+        font-size: 11px !important;
+        padding: 6px 8px !important;
+        min-width: 0 !important;
+      }
+      #bpdf-toolbar button svg,
+      #bpdf-toolbar button img {
+        width: 16px !important;
+        height: 16px !important;
+      }
     }
   `;
   document.head.appendChild(mobileStyle);
@@ -629,10 +645,12 @@
         btn.remove();
       }
     });
-    // Ajouter "Importer JSON" à côté de "Exporter JSON"
+    // Ajouter "Importer JSON" à côté de "Exporter JSON" + taguer la barre d'outils
     document.querySelectorAll('button').forEach(btn => {
       if (btn.textContent.includes('Exporter JSON') && !btn.dataset.bpdfImportInjected) {
         btn.dataset.bpdfImportInjected = '1';
+        // Taguer le conteneur parent comme barre d'outils pour le CSS mobile
+        if (btn.parentElement && !btn.parentElement.id) btn.parentElement.id = 'bpdf-toolbar';
         const b = document.createElement('button');
         b.className = btn.className;
         b.innerHTML = '📂 Importer JSON';
