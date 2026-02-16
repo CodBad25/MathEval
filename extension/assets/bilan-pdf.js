@@ -16,7 +16,55 @@
         gap: 4px !important;
         padding: 0 !important;
       }
-      /* Stats : terminé/en cours/non commencé à DROITE de Min/Méd/Max */
+
+      /* ── Bandeau Mode/Réinitialiser : compact sur une ligne à côté de "Correction" ── */
+      #bpdf-mode-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 4px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      /* Le groupe Mode: Classique/DNB — rendre compact */
+      #bpdf-mode-bar > *:first-child {
+        flex-shrink: 0 !important;
+        padding: 4px 6px !important;
+        font-size: 11px !important;
+      }
+      #bpdf-mode-bar > *:first-child button {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+      }
+      /* Le bouton Réinitialiser — petit icône seulement */
+      #bpdf-mode-bar > *:last-child,
+      #bpdf-mode-bar > button:last-child {
+        padding: 4px 8px !important;
+        font-size: 0 !important;
+        min-width: 0 !important;
+        flex-shrink: 0 !important;
+      }
+      /* Garder l'emoji visible via ::first-letter ou contenu emoji */
+      #bpdf-mode-bar > *:last-child *,
+      #bpdf-mode-bar > button:last-child * {
+        font-size: 16px !important;
+      }
+      /* Conteneur Correction + Mode sur la même ligne */
+      #bpdf-correction-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        padding: 4px 8px !important;
+      }
+      #bpdf-correction-row > h2,
+      #bpdf-correction-row > [class*="text-"] {
+        margin: 0 !important;
+        font-size: 16px !important;
+      }
+
+      /* ── Stats : row compact ── */
       #bpdf-stats-box {
         display: flex !important;
         flex-direction: row !important;
@@ -33,11 +81,31 @@
         gap: 2px !important;
         font-size: 11px !important;
       }
-      /* Toolbar compact */
+
+      /* ── Compétences : ligne horizontale compacte ── */
+      #bpdf-competences-section { display: none !important; }
+      #bpdf-competences-compact {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        padding: 2px 0 6px !important;
+      }
+      #bpdf-competences-compact .bpdf-comp-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+      }
+
+      /* ── Toolbar compact ── */
       #bpdf-toolbar {
         display: flex !important;
         flex-wrap: nowrap !important;
-        gap: 6px !important;
+        gap: 4px !important;
         justify-content: center !important;
         padding: 0 2px !important;
         margin-bottom: 4px !important;
@@ -45,8 +113,8 @@
       #bpdf-toolbar button {
         flex: 1 1 0 !important;
         min-width: 0 !important;
-        font-size: 10px !important;
-        padding: 6px 3px !important;
+        font-size: 9px !important;
+        padding: 5px 2px !important;
         word-break: break-word !important;
       }
       /* Masquer la recherche Svelte native (remplacée par la nôtre) */
@@ -87,6 +155,7 @@
       }
     }
     #bpdf-mobile-nav { display: none; }
+    #bpdf-competences-compact { display: none; }
   `;
   document.head.appendChild(mobileStyle);
 
@@ -820,6 +889,74 @@
         if (ph.includes('Rechercher') && !inp.classList.contains('bpdf-mobile-search')) {
           let wrapper = inp.parentElement;
           if (wrapper) wrapper.id = 'bpdf-native-search';
+        }
+      });
+    }
+    // Taguer le bandeau Mode/Réinitialiser
+    if (!document.getElementById('bpdf-mode-bar')) {
+      document.querySelectorAll('button').forEach(btn => {
+        if (document.getElementById('bpdf-mode-bar')) return;
+        if (btn.textContent.trim().includes('initialiser')) {
+          let el = btn.parentElement;
+          for (let i = 0; i < 4 && el; i++) {
+            const allBtns = el.querySelectorAll('button');
+            const texts = Array.from(allBtns).map(b => b.textContent);
+            if (texts.some(t => t.includes('Classique')) && texts.some(t => t.includes('initialiser'))) {
+              el.id = 'bpdf-mode-bar';
+              return;
+            }
+            el = el.parentElement;
+          }
+        }
+      });
+    }
+    // Taguer la section compétences et créer la version compacte mobile
+    if (!document.getElementById('bpdf-competences-section')) {
+      document.querySelectorAll('span, p, div').forEach(el => {
+        if (document.getElementById('bpdf-competences-section')) return;
+        if (el.textContent.trim() === 'Compétences:' || el.textContent.trim() === 'Compétences :') {
+          // Le conteneur parent qui englobe "Compétences:" et les badges
+          let section = el.parentElement;
+          if (section && !section.id) {
+            section.id = 'bpdf-competences-section';
+            // Créer la version compacte
+            if (!document.getElementById('bpdf-competences-compact') && window.innerWidth <= 768) {
+              const compColors = {
+                modeliser: '#9b59b6', calculer: '#3498db', raisonner: '#2ecc71',
+                communiquer: '#e67e22', representer: '#e74c3c', chercher: '#f1c40f'
+              };
+              const compAbr = {
+                modeliser: 'Mo', calculer: 'Ca', raisonner: 'Ra',
+                communiquer: 'Co', representer: 'Re', chercher: 'Ch'
+              };
+              const compact = document.createElement('div');
+              compact.id = 'bpdf-competences-compact';
+              // Extraire les compétences depuis les badges existants
+              section.querySelectorAll('[class*="rounded"], [class*="badge"], span[style]').forEach(badge => {
+                const text = badge.textContent.trim();
+                const match = text.match(/(\S+?)\.{0,3}\s+(\d+)%/);
+                if (match) {
+                  const chip = document.createElement('span');
+                  chip.className = 'bpdf-comp-chip';
+                  const compName = match[1].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                  let bgColor = '#999';
+                  let abr = match[1];
+                  Object.keys(compAbr).forEach(k => {
+                    if (compName.startsWith(k.substring(0, 4))) {
+                      bgColor = compColors[k];
+                      abr = compAbr[k];
+                    }
+                  });
+                  chip.style.background = bgColor;
+                  chip.textContent = abr + ' ' + match[2] + '%';
+                  compact.appendChild(chip);
+                }
+              });
+              if (compact.children.length > 0) {
+                section.parentElement.insertBefore(compact, section.nextSibling);
+              }
+            }
+          }
         }
       });
     }
