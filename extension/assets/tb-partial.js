@@ -496,7 +496,7 @@
   function createCompToggle(qIndex) {
     const exIndex = getExIndex();
     const comps = getQuestionCompetences(exIndex, qIndex);
-    if (comps.length === 0) return null;
+    if (comps.length < 2) return null;
 
     const wrapper = document.createElement('div');
     wrapper.dataset.compToggle = qIndex;
