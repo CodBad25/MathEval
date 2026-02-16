@@ -58,8 +58,8 @@
 
       /* ── Réduire marges globales du conteneur stats (boîte bleu clair) ── */
       #bpdf-stats-box-wrapper {
-        padding: 4px 6px 2px !important;
-        margin: 2px 8px 0 !important;
+        padding: 4px 6px 0 !important;
+        margin: 0 8px !important;
         gap: 0 !important;
       }
 
@@ -125,6 +125,16 @@
       }
       /* Masquer la recherche Svelte native (remplacée par la nôtre) */
       #bpdf-native-search { display: none !important; }
+      /* Masquer le bouton flottant "Commentaires TB-" sur la vue d'ensemble */
+      #tb-partial-floating { display: none !important; }
+      /* Bouton Sync plus discret et petit */
+      #supabase-sync-btn {
+        transform: scale(0.7) !important;
+        transform-origin: bottom left !important;
+        opacity: 0.7 !important;
+        left: 4px !important;
+        bottom: 4px !important;
+      }
       /* Masquer la grille d'élèves */
       #bpdf-student-grid { display: none !important; }
       /* Espace entre toolbar et mobile-nav */
@@ -881,6 +891,17 @@
 
   // ===================== Injection boutons =====================
   function injectButtons() {
+    // Taguer les boutons flottants (Sync, Commentaires TB-) pour le CSS mobile
+    if (window.innerWidth <= 768) {
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('Sync') && btn.style.position === 'fixed' && !btn.id) {
+          btn.id = 'supabase-sync-btn';
+        }
+        if (btn.textContent.includes('Commentaires TB') && !btn.id) {
+          btn.id = 'tb-partial-floating';
+        }
+      });
+    }
     // Taguer le titre "Vue d'ensemble" et son conteneur pour le CSS mobile
     document.querySelectorAll('h1').forEach(h1 => {
       if (h1.textContent.includes('Vue d\u2019ensemble') || h1.textContent.includes('Vue d\'ensemble')) {
@@ -924,7 +945,7 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:16px;font-weight:600;display:flex;align-items:center;gap:4px">\u21aa Correction</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
