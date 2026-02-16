@@ -23,8 +23,6 @@
         position: fixed !important;
         left: -9999px !important;
         opacity: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
       }
 
       /* ── Ligne Correction + Mode fusionnée ── */
@@ -955,18 +953,27 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h13</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h14</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
+                  // Helper : cherche dynamiquement un bouton dans #bpdf-mode-bar par mot-clé
+                  function clickModeBtn(keyword) {
+                    const bar = document.getElementById('bpdf-mode-bar');
+                    if (!bar) return;
+                    bar.querySelectorAll('button').forEach(b => {
+                      if (b.textContent.includes(keyword)) b.click();
+                    });
+                  }
                   allBtns.forEach(origBtn => {
                     const text = origBtn.textContent.trim();
                     if (text.includes('Classique') || text.includes('DNB')) {
                       const b = document.createElement('button');
-                      b.textContent = text.includes('Classique') ? 'Classique' : 'DNB';
+                      const keyword = text.includes('Classique') ? 'Classique' : 'DNB';
+                      b.textContent = keyword;
                       b.style.cssText = origBtn.style.cssText || '';
                       b.className = origBtn.className;
-                      b.addEventListener('click', () => origBtn.click());
+                      b.addEventListener('click', () => clickModeBtn(keyword));
                       modeDiv.appendChild(b);
                     }
                     if (text.includes('initialiser')) {
@@ -975,7 +982,7 @@
                       b.textContent = '\ud83d\uddd1\ufe0f';
                       b.title = 'R\u00e9initialiser';
                       b.style.cssText = 'background:#e74c3c;color:white;border:none;cursor:pointer';
-                      b.addEventListener('click', () => origBtn.click());
+                      b.addEventListener('click', () => clickModeBtn('initialiser'));
                       modeDiv.appendChild(b);
                     }
                   });
