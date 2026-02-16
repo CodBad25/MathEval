@@ -33,6 +33,8 @@
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         padding: 2px 8px !important;
         margin: 8px 0 0 !important;
         flex-wrap: nowrap !important;
@@ -42,6 +44,7 @@
         display: flex;
         align-items: center;
         gap: 3px;
+        margin-left: auto !important;
       }
       #bpdf-correction-row .bpdf-mode-compact button {
         padding: 3px 8px !important;
@@ -889,19 +892,28 @@
     }
   });
 
+  // Taguer les boutons flottants (body-level, hors MutationObserver)
+  function tagFloatingButtons() {
+    if (window.innerWidth > 768) return;
+    document.querySelectorAll('button').forEach(btn => {
+      if (btn.textContent.includes('Sync') && btn.style.position === 'fixed' && !btn.id) {
+        btn.id = 'supabase-sync-btn';
+      }
+      if (btn.textContent.includes('Commentaires TB') && !btn.id) {
+        btn.id = 'tb-partial-floating';
+      }
+    });
+  }
+  // Appeler régulièrement les premières secondes (les autres scripts créent leurs boutons avec un délai)
+  let _tagAttempts = 0;
+  const _tagInterval = setInterval(() => {
+    tagFloatingButtons();
+    if (++_tagAttempts >= 10) clearInterval(_tagInterval);
+  }, 1000);
+
   // ===================== Injection boutons =====================
   function injectButtons() {
-    // Taguer les boutons flottants (Sync, Commentaires TB-) pour le CSS mobile
-    if (window.innerWidth <= 768) {
-      document.querySelectorAll('button').forEach(btn => {
-        if (btn.textContent.includes('Sync') && btn.style.position === 'fixed' && !btn.id) {
-          btn.id = 'supabase-sync-btn';
-        }
-        if (btn.textContent.includes('Commentaires TB') && !btn.id) {
-          btn.id = 'tb-partial-floating';
-        }
-      });
-    }
+    tagFloatingButtons();
     // Taguer le titre "Vue d'ensemble" et son conteneur pour le CSS mobile
     document.querySelectorAll('h1').forEach(h1 => {
       if (h1.textContent.includes('Vue d\u2019ensemble') || h1.textContent.includes('Vue d\'ensemble')) {
