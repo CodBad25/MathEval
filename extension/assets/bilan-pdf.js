@@ -18,8 +18,15 @@
         margin: 0 !important;
       }
 
-      /* ── Bandeau Mode original masqué (déplacé par JS dans la ligne Correction) ── */
-      #bpdf-mode-bar { display: none !important; }
+      /* ── Bandeau Mode original masqué (off-screen pour garder les click() actifs) ── */
+      #bpdf-mode-bar {
+        position: fixed !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
 
       /* ── Ligne Correction + Mode fusionnée ── */
       #bpdf-correction-row {
@@ -27,7 +34,7 @@
         align-items: center !important;
         justify-content: space-between !important;
         padding: 2px 8px !important;
-        margin: 4px 0 0 !important;
+        margin: 8px 0 0 !important;
         flex-wrap: nowrap !important;
         clear: both !important;
       }
@@ -51,8 +58,8 @@
 
       /* ── Réduire marges globales du conteneur stats (boîte bleu clair) ── */
       #bpdf-stats-box-wrapper {
-        padding: 4px 6px !important;
-        margin: 2px 8px !important;
+        padding: 4px 6px 2px !important;
+        margin: 2px 8px 0 !important;
         gap: 0 !important;
       }
 
@@ -107,7 +114,7 @@
         gap: 3px !important;
         justify-content: center !important;
         padding: 0 2px !important;
-        margin: 0 0 2px !important;
+        margin: 0 !important;
       }
       #bpdf-toolbar button {
         flex: 1 1 0 !important;
