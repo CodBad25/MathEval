@@ -895,20 +895,20 @@
         btn.dataset.bpdfHidden = '1';
         btn.style.display = 'none';
       }
-      // Masquer le bouton Sync flottant (remplacé par un bouton dans la toolbar)
+      // Masquer le bouton Sync flottant (remplacé par un bouton dans la correction-row)
       if (txt.includes('Sync') && btn.style.position === 'fixed' && !btn.dataset.bpdfHidden) {
         btn.dataset.bpdfHidden = '1';
         btn.style.display = 'none';
-        // Ajouter un bouton Sync compact dans la toolbar s'il n'existe pas
-        const toolbar = document.getElementById('bpdf-toolbar');
-        if (toolbar && !document.getElementById('bpdf-sync-toolbar-btn')) {
+        // Ajouter un bouton Sync compact dans la correction-row (à côté des boutons Mode)
+        const modeCompact = document.querySelector('#bpdf-correction-row .bpdf-mode-compact');
+        if (modeCompact && !document.getElementById('bpdf-sync-toolbar-btn')) {
           const syncBtn = document.createElement('button');
           syncBtn.id = 'bpdf-sync-toolbar-btn';
-          syncBtn.className = toolbar.querySelector('button')?.className || '';
-          syncBtn.innerHTML = '\u2601\ufe0f Sync';
-          syncBtn.style.cssText = toolbar.querySelector('button')?.style.cssText || '';
+          syncBtn.textContent = '\u2601\ufe0f';
+          syncBtn.title = 'Synchroniser';
+          syncBtn.style.cssText = 'background:#3498db;color:white;border:none;cursor:pointer;padding:3px 6px;font-size:14px;line-height:1;min-width:0;border-radius:4px';
           syncBtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); btn.click(); });
-          toolbar.appendChild(syncBtn);
+          modeCompact.appendChild(syncBtn);
         }
       }
     });
@@ -966,7 +966,7 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v13h10</span>';
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h11</span>';
                   // Créer les boutons Mode compacts qui déclenchent les vrais boutons
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
