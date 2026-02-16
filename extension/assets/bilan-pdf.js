@@ -814,28 +814,45 @@
       }
     });
     // Taguer le bandeau Mode/Réinitialiser pour le masquer en mobile
-    document.querySelectorAll('button').forEach(btn => {
-      if ((btn.textContent.includes('Classique') || btn.textContent.includes('DNB')) && !btn.dataset.bpdfModeTagged) {
-        btn.dataset.bpdfModeTagged = '1';
-        // Remonter au conteneur flex du bandeau Mode + Réinitialiser
-        let bar = btn.closest('[class*="flex"]');
-        if (bar && bar.querySelector('button') && !bar.id) {
-          // Vérifier qu'on a bien le bon conteneur (avec Classique + DNB + Réinitialiser)
-          const btns = bar.querySelectorAll('button');
-          const texts = Array.from(btns).map(b => b.textContent);
-          if (texts.some(t => t.includes('initialiser'))) {
-            bar.id = 'bpdf-mode-bar';
+    if (!document.getElementById('bpdf-mode-bar')) {
+      document.querySelectorAll('button').forEach(btn => {
+        if (document.getElementById('bpdf-mode-bar')) return;
+        if (btn.textContent.trim().includes('initialiser')) {
+          // Le bouton Réinitialiser — remonter jusqu'au conteneur qui contient aussi Mode:Classique/DNB
+          let el = btn.parentElement;
+          // Remonter max 3 niveaux pour trouver le conteneur englobant
+          for (let i = 0; i < 3 && el; i++) {
+            const allBtns = el.querySelectorAll('button');
+            const texts = Array.from(allBtns).map(b => b.textContent);
+            if (texts.some(t => t.includes('Classique')) && texts.some(t => t.includes('initialiser'))) {
+              el.id = 'bpdf-mode-bar';
+              return;
+            }
+            el = el.parentElement;
           }
         }
-      }
-    });
+      });
+    }
     // Taguer la barre de recherche Svelte native pour la masquer en mobile
-    document.querySelectorAll('input[placeholder]').forEach(inp => {
-      if (inp.placeholder.includes('Rechercher un') && !inp.id && !inp.classList.contains('bpdf-mobile-search')) {
-        const wrapper = inp.parentElement;
-        if (wrapper && !wrapper.id) wrapper.id = 'bpdf-native-search';
-      }
-    });
+    if (!document.getElementById('bpdf-native-search')) {
+      document.querySelectorAll('input').forEach(inp => {
+        if (document.getElementById('bpdf-native-search')) return;
+        const ph = inp.getAttribute('placeholder') || '';
+        if (ph.includes('Rechercher') && !inp.classList.contains('bpdf-mobile-search')) {
+          // Remonter pour trouver un conteneur visible avec l'icône de recherche
+          let wrapper = inp.parentElement;
+          for (let i = 0; i < 2 && wrapper; i++) {
+            if (wrapper.querySelector('svg') || wrapper.querySelector('input')) {
+              wrapper.id = 'bpdf-native-search';
+              return;
+            }
+            wrapper = wrapper.parentElement;
+          }
+          // Fallback : tagger le parent direct
+          if (inp.parentElement) inp.parentElement.id = 'bpdf-native-search';
+        }
+      });
+    }
     // Taguer la ligne de stats (terminé/en cours/non commencé) pour CSS mobile
     document.querySelectorAll('span').forEach(sp => {
       if (sp.textContent === 'terminé(s)' && !sp.dataset.bpdfTagged) {
