@@ -49,13 +49,6 @@
         font-size: 11px !important;
         border-radius: 4px !important;
       }
-      #bpdf-correction-row .bpdf-reset-btn {
-        padding: 3px 6px !important;
-        font-size: 14px !important;
-        line-height: 1 !important;
-        min-width: 0 !important;
-        border-radius: 4px !important;
-      }
 
       /* ── Réduire marges globales du conteneur stats (boîte bleu clair) ── */
       #bpdf-stats-box-wrapper {
@@ -953,36 +946,22 @@
                   const row = document.createElement('div');
                   row.id = 'bpdf-correction-row';
                   // Cloner le texte Correction avec son icône
-                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h15</span>';
-                  // Créer les boutons Mode compacts qui déclenchent les vrais boutons
+                  row.innerHTML = '<span style="font-size:15px;font-weight:600">Correction</span><span style="font-size:9px;color:#999;margin-left:4px">v16h16</span>';
+                  // Boutons compacts : Nouvelle correction + Sync
                   const modeDiv = document.createElement('div');
                   modeDiv.className = 'bpdf-mode-compact';
-                  // Helper : cherche dynamiquement un bouton dans #bpdf-mode-bar par mot-clé
-                  function clickModeBtn(keyword) {
-                    const bar = document.getElementById('bpdf-mode-bar');
-                    if (!bar) return;
-                    bar.querySelectorAll('button').forEach(b => {
-                      if (b.textContent.includes(keyword)) b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                    });
-                  }
+                  // Bouton "Nouvelle correction"
                   allBtns.forEach(origBtn => {
-                    const text = origBtn.textContent.trim();
-                    if (text.includes('Classique') || text.includes('DNB')) {
+                    if (origBtn.textContent.trim().includes('initialiser')) {
                       const b = document.createElement('button');
-                      const keyword = text.includes('Classique') ? 'Classique' : 'DNB';
-                      b.textContent = keyword;
-                      b.style.cssText = origBtn.style.cssText || '';
-                      b.className = origBtn.className;
-                      b.addEventListener('click', () => clickModeBtn(keyword));
-                      modeDiv.appendChild(b);
-                    }
-                    if (text.includes('initialiser')) {
-                      const b = document.createElement('button');
-                      b.className = 'bpdf-reset-btn';
-                      b.textContent = '\ud83d\uddd1\ufe0f';
-                      b.title = 'R\u00e9initialiser';
-                      b.style.cssText = 'background:#e74c3c;color:white;border:none;cursor:pointer';
-                      b.addEventListener('click', () => clickModeBtn('initialiser'));
+                      b.textContent = 'Nouvelle correction';
+                      b.style.cssText = 'background:#e74c3c;color:white;border:none;cursor:pointer;padding:3px 8px;font-size:11px;border-radius:4px';
+                      b.addEventListener('click', () => {
+                        const bar = document.getElementById('bpdf-mode-bar');
+                        if (bar) bar.querySelectorAll('button').forEach(bb => {
+                          if (bb.textContent.includes('initialiser')) bb.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                        });
+                      });
                       modeDiv.appendChild(b);
                     }
                   });
