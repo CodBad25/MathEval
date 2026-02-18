@@ -536,21 +536,45 @@
     }
   }
 
+  /* ── Masquer "Vue d'ensemble X élèves" et placer le bouton Sync à sa place ── */
+  function hideVueEnsemble() {
+    function tryHide() {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => {
+          if (n.textContent.match(/vue\s+d['']ensemble/i)) return NodeFilter.FILTER_ACCEPT;
+          return NodeFilter.FILTER_REJECT;
+        }
+      });
+      if (walker.nextNode()) {
+        const el = walker.currentNode.parentElement;
+        if (el) { el.style.display = 'none'; return true; }
+      }
+      return false;
+    }
+    if (tryHide()) return;
+    const obs = new MutationObserver(() => { if (tryHide()) obs.disconnect(); });
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => obs.disconnect(), 15000);
+  }
+
   /* ── Sync Button ──────────────────────────────────── */
   function createBtn() {
     // Masquer le bouton "Cloud" de auth-global.js (doublon)
     const authBtn = document.getElementById('matheval-auth-indicator');
     if (authBtn) authBtn.style.display = 'none';
 
+    // Masquer "Vue d'ensemble X élèves"
+    hideVueEnsemble();
+
     const btn = document.createElement('button');
     btn.id = 'sb-sync-btn';
     btn.innerHTML = '\u2601\uFE0F <span style="font-size:13px;font-weight:600;margin-left:4px">Sync</span>';
     btn.title = 'Synchronisation cloud';
     Object.assign(btn.style, {
-      position: 'fixed', top: '10px', left: '35%', zIndex: '99999',
-      height: '36px', borderRadius: '18px', padding: '0 14px 0 10px',
+      position: 'fixed', top: '44px', left: '10px', zIndex: '99999',
+      height: '32px', borderRadius: '16px', padding: '0 12px 0 8px',
       background: '#2196f3', color: '#fff', border: 'none',
-      fontSize: '16px', cursor: 'pointer', display: 'flex',
+      fontSize: '15px', cursor: 'pointer', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
       boxShadow: '0 2px 8px rgba(33,150,243,.4)', transition: 'transform .15s',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
