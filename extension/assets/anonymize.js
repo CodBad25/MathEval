@@ -100,74 +100,95 @@
   }
 
   /* ── Remplacement dans le DOM ─────────────────────────── */
+  let isReplacing = false; // guard contre la boucle infinie observer ↔ remplacement
+
   function replaceInTextNodes(root, map) {
     // Trier par longueur décroissante pour éviter les remplacements partiels
     const entries = Object.entries(map).sort((a, b) => b[0].length - a[0].length);
     if (!entries.length) return;
 
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: n => {
-        // Ignorer les scripts et styles
-        const tag = n.parentElement?.tagName;
-        if (tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
+    // Désactiver l'observer pendant le remplacement pour éviter la boucle
+    const wasReplacing = isReplacing;
+    isReplacing = true;
 
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-
-    nodes.forEach(node => {
-      let text = node.textContent;
-      let changed = false;
-      for (const [from, to] of entries) {
-        if (text.includes(from)) {
-          text = text.split(from).join(to);
-          changed = true;
+    try {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => {
+          const tag = n.parentElement?.tagName;
+          if (tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
         }
-      }
-      if (changed) node.textContent = text;
-    });
+      });
 
-    // Aussi remplacer dans les attributs value des inputs/selects (dropdowns élèves)
-    root.querySelectorAll('option, [data-student-name]').forEach(el => {
-      let text = el.textContent;
-      let changed = false;
-      for (const [from, to] of entries) {
-        if (text.includes(from)) {
-          text = text.split(from).join(to);
-          changed = true;
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+
+      nodes.forEach(node => {
+        let text = node.textContent;
+        let changed = false;
+        for (const [from, to] of entries) {
+          if (text.includes(from)) {
+            text = text.split(from).join(to);
+            changed = true;
+          }
         }
-      }
-      if (changed) el.textContent = text;
-    });
+        if (changed) node.textContent = text;
+      });
+
+      // Aussi remplacer dans les attributs value des inputs/selects (dropdowns élèves)
+      root.querySelectorAll('option, [data-student-name]').forEach(el => {
+        let text = el.textContent;
+        let changed = false;
+        for (const [from, to] of entries) {
+          if (text.includes(from)) {
+            text = text.split(from).join(to);
+            changed = true;
+          }
+        }
+        if (changed) el.textContent = text;
+      });
+    } finally {
+      isReplacing = wasReplacing;
+    }
   }
 
   /* ── MutationObserver pour les mises à jour dynamiques ── */
+
   function startObserver() {
     if (observer) observer.disconnect();
     observer = new MutationObserver(mutations => {
-      if (!actif || !mapNoms) return;
-      mutations.forEach(m => {
-        m.addedNodes.forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            let text = node.textContent;
-            let changed = false;
-            const entries = Object.entries(mapNoms).sort((a, b) => b[0].length - a[0].length);
-            for (const [from, to] of entries) {
-              if (text.includes(from)) {
-                text = text.split(from).join(to);
-                changed = true;
-              }
+      if (!actif || !mapNoms || isReplacing) return;
+      isReplacing = true;
+      try {
+        mutations.forEach(m => {
+          m.addedNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+              replaceTextNode(node, mapNoms);
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+              replaceInTextNodes(node, mapNoms);
             }
-            if (changed) node.textContent = text;
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
-            replaceInTextNodes(node, mapNoms);
-          }
+          });
         });
-      });
+      } finally {
+        isReplacing = false;
+      }
     });
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function replaceTextNode(node, map) {
+    const tag = node.parentElement?.tagName;
+    if (tag === 'SCRIPT' || tag === 'STYLE') return;
+    let text = node.textContent;
+    let changed = false;
+    const entries = Object.entries(map).sort((a, b) => b[0].length - a[0].length);
+    for (const [from, to] of entries) {
+      if (text.includes(from)) {
+        text = text.split(from).join(to);
+        changed = true;
+      }
+    }
+    if (changed) node.textContent = text;
   }
 
   /* ── Mélange / restauration de l'ordre des cartes élèves ── */
