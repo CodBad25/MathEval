@@ -241,6 +241,19 @@
   }
   function fmt(n) { return n % 1 === 0 ? String(n) : n.toFixed(1); }
 
+  // Anonymisation : remplace un nom réel par le pseudo si le mode 🎭 est actif
+  function anonName(realName) {
+    const a = window.__anonymize;
+    if (!a || !a.active || !a.map) return realName;
+    // Chercher la correspondance la plus longue d'abord
+    const entries = Object.entries(a.map).sort((a, b) => b[0].length - a[0].length);
+    let result = realName;
+    for (const [from, to] of entries) {
+      if (result.includes(from)) result = result.split(from).join(to);
+    }
+    return result;
+  }
+
   // --- Scoring ---
   function getCorr() { try { return JSON.parse(localStorage.getItem('studentCorrections')||'{}'); } catch { return {}; } }
   function getCW() { try { return JSON.parse(localStorage.getItem('competencyWeights')||'null'); } catch { return null; } }
@@ -361,7 +374,7 @@
   function renderStudent(doc, sid, Y0, halfH, cfg, exs, stats, cAvg, dist, date, qrImg) {
     const PW = 210, M = 10, W = PW - 2*M;
     const stu = getStudents().find(s=>s.id===sid);
-    const name = stu ? `${stu.nom||''} ${stu.prenom||''}`.trim() : sid;
+    const name = anonName(stu ? `${stu.nom||''} ${stu.prenom||''}`.trim() : sid);
     const g = globalScore(sid);
     const pct = g.total>0 ? g.correct/g.total*100 : 0;
     const comment = getComment(sid);
@@ -667,8 +680,8 @@
     const sts = getStudents();
     ids.forEach(sid => {
       const stu = sts.find(s => s.id === sid);
-      const nom = (stu?.nom||'').replace(/\s+/g,'_');
-      const prenom = (stu?.prenom||'').replace(/\s+/g,'_');
+      const nom = anonName((stu?.nom||'')).replace(/\s+/g,'_');
+      const prenom = anonName((stu?.prenom||'')).replace(/\s+/g,'_');
       const fname = `Bilan_${nom}${prenom ? '_'+prenom : ''}.pdf`;
       zip.file(fname, generateSinglePDFBlob(sid));
     });
@@ -868,7 +881,7 @@
 
     // Chips bar
     const chipsBar = document.createElement('div');
-    chipsBar.style.cssText = `display:flex;gap:4px;padding:6px 14px;overflow-x:auto;background:rgba(0,0,0,.08);flex-shrink:0`;
+    chipsBar.style.cssText = `display:flex;gap:4px;padding:6px 14px;overflow-x:auto;background:#34495e;flex-shrink:0`;
     ids.forEach((sid, i) => {
       const stu = allStudents.find(s => s.id === sid);
       const chip = document.createElement('button');
@@ -946,7 +959,7 @@
     header.querySelector('#bp-export-one').addEventListener('click', () => {
       const sid = ids[currentIdx];
       const stu = allStudents.find(s => s.id === sid);
-      const fn = `Bilan_${(stu?.nom || 'eleve').replace(/\s+/g, '_')}.pdf`;
+      const fn = `Bilan_${anonName(stu?.nom || 'eleve').replace(/\s+/g, '_')}.pdf`;
       generatePDF([sid], fn);
     });
 
@@ -1020,7 +1033,7 @@
       const { nc, ids, sts } = getModalData();
       if (!ids.length) { alert('Aucun élève corrigé.'); return; }
       ov.remove();
-      const fn = mode==='single' ? `Bilan_${(sts.find(s=>s.id===ids[0])?.nom||'eleve').replace(/\s+/g,'_')}.pdf` : `Bilans${nc.classe?'_'+nc.classe.replace(/\s+/g,'_'):''}.pdf`;
+      const fn = mode==='single' ? `Bilan_${anonName(sts.find(s=>s.id===ids[0])?.nom||'eleve').replace(/\s+/g,'_')}.pdf` : `Bilans${nc.classe?'_'+nc.classe.replace(/\s+/g,'_'):''}.pdf`;
       generatePDF(ids, fn);
     });
 
@@ -1449,7 +1462,7 @@
     const stu = sts.find(s => s.id === studentId);
     if (!stu) { console.error('Élève non trouvé:', studentId); return; }
     const name = `${stu.nom||''} ${stu.prenom||''}`.trim();
-    const fn = `Bilan_${(stu.nom||'eleve').replace(/\s+/g,'_')}.pdf`;
+    const fn = `Bilan_${anonName(stu.nom||'eleve').replace(/\s+/g,'_')}.pdf`;
     console.log(`Génération du bilan PDF pour ${name}...`);
     generatePDF([studentId], fn);
     console.log(`✅ PDF téléchargé: ${fn}`);

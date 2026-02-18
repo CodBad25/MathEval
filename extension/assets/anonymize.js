@@ -182,10 +182,13 @@
     if (actif) {
       replaceInTextNodes(document.body, mapNoms);
       startObserver();
+      // Exposer le mapping pour que bilan-pdf.js puisse générer des PDF anonymes
+      window.__anonymize = { active: true, map: mapNoms, inverse: mapInverse };
       toast('🎭 Noms anonymisés', 'info');
     } else {
       if (observer) { observer.disconnect(); observer = null; }
       replaceInTextNodes(document.body, mapInverse);
+      window.__anonymize = { active: false, map: null, inverse: null };
       toast('Noms restaurés', 'info');
     }
 
