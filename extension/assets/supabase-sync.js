@@ -547,7 +547,7 @@
     btn.innerHTML = '\u2601\uFE0F <span style="font-size:13px;font-weight:600;margin-left:4px">Sync</span>';
     btn.title = 'Synchronisation cloud';
     Object.assign(btn.style, {
-      position: 'fixed', top: '10px', left: '150px', zIndex: '99999',
+      position: 'fixed', top: '10px', left: '35%', zIndex: '99999',
       height: '36px', borderRadius: '18px', padding: '0 14px 0 10px',
       background: '#2196f3', color: '#fff', border: 'none',
       fontSize: '16px', cursor: 'pointer', display: 'flex',
