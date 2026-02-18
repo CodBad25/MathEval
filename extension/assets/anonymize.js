@@ -99,15 +99,30 @@
     return true;
   }
 
-  /* ── Remplacement dans le DOM ─────────────────────────── */
-  let isReplacing = false; // guard contre la boucle infinie observer ↔ remplacement
+  /* ── Remplacement sans cascade (single-pass) ─────────── */
+  let isReplacing = false;
+
+  /**
+   * Remplace en une seule passe : le texte de remplacement n'est JAMAIS
+   * re-scanné, ce qui évite les cascades (ex: nom "in" → "Euler" puis
+   * "Euler" contient un autre nom d'élève qui serait à nouveau remplacé).
+   */
+  function safeReplace(text, entries) {
+    // Construire une regex qui matche tous les termes (plus longs d'abord)
+    // avec des word boundaries pour ne pas matcher au milieu d'un mot
+    const escaped = entries.map(([from]) =>
+      from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    );
+    const regex = new RegExp('(?:' + escaped.join('|') + ')', 'g');
+    const map = Object.fromEntries(entries);
+    const result = text.replace(regex, match => map[match] || match);
+    return result !== text ? result : null;
+  }
 
   function replaceInTextNodes(root, map) {
-    // Trier par longueur décroissante pour éviter les remplacements partiels
     const entries = Object.entries(map).sort((a, b) => b[0].length - a[0].length);
     if (!entries.length) return;
 
-    // Désactiver l'observer pendant le remplacement pour éviter la boucle
     const wasReplacing = isReplacing;
     isReplacing = true;
 
@@ -124,28 +139,13 @@
       while (walker.nextNode()) nodes.push(walker.currentNode);
 
       nodes.forEach(node => {
-        let text = node.textContent;
-        let changed = false;
-        for (const [from, to] of entries) {
-          if (text.includes(from)) {
-            text = text.split(from).join(to);
-            changed = true;
-          }
-        }
-        if (changed) node.textContent = text;
+        const replaced = safeReplace(node.textContent, entries);
+        if (replaced !== null) node.textContent = replaced;
       });
 
-      // Aussi remplacer dans les attributs value des inputs/selects (dropdowns élèves)
       root.querySelectorAll('option, [data-student-name]').forEach(el => {
-        let text = el.textContent;
-        let changed = false;
-        for (const [from, to] of entries) {
-          if (text.includes(from)) {
-            text = text.split(from).join(to);
-            changed = true;
-          }
-        }
-        if (changed) el.textContent = text;
+        const replaced = safeReplace(el.textContent, entries);
+        if (replaced !== null) el.textContent = replaced;
       });
     } finally {
       isReplacing = wasReplacing;
@@ -179,16 +179,9 @@
   function replaceTextNode(node, map) {
     const tag = node.parentElement?.tagName;
     if (tag === 'SCRIPT' || tag === 'STYLE') return;
-    let text = node.textContent;
-    let changed = false;
     const entries = Object.entries(map).sort((a, b) => b[0].length - a[0].length);
-    for (const [from, to] of entries) {
-      if (text.includes(from)) {
-        text = text.split(from).join(to);
-        changed = true;
-      }
-    }
-    if (changed) node.textContent = text;
+    const replaced = safeReplace(node.textContent, entries);
+    if (replaced !== null) node.textContent = replaced;
   }
 
   /* ── Mélange / restauration de l'ordre des cartes élèves ── */
