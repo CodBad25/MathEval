@@ -536,12 +536,12 @@
     }
   }
 
-  /* ── Masquer "Vue d'ensemble X élèves" et placer le bouton Sync à sa place ── */
+  /* ── Masquer "Vue d'ensemble X élèves" ── */
   function hideVueEnsemble() {
     function tryHide() {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode: n => {
-          if (n.textContent.match(/vue\s+d['']ensemble/i)) return NodeFilter.FILTER_ACCEPT;
+          if (n.textContent.match(/vue\s+d[''\u2019]ensemble/i)) return NodeFilter.FILTER_ACCEPT;
           return NodeFilter.FILTER_REJECT;
         }
       });
@@ -555,6 +555,56 @@
     const obs = new MutationObserver(() => { if (tryHide()) obs.disconnect(); });
     obs.observe(document.body, { childList: true, subtree: true });
     setTimeout(() => obs.disconnect(), 15000);
+  }
+
+  /* ── Injecter le bouton Sync dans la barre de navigation existante ── */
+  function injectBtnIntoNav(btn) {
+    // Cherche la barre de nav du haut (contient "Correction" ou "MathALÉA")
+    function tryInject() {
+      // Stratégie : trouver le premier <nav> ou la barre flex en haut
+      const nav = document.querySelector('#app nav, #app header');
+      if (nav) {
+        // Insérer le bouton comme premier enfant de la nav
+        nav.style.position = 'relative';
+        btn.style.position = 'absolute';
+        btn.style.right = '0';
+        btn.style.top = '50%';
+        btn.style.transform = 'translateY(-50%)';
+        nav.appendChild(btn);
+        return true;
+      }
+      // Fallback : chercher un élément flex en haut contenant du texte de titre
+      const topEls = document.querySelectorAll('#app > div > div, #app > div');
+      for (const el of topEls) {
+        const style = getComputedStyle(el);
+        if (style.display === 'flex' && el.getBoundingClientRect().top < 50) {
+          el.style.position = 'relative';
+          btn.style.position = 'relative';
+          btn.style.marginLeft = 'auto';
+          btn.style.marginRight = '8px';
+          el.appendChild(btn);
+          return true;
+        }
+      }
+      return false;
+    }
+    if (tryInject()) return;
+    // Si le DOM n'est pas encore prêt, observer
+    const obs = new MutationObserver(() => {
+      if (tryInject()) obs.disconnect();
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => {
+      obs.disconnect();
+      // Dernier recours : position fixed discrète en haut au centre
+      if (!btn.parentElement || btn.parentElement === document.body) {
+        Object.assign(btn.style, {
+          position: 'fixed', top: '6px', left: '50%',
+          transform: 'translateX(-50%)', zIndex: '99999'
+        });
+        document.body.appendChild(btn);
+      }
+    }, 5000);
   }
 
   /* ── Sync Button ──────────────────────────────────── */
@@ -571,18 +621,19 @@
     btn.innerHTML = '\u2601\uFE0F <span style="font-size:13px;font-weight:600;margin-left:4px">Sync</span>';
     btn.title = 'Synchronisation cloud';
     Object.assign(btn.style, {
-      position: 'fixed', top: '44px', left: '10px', zIndex: '99999',
-      height: '32px', borderRadius: '16px', padding: '0 12px 0 8px',
+      height: '30px', borderRadius: '15px', padding: '0 12px 0 8px',
       background: '#2196f3', color: '#fff', border: 'none',
-      fontSize: '15px', cursor: 'pointer', display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
-      boxShadow: '0 2px 8px rgba(33,150,243,.4)', transition: 'transform .15s',
+      fontSize: '14px', cursor: 'pointer', display: 'inline-flex',
+      alignItems: 'center', justifyContent: 'center', flexShrink: '0',
+      boxShadow: '0 2px 6px rgba(33,150,243,.3)', transition: 'transform .15s',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     });
-    btn.onmouseenter = () => btn.style.transform = 'scale(1.1)';
-    btn.onmouseleave = () => btn.style.transform = 'scale(1)';
+    btn.onmouseenter = () => { btn.style.transform = 'scale(1.08)'; };
+    btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
     btn.onclick = handleClick;
-    document.body.appendChild(btn);
+
+    // Injecter dans la nav plutôt que position fixed
+    injectBtnIntoNav(btn);
     updateBtn();
   }
 
