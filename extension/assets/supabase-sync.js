@@ -20,7 +20,7 @@
    ────────────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
-  if (!location.search.includes('correction')) return;
+  const IS_CORRECTION = location.search.includes('correction');
 
   const SUPABASE_URL = 'https://ehxdbjgvqzpttuafwufh.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoeGRiamd2cXpwdHR1YWZ3dWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDA5NDEsImV4cCI6MjA4NjMxNjk0MX0.6QETEpU6VR_KvI4gDRbyxeqLmYZn3vb0EwqkHrh7DK4';
@@ -46,6 +46,39 @@
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const esc = s => s.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  /**
+   * Construit l'URL avec les paramètres des exercices pour que le bundle Svelte
+   * puisse régénérer les exercices au chargement (uuid, alea, n, sup, sup2…).
+   * Sans ces paramètres dans l'URL, le bundle ne génère rien → page vide.
+   */
+  function buildExerciseUrl() {
+    const raw = localStorage.getItem('evaluationExercices');
+    if (!raw) return null;
+    try {
+      const ex = JSON.parse(raw);
+      if (!ex.uuids || ex.uuids.length === 0) return null;
+      const url = new URL(window.location.pathname, window.location.origin);
+      url.searchParams.set('v', 'correction');
+      ex.uuids.forEach((uuid, i) => {
+        url.searchParams.append('uuid', uuid);
+        if (ex.seeds && ex.seeds[i]) url.searchParams.append('alea', ex.seeds[i]);
+        const p = ex.params && ex.params[i];
+        if (p) {
+          if (p.nbQuestions != null) url.searchParams.append('n', String(p.nbQuestions));
+          if (p.sup != null) url.searchParams.append('s', String(p.sup));
+          if (p.sup2 != null) url.searchParams.append('s2', String(p.sup2));
+          if (p.sup3 != null) url.searchParams.append('s3', String(p.sup3));
+          if (p.sup4 != null) url.searchParams.append('s4', String(p.sup4));
+          if (p.sup5 != null) url.searchParams.append('s5', String(p.sup5));
+        }
+      });
+      return url.toString();
+    } catch (e) {
+      console.warn('[Supabase Sync] buildExerciseUrl error:', e);
+      return null;
+    }
+  }
 
   /* ── SDK (fallback si auth-global.js absent) ───────── */
   function loadSDK() {
@@ -347,7 +380,10 @@
           restore(r.data);
           setActId(id);
           toast('Charg\u00e9 ! Rechargement\u2026', 'success');
-          setTimeout(() => location.reload(), 800);
+          setTimeout(() => {
+            const url = buildExerciseUrl();
+            window.location.href = url || (window.location.pathname + '?v=correction');
+          }, 800);
         } catch (err) { toast('Erreur: ' + err.message, 'error'); btn.textContent = 'Charger'; }
       });
 
@@ -424,7 +460,10 @@
               }
               closeModal();
               toast(nbCorrected + ' corrections import\u00e9es ! Rechargement\u2026', 'success');
-              setTimeout(() => location.reload(), 1000);
+              setTimeout(() => {
+                const url = buildExerciseUrl();
+                window.location.href = url || (window.location.pathname + '?v=correction');
+              }, 1000);
             } catch (err) { toast('Erreur: ' + err.message, 'error'); }
           };
           reader.readAsText(file);
