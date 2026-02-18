@@ -188,19 +188,25 @@
   }
 
   /* ── Mélange / restauration de l'ordre des cartes élèves ── */
-  let originalOrder = null; // sauvegarde de l'ordre DOM original
+  let shuffledGrid = null; // référence au conteneur mélangé
+
+  function findStudentGrid() {
+    return document.getElementById('bpdf-student-grid')
+      || document.querySelector('[class*="grid"]');
+  }
 
   function shuffleStudentCards() {
-    // Cherche le conteneur de cartes élèves (grille Svelte)
-    const grid = document.getElementById('bpdf-student-grid')
-      || document.querySelector('[class*="grid"]');
+    const grid = findStudentGrid();
     if (!grid || grid.children.length < 2) return;
 
-    // Sauvegarder l'ordre original
-    originalOrder = Array.from(grid.children);
+    // Tagger chaque enfant avec son index original (survit aux re-renders)
+    Array.from(grid.children).forEach((child, i) => {
+      child.dataset.origOrder = String(i);
+    });
+    shuffledGrid = grid;
 
     // Mélanger (Fisher-Yates)
-    const shuffled = [...originalOrder];
+    const shuffled = Array.from(grid.children);
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -211,11 +217,23 @@
   }
 
   function restoreStudentCards() {
-    if (!originalOrder) return;
-    const grid = originalOrder[0]?.parentElement;
+    // Retrouver la grille (même si Svelte a re-rendu)
+    const grid = shuffledGrid || findStudentGrid();
     if (!grid) return;
-    originalOrder.forEach(child => grid.appendChild(child));
-    originalOrder = null;
+
+    const children = Array.from(grid.children);
+    // Trier par data-orig-order
+    const hasOrder = children.some(c => c.dataset.origOrder !== undefined);
+    if (!hasOrder) return;
+
+    children
+      .sort((a, b) => (parseInt(a.dataset.origOrder) || 0) - (parseInt(b.dataset.origOrder) || 0))
+      .forEach(child => {
+        grid.appendChild(child);
+        delete child.dataset.origOrder;
+      });
+
+    shuffledGrid = null;
   }
 
   /* ── Toggle ───────────────────────────────────────────── */
