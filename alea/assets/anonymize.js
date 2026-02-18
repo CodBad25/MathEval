@@ -246,10 +246,26 @@
     }
   }
 
+  /* ── Masquer le bouton scroll-to-top inutile (bottom-right du bundle) ── */
+  function hideScrollBtn() {
+    const sel = 'button.\\!fixed.bottom-5.right-5';
+    const el = document.querySelector(sel);
+    if (el) { el.style.display = 'none'; return; }
+    // Si pas encore rendu, observer le DOM
+    const obs = new MutationObserver(() => {
+      const el2 = document.querySelector(sel);
+      if (el2) { el2.style.display = 'none'; obs.disconnect(); }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    // Arrêter après 10s si jamais non trouvé
+    setTimeout(() => obs.disconnect(), 10000);
+  }
+
   /* ── Init ──────────────────────────────────────────────── */
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', createBtn);
+    document.addEventListener('DOMContentLoaded', () => { createBtn(); hideScrollBtn(); });
   } else {
     createBtn();
+    hideScrollBtn();
   }
 })();
