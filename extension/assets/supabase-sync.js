@@ -399,15 +399,60 @@
         } catch (err) { toast('Erreur: ' + err.message, 'error'); }
       });
 
-      // Sauvegarder / Mettre à jour
+      // Sauvegarder / Mettre à jour (avec protection anti-écrasement)
       const svBtn = $('#s-sv', b);
       if (svBtn) svBtn.onclick = async () => {
         const n = $('#s-name', b).value.trim();
         if (!n) return toast('Nom requis', 'warning');
+        const aid = getActId();
+
+        // Si mise à jour d'une évaluation existante → vérifier avant d'écraser
+        if (aid) {
+          try {
+            const cloud = await loadEval(aid);
+            const cloudStudents = cloud.data?.studentsList
+              ? (typeof cloud.data.studentsList === 'string' ? JSON.parse(cloud.data.studentsList) : cloud.data.studentsList)
+              : [];
+            const localStudentsRaw = localStorage.getItem('studentsList');
+            const localStudents = localStudentsRaw ? JSON.parse(localStudentsRaw) : [];
+            const cloudNames = cloudStudents.filter(s => s.nom).map(s => (s.nom + ' ' + (s.prenom || '')).trim()).sort();
+            const localNames = localStudents.filter(s => s.nom).map(s => (s.nom + ' ' + (s.prenom || '')).trim()).sort();
+            const cloudCorr = cloud.data?.studentCorrections
+              ? (typeof cloud.data.studentCorrections === 'string' ? JSON.parse(cloud.data.studentCorrections) : cloud.data.studentCorrections)
+              : {};
+            const localCorrRaw = localStorage.getItem('studentCorrections');
+            const localCorr = localCorrRaw ? JSON.parse(localCorrRaw) : {};
+            const nbCloudCorr = Object.keys(cloudCorr).length;
+            const nbLocalCorr = Object.keys(localCorr).length;
+
+            // Détection de conflit : listes d'élèves différentes
+            const sameStudents = cloudNames.length === localNames.length &&
+              cloudNames.every((n, i) => n === localNames[i]);
+
+            let msg = 'Mettre à jour « ' + cloud.name + ' » sur le cloud ?\n\n';
+            if (!sameStudents && cloudNames.length > 0) {
+              msg += '⚠️ ATTENTION : La liste d\'élèves est DIFFÉRENTE !\n';
+              msg += '   Cloud : ' + cloudNames.length + ' élève(s) — ' + (cloudNames.slice(0, 3).join(', ')) + (cloudNames.length > 3 ? '…' : '') + '\n';
+              msg += '   Local : ' + localNames.length + ' élève(s) — ' + (localNames.slice(0, 3).join(', ')) + (localNames.length > 3 ? '…' : '') + '\n\n';
+              msg += '❌ Vous allez peut-être ÉCRASER les données d\'une autre classe !\n\n';
+            }
+            msg += '📊 Cloud : ' + nbCloudCorr + ' correction(s) sauvegardée(s)\n';
+            msg += '💻 Local : ' + nbLocalCorr + ' correction(s) à envoyer\n\n';
+            msg += 'Confirmer la mise à jour ?';
+
+            if (!confirm(msg)) {
+              return;
+            }
+          } catch (e) {
+            // Si erreur de chargement cloud, on continue avec une confirmation simple
+            if (!confirm('Mettre à jour « ' + n + ' » sur le cloud ?\n\nLes données cloud seront remplacées par les données locales.')) return;
+          }
+        }
+
         const origText = svBtn.textContent;
         svBtn.textContent = '\u2026'; svBtn.disabled = true;
         try {
-          const id = await saveEval(n, getActId());
+          const id = await saveEval(n, aid);
           setActId(id);
           toast('Sauvegard\u00e9 !', 'success');
           viewEvals();
