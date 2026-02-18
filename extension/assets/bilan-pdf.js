@@ -680,6 +680,285 @@
     URL.revokeObjectURL(a.href);
   }
 
+  // ===================== HTML Preview =====================
+  const hex = rgb => '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('');
+
+  function drawHistogramToDataURL(dist) {
+    if (!dist || !dist.max) return null;
+    const W = 300, H = 140, canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const nbBins = dist.bins.length, pad = 20, barGap = 6;
+    const barW = (W - 2 * pad - (nbBins - 1) * barGap) / nbBins;
+    const barsH = H - 40;
+    for (let i = 0; i < nbBins; i++) {
+      const x = pad + i * (barW + barGap);
+      const h = dist.max > 0 ? (dist.bins[i] / dist.max) * barsH : 0;
+      const midPct = ((i + 0.5) / nbBins) * 100;
+      const c = levelFromPct(midPct).color;
+      ctx.fillStyle = hex(c);
+      if (h > 0) {
+        ctx.beginPath();
+        ctx.roundRect(x, pad + barsH - h, barW, h, 4);
+        ctx.fill();
+        ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(String(dist.bins[i]), x + barW / 2, pad + barsH - h - 4);
+      }
+      ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(dist.labels[i], x + barW / 2, H - 6);
+    }
+    return canvas.toDataURL('image/png');
+  }
+
+  function renderStudentHTML(sid, cfg, exs, stats, cAvg, dist, date, histImg) {
+    const stu = getStudents().find(s => s.id === sid);
+    const name = stu ? `${stu.nom || ''} ${stu.prenom || ''}`.trim() : sid;
+    const g = globalScore(sid);
+    const pct = g.total > 0 ? g.correct / g.total * 100 : 0;
+    const lvl = levelFromPct(pct);
+    const comment = getComment(sid);
+    const comps = compScores(sid);
+    const compKeys = Object.keys(comps);
+    const sur20 = g.total > 0 ? Math.round(g.correct / g.total * 20 * 10) / 10 : 0;
+    const cw = getCW();
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    let h = '<div style="background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.1);overflow:hidden;max-width:620px;margin:0 auto 24px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif">';
+
+    // Bandeau
+    h += `<div style="background:${hex(C.primary)};color:#fff;padding:12px 16px;text-align:center">
+      <div style="font-size:14px;font-weight:700">BILAN D'\u00c9VALUATION \u2014 Math\u00e9matiques</div>
+      <div style="font-size:11px;opacity:.85;margin-top:2px">${esc(cfg.titre || '\u00c9valuation')}${cfg.classe ? ' \u2014 ' + esc(cfg.classe) : ''} \u2022 ${date}</div>
+    </div>`;
+
+    // Nom
+    h += `<div style="background:${hex(C.light)};padding:10px 14px;font-weight:700;font-size:15px;color:${hex(C.dark)}">${esc(name)}</div>`;
+
+    // Note + Appréciation
+    if (cfg.showNote !== false && g.total > 0) {
+      h += '<div style="display:flex;gap:10px;padding:10px 14px;align-items:stretch">';
+      h += `<div style="background:${hex(lvl.color)};color:#fff;border-radius:8px;padding:8px 14px;text-align:center;min-width:80px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:20px;font-weight:800">${fmt(g.correct)}/${g.total}</div>
+        <div style="font-size:11px;opacity:.9">(${fmt(sur20)}/20)</div>
+        <div style="font-size:10px;margin-top:2px;font-weight:600">${lvl.code} \u2014 ${lvl.label}</div>
+      </div>`;
+      if (cfg.showComment !== false && comment) {
+        h += `<div style="flex:1;background:#f8f9fa;border-radius:8px;padding:8px 12px;border-left:3px solid ${hex(C.primary)};font-size:12px;color:${hex(C.dark)};line-height:1.5;white-space:pre-wrap">${esc(comment)}</div>`;
+      }
+      h += '</div>';
+    } else if (cfg.showComment !== false && comment) {
+      h += `<div style="padding:10px 14px"><div style="background:#f8f9fa;border-radius:8px;padding:8px 12px;border-left:3px solid ${hex(C.primary)};font-size:12px;color:${hex(C.dark)};line-height:1.5;white-space:pre-wrap">${esc(comment)}</div></div>`;
+    }
+
+    // Compétences
+    if (cfg.showCompetences !== false && compKeys.length > 0) {
+      h += '<div style="padding:8px 14px"><div style="font-size:12px;font-weight:700;color:#2c3e50;margin-bottom:6px">COMP\u00c9TENCES</div>';
+      compKeys.forEach(k => {
+        const c = comps[k], cc = compColor(k);
+        h += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:16px;flex-shrink:0">${compEmojiMap[k] || '\u2022'}</span>
+          <div style="flex:1;height:22px;background:#e8e8e8;border-radius:6px;overflow:hidden;position:relative">
+            <div style="height:100%;width:${Math.max(8, c.pct)}%;background:${hex(cc)};border-radius:6px;display:flex;align-items:center;padding-left:6px">
+              <span style="color:#fff;font-size:10px;font-weight:700;white-space:nowrap">${niceComp(k)}</span>
+            </div>
+          </div>
+          <span style="font-size:10px;font-weight:600;color:${hex(cc)};white-space:nowrap;min-width:90px;text-align:right">${c.lvl.code} ${fmt(c.correct)}/${fmt(c.total)} (${Math.round(c.pct)}%)</span>
+        </div>`;
+      });
+      h += '</div>';
+    }
+
+    // Exercices
+    if (cfg.showExercises !== false && exs.length > 0) {
+      h += '<div style="padding:8px 14px"><div style="font-size:12px;font-weight:700;color:#2c3e50;margin-bottom:6px">EXERCICES</div>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">';
+      exs.forEach((ex, i) => {
+        const sc = exScore(sid, i);
+        const ep = sc.t > 0 ? sc.o / sc.t * 100 : 0;
+        const lv = sc.t > 0 ? levelFromPct(ep) : { code: '-', color: [150, 150, 150] };
+        let exComps = [];
+        const w = cw?.[ex.exerciceIndex];
+        if (w) exComps = Object.keys(w).map(c => normalizeComp(c));
+        else if (ex.competencesExercice) exComps = ex.competencesExercice.map(c => normalizeComp(c));
+        const bgColor = i % 2 === 0 ? '#f8f8fa' : '#f0f3f7';
+        let title = ex.titre || `Exercice ${i + 1}`;
+        if (title.length > 28) title = title.slice(0, 25) + '\u2026';
+        h += `<div style="background:${bgColor};padding:4px 6px;border-radius:4px;display:flex;align-items:center;gap:3px;font-size:10px">
+          <span style="display:flex;gap:1px;flex-shrink:0">${exComps.map(k => `<span style="font-size:12px">${compEmojiMap[k] || ''}</span>`).join('')}</span>
+          <span style="font-weight:700;color:${hex(C.dark)}">${i + 1}.</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${esc(title)}</span>
+          <span style="font-weight:600;white-space:nowrap">${fmt(sc.o)}/${sc.t}</span>
+          <span style="font-weight:700;color:${hex(lv.color)};font-size:9px">${lv.code}</span>
+        </div>`;
+      });
+      h += '</div></div>';
+    }
+
+    // Stats classe
+    if (cfg.showStats !== false && stats) {
+      h += '<div style="padding:8px 14px"><div style="font-size:12px;font-weight:700;color:#2c3e50;margin-bottom:6px">CLASSE</div>';
+      h += `<div style="background:${hex(C.light)};border-radius:8px;padding:10px 12px">`;
+      h += `<div style="font-size:11px;color:#555;margin-bottom:8px">Moy: <b>${fmt(stats.avg)}/${stats.total}</b> \u00a0 Min: <b>${fmt(stats.min)}</b> \u00a0 M\u00e9d: <b>${fmt(stats.med)}</b> \u00a0 Max: <b>${fmt(stats.max)}</b> \u00a0 (${stats.n} corrig\u00e9s)</div>`;
+      h += '<div style="display:flex;gap:12px;align-items:flex-start">';
+      if (histImg) {
+        h += `<div style="flex:1"><img src="${histImg}" style="width:100%;height:auto;border-radius:4px"></div>`;
+      }
+      const compAvgKeys = Object.keys(cAvg);
+      if (compAvgKeys.length > 0) {
+        h += '<div style="flex:1">';
+        compAvgKeys.forEach(k => {
+          const avg = Math.round(cAvg[k].s / cAvg[k].n);
+          const cc = compColor(k);
+          h += `<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+            <span style="font-size:10px;font-weight:700;color:${hex(cc)};width:70px;text-align:right">${niceComp(k)}</span>
+            <div style="flex:1;height:12px;background:#ddd;border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${avg}%;background:${hex(cc)};border-radius:4px"></div>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:${hex(cc)};width:30px">${avg}%</span>
+          </div>`;
+        });
+        h += '</div>';
+      }
+      h += '</div></div></div>';
+    }
+
+    // Signatures
+    if (cfg.showSignatures !== false) {
+      h += `<div style="display:flex;justify-content:space-around;padding:10px 14px;color:#aaa;font-size:10px">
+        <span>Signature \u00e9l\u00e8ve : ________________</span>
+        <span>Signature parents : ________________</span>
+      </div>`;
+    }
+
+    h += '</div>';
+    return h;
+  }
+
+  function showBilanPreviewPanel() {
+    const cfg = getConfig();
+    const exs = getExercises();
+    const stats = cfg.showStats !== false ? classStats() : null;
+    const cAvg = cfg.showStats !== false ? classCompAvgs() : {};
+    const dist = stats ? scoreDistribution(stats) : null;
+    const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const histImg = drawHistogramToDataURL(dist);
+
+    const allStudents = getStudents();
+    const ids = allStudents.filter(s => isCorrected(s.id)).map(s => s.id);
+    if (!ids.length) { alert('Aucun \u00e9l\u00e8ve corrig\u00e9.'); return; }
+
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'background:#f0f2f5;width:95vw;max-width:700px;height:90vh;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column';
+
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = `background:${hex(C.primary)};color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap`;
+    header.innerHTML = `
+      <button id="bp-prev" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;font-weight:700">\u2190</button>
+      <span id="bp-indicator" style="font-size:13px;font-weight:600;min-width:45px;text-align:center">1/${ids.length}</span>
+      <button id="bp-next" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;font-weight:700">\u2192</button>
+      <input id="bp-search" type="text" placeholder="\uD83D\uDD0D Rechercher..." style="flex:1;min-width:100px;padding:5px 10px;border:none;border-radius:6px;font-size:12px;background:rgba(255,255,255,.2);color:#fff;outline:none">
+      <button id="bp-export-one" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:600">\uD83D\uDCE5 PDF \u00e9l\u00e8ve</button>
+      <button id="bp-export-all" style="background:#27ae60;border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:600">\uD83D\uDCE5 PDF tous</button>
+      <button id="bp-close" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:16px;font-weight:700">\u2715</button>`;
+
+    // Chips bar
+    const chipsBar = document.createElement('div');
+    chipsBar.style.cssText = `display:flex;gap:4px;padding:6px 14px;overflow-x:auto;background:rgba(0,0,0,.08);flex-shrink:0`;
+    ids.forEach((sid, i) => {
+      const stu = allStudents.find(s => s.id === sid);
+      const chip = document.createElement('button');
+      chip.textContent = stu ? `${stu.nom || ''} ${stu.prenom || ''}`.trim() : sid;
+      chip.dataset.index = i;
+      chip.style.cssText = 'background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:12px;padding:3px 10px;cursor:pointer;font-size:11px;white-space:nowrap;flex-shrink:0;transition:background .15s';
+      chipsBar.appendChild(chip);
+    });
+
+    // Content
+    const content = document.createElement('div');
+    content.style.cssText = 'flex:1;overflow-y:auto;padding:16px';
+    let cardsHTML = '';
+    ids.forEach(sid => {
+      cardsHTML += `<div data-bp-card="${sid}">` + renderStudentHTML(sid, cfg, exs, stats, cAvg, dist, date, histImg) + '</div>';
+    });
+    content.innerHTML = cardsHTML;
+
+    panel.appendChild(header);
+    panel.appendChild(chipsBar);
+    panel.appendChild(content);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    // Navigation
+    let currentIdx = 0;
+    const cards = content.querySelectorAll('[data-bp-card]');
+    const chips = chipsBar.querySelectorAll('button');
+
+    function updateIndicator() {
+      header.querySelector('#bp-indicator').textContent = `${currentIdx + 1}/${ids.length}`;
+      chips.forEach((c, i) => {
+        c.style.background = i === currentIdx ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.15)';
+        c.style.fontWeight = i === currentIdx ? '700' : '400';
+      });
+    }
+    function scrollTo(idx) {
+      if (idx < 0 || idx >= ids.length) return;
+      currentIdx = idx;
+      cards[idx]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      updateIndicator();
+    }
+
+    // IntersectionObserver pour suivre le scroll
+    const intObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting && e.intersectionRatio > 0.3) {
+          const idx = Array.from(cards).indexOf(e.target);
+          if (idx >= 0) { currentIdx = idx; updateIndicator(); }
+        }
+      });
+    }, { root: content, threshold: [0, 0.3, 0.5, 0.8] });
+    cards.forEach(c => intObs.observe(c));
+
+    // Events
+    header.querySelector('#bp-prev').addEventListener('click', () => scrollTo(currentIdx - 1));
+    header.querySelector('#bp-next').addEventListener('click', () => scrollTo(currentIdx + 1));
+    header.querySelector('#bp-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => scrollTo(Number(chip.dataset.index)));
+    });
+
+    // Recherche
+    header.querySelector('#bp-search').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      chips.forEach(chip => {
+        const name = chip.textContent.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        chip.style.display = name.includes(q) ? '' : 'none';
+      });
+    });
+
+    // Export PDF élève courant
+    header.querySelector('#bp-export-one').addEventListener('click', () => {
+      const sid = ids[currentIdx];
+      const stu = allStudents.find(s => s.id === sid);
+      const fn = `Bilan_${(stu?.nom || 'eleve').replace(/\s+/g, '_')}.pdf`;
+      generatePDF([sid], fn);
+    });
+
+    // Export PDF tous
+    header.querySelector('#bp-export-all').addEventListener('click', () => {
+      const fn = `Bilans${cfg.classe ? '_' + cfg.classe.replace(/\s+/g, '_') : ''}.pdf`;
+      generatePDF(ids, fn);
+    });
+
+    updateIndicator();
+  }
+
   // ===================== Config Modal =====================
   function showConfigModal(mode) {
     const cfg = getConfig();
@@ -717,8 +996,9 @@
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
         <button id="bpdf-cancel" style="padding:8px 16px;background:#eee;border:none;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
-        <button id="bpdf-zip" style="padding:8px 16px;background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" title="1 PDF par élève dans un ZIP (pour envoi Classroom)">📦 ZIP individuels</button>
-        <button id="bpdf-generate" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">📥 PDF groupé</button>
+        <button id="bpdf-zip" style="padding:8px 16px;background:#27ae60;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" title="1 PDF par élève dans un ZIP (pour envoi Classroom)">\uD83D\uDCE6 ZIP individuels</button>
+        <button id="bpdf-preview" style="padding:8px 16px;background:#8e44ad;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" title="Aperçu HTML (compatible anonymisation)">\uD83D\uDC41\uFE0F Aperçu HTML</button>
+        <button id="bpdf-generate" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">\uD83D\uDCE5 PDF groupé</button>
       </div>`;
     ov.appendChild(md); document.body.appendChild(ov);
     ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
@@ -751,6 +1031,13 @@
       ov.remove();
       const zipName = `Bilans_individuels${nc.classe?'_'+nc.classe.replace(/\s+/g,'_'):''}.zip`;
       generateZIP(ids, zipName);
+    });
+
+    // Aperçu HTML
+    md.querySelector('#bpdf-preview').addEventListener('click', () => {
+      getModalData(); // sauvegarde la config
+      ov.remove();
+      showBilanPreviewPanel();
     });
   }
 
