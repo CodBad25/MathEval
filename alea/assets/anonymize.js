@@ -79,21 +79,21 @@
         mi++;
       }
 
-      const pseudoNom = pseudo.split(' ').pop();
-      const pseudoPrenom = pseudo.split(' ').slice(0, -1).join(' ');
+      const pseudoParts = pseudo.split(' ');
+      const pseudoNom = pseudoParts.length > 1 ? pseudoParts.pop() : pseudo;
+      const pseudoPrenom = pseudoParts.length > 0 ? pseudoParts.join(' ') : '';
 
-      // Mapper toutes les variantes possibles du nom réel
-      // "NOM Prénom", "Prénom NOM", "NOM", "Prénom"
+      // Mapper les noms complets (NOM Prénom / Prénom NOM)
       const fullNP = (nom + ' ' + prenom).trim();
       const fullPN = (prenom + ' ' + nom).trim();
 
       if (fullNP) { mapNoms[fullNP] = pseudo; mapInverse[pseudo] = fullNP; }
       if (fullPN && fullPN !== fullNP) { mapNoms[fullPN] = pseudo; }
 
-      // Nom seul → pseudo nom seul
-      if (nom && !mapNoms[nom]) { mapNoms[nom] = pseudoNom; mapInverse[pseudoNom] = nom; }
-      // Prénom seul → pseudo prénom seul
-      if (prenom && !mapNoms[prenom]) { mapNoms[prenom] = pseudoPrenom; mapInverse[pseudoPrenom] = prenom; }
+      // Nom seul → pseudo nom seul (seulement si >= 3 caractères)
+      if (nom && nom.length >= 3 && !mapNoms[nom]) { mapNoms[nom] = pseudoNom; mapInverse[pseudoNom] = nom; }
+      // Prénom seul → pseudo prénom seul (seulement si >= 3 caractères ET pseudoPrenom non vide)
+      if (prenom && prenom.length >= 3 && pseudoPrenom && !mapNoms[prenom]) { mapNoms[prenom] = pseudoPrenom; mapInverse[pseudoPrenom] = prenom; }
     });
 
     return true;
@@ -108,14 +108,17 @@
    * "Euler" contient un autre nom d'élève qui serait à nouveau remplacé).
    */
   function safeReplace(text, entries) {
-    // Construire une regex qui matche tous les termes (plus longs d'abord)
-    // avec des word boundaries pour ne pas matcher au milieu d'un mot
-    const escaped = entries.map(([from]) =>
+    // Filtrer les entrées vides ou trop courtes
+    const valid = entries.filter(([from, to]) => from && from.length >= 2 && to !== undefined);
+    if (!valid.length) return null;
+
+    // Construire une regex avec word boundaries pour ne pas matcher au milieu d'un mot
+    const escaped = valid.map(([from]) =>
       from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     );
-    const regex = new RegExp('(?:' + escaped.join('|') + ')', 'g');
-    const map = Object.fromEntries(entries);
-    const result = text.replace(regex, match => map[match] || match);
+    const regex = new RegExp('\\b(?:' + escaped.join('|') + ')\\b', 'g');
+    const map = Object.fromEntries(valid);
+    const result = text.replace(regex, match => map[match] ?? match);
     return result !== text ? result : null;
   }
 
