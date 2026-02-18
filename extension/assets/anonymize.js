@@ -90,8 +90,10 @@
       if (fullNP) { mapNoms[fullNP] = pseudo; mapInverse[pseudo] = fullNP; }
       if (fullPN && fullPN !== fullNP) { mapNoms[fullPN] = pseudo; }
 
-      // Nom seul → pseudo nom seul (pour les listes qui n'affichent que le nom)
+      // Nom seul → pseudo nom seul
       if (nom && !mapNoms[nom]) { mapNoms[nom] = pseudoNom; mapInverse[pseudoNom] = nom; }
+      // Prénom seul → pseudo prénom seul
+      if (prenom && !mapNoms[prenom]) { mapNoms[prenom] = pseudoPrenom; mapInverse[pseudoPrenom] = prenom; }
     });
 
     return true;
