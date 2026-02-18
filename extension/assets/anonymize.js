@@ -170,6 +170,37 @@
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
 
+  /* ── Mélange / restauration de l'ordre des cartes élèves ── */
+  let originalOrder = null; // sauvegarde de l'ordre DOM original
+
+  function shuffleStudentCards() {
+    // Cherche le conteneur de cartes élèves (grille Svelte)
+    const grid = document.getElementById('bpdf-student-grid')
+      || document.querySelector('[class*="grid"]');
+    if (!grid || grid.children.length < 2) return;
+
+    // Sauvegarder l'ordre original
+    originalOrder = Array.from(grid.children);
+
+    // Mélanger (Fisher-Yates)
+    const shuffled = [...originalOrder];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Réordonner le DOM
+    shuffled.forEach(child => grid.appendChild(child));
+  }
+
+  function restoreStudentCards() {
+    if (!originalOrder) return;
+    const grid = originalOrder[0]?.parentElement;
+    if (!grid) return;
+    originalOrder.forEach(child => grid.appendChild(child));
+    originalOrder = null;
+  }
+
   /* ── Toggle ───────────────────────────────────────────── */
   function toggle() {
     if (!mapNoms && !buildMap()) {
@@ -181,15 +212,17 @@
 
     if (actif) {
       replaceInTextNodes(document.body, mapNoms);
+      shuffleStudentCards();
       startObserver();
       // Exposer le mapping pour que bilan-pdf.js puisse générer des PDF anonymes
       window.__anonymize = { active: true, map: mapNoms, inverse: mapInverse };
-      toast('🎭 Noms anonymisés', 'info');
+      toast('🎭 Noms anonymisés (ordre mélangé)', 'info');
     } else {
       if (observer) { observer.disconnect(); observer = null; }
       replaceInTextNodes(document.body, mapInverse);
+      restoreStudentCards();
       window.__anonymize = { active: false, map: null, inverse: null };
-      toast('Noms restaurés', 'info');
+      toast('Noms restaurés (ordre original)', 'info');
     }
 
     updateBtn();
