@@ -493,6 +493,10 @@
 
   /* ── Sync Button ──────────────────────────────────── */
   function createBtn() {
+    // Masquer le bouton "Cloud" de auth-global.js (doublon)
+    const authBtn = document.getElementById('matheval-auth-indicator');
+    if (authBtn) authBtn.style.display = 'none';
+
     const btn = document.createElement('button');
     btn.id = 'sb-sync-btn';
     btn.innerHTML = '\u2601\uFE0F <span style="font-size:13px;font-weight:600;margin-left:4px">Sync</span>';
