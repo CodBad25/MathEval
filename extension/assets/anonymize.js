@@ -4,7 +4,6 @@
    ────────────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
-  if (!location.search.includes('correction')) return;
 
   /* ── Listes de mathématicien(ne)s ─────────────────────── */
   const FEMMES = [
@@ -51,7 +50,14 @@
 
   /* ── Construction du mapping ──────────────────────────── */
   function buildMap() {
-    const students = window.__getStudentList ? window.__getStudentList() : [];
+    let students = window.__getStudentList ? window.__getStudentList() : [];
+    // Fallback : lire directement le localStorage si la fonction globale n'est pas dispo
+    if (!students || !students.length) {
+      try {
+        const raw = localStorage.getItem('studentsList');
+        if (raw) students = JSON.parse(raw);
+      } catch (_) {}
+    }
     if (!students || !students.length) return false;
 
     mapNoms = {};
