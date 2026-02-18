@@ -246,26 +246,39 @@
     }
   }
 
-  /* ── Masquer le bouton scroll-to-top inutile (bottom-right du bundle) ── */
-  function hideScrollBtn() {
-    const sel = 'button.\\!fixed.bottom-5.right-5';
-    const el = document.querySelector(sel);
-    if (el) { el.style.display = 'none'; return; }
+  /* ── Masquer la toolbar flottante inutile (bottom-right du bundle) ── */
+  function hideFloatingToolbar() {
+    // Cible la toolbar avec les icônes (rounded-b-full rounded-t-full, fixed bottom-right)
+    const selectors = [
+      '.fixed.rounded-b-full.rounded-t-full',
+      'button.\\!fixed.bottom-5.right-5'
+    ];
+    function tryHide() {
+      for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el) el.style.display = 'none';
+      }
+    }
+    tryHide();
     // Si pas encore rendu, observer le DOM
     const obs = new MutationObserver(() => {
-      const el2 = document.querySelector(sel);
-      if (el2) { el2.style.display = 'none'; obs.disconnect(); }
+      tryHide();
+      // Vérifier si tous trouvés
+      const allFound = selectors.every(sel => {
+        const el = document.querySelector(sel);
+        return !el || el.style.display === 'none';
+      });
+      if (allFound) obs.disconnect();
     });
     obs.observe(document.body, { childList: true, subtree: true });
-    // Arrêter après 10s si jamais non trouvé
-    setTimeout(() => obs.disconnect(), 10000);
+    setTimeout(() => obs.disconnect(), 15000);
   }
 
   /* ── Init ──────────────────────────────────────────────── */
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { createBtn(); hideScrollBtn(); });
+    document.addEventListener('DOMContentLoaded', () => { createBtn(); hideFloatingToolbar(); });
   } else {
     createBtn();
-    hideScrollBtn();
+    hideFloatingToolbar();
   }
 })();
