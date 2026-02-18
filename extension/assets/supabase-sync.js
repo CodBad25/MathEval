@@ -502,12 +502,12 @@
     btn.innerHTML = '\u2601\uFE0F <span style="font-size:13px;font-weight:600;margin-left:4px">Sync</span>';
     btn.title = 'Synchronisation cloud';
     Object.assign(btn.style, {
-      position: 'fixed', bottom: '20px', left: '20px', zIndex: '99999',
-      height: '46px', borderRadius: '23px', padding: '0 18px 0 14px',
+      position: 'fixed', top: '10px', right: '10px', zIndex: '99999',
+      height: '36px', borderRadius: '18px', padding: '0 14px 0 10px',
       background: '#2196f3', color: '#fff', border: 'none',
-      fontSize: '20px', cursor: 'pointer', display: 'flex',
+      fontSize: '16px', cursor: 'pointer', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
-      boxShadow: '0 3px 12px rgba(33,150,243,.5)', transition: 'transform .15s',
+      boxShadow: '0 2px 8px rgba(33,150,243,.4)', transition: 'transform .15s',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     });
     btn.onmouseenter = () => btn.style.transform = 'scale(1.1)';
