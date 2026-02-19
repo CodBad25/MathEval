@@ -354,7 +354,9 @@
     setTimeout(() => obs.disconnect(), 15000);
   }
 
-  /* ── Init ──────────────────────────────────────────────── */
+  /* ── Init (uniquement en mode correction) ─────────────── */
+  if (!location.search.includes('correction')) return;
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { createBtn(); hideFloatingToolbar(); });
   } else {
