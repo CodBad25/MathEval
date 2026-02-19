@@ -761,47 +761,55 @@
     } catch (_) {}
     if (!students.length) return;
 
-    // Construire un map nom complet → genre
-    const genderMap = {};
+    // Construire une liste de noms complets triés par longueur décroissante
+    const nameEntries = [];
     students.forEach(s => {
       const nom = (s.nom || '').trim();
       const prenom = (s.prenom || '').trim();
-      const sexe = (s.sexe || '').toUpperCase();
+      const sexe = (s.sexe || '').toUpperCase().startsWith('F') ? 'F' : 'M';
       const full1 = (nom + ' ' + prenom).trim();
       const full2 = (prenom + ' ' + nom).trim();
-      if (full1) genderMap[full1] = sexe;
-      if (full2) genderMap[full2] = sexe;
-      if (nom) genderMap[nom] = sexe;
-      if (prenom) genderMap[prenom] = sexe;
+      if (full1) nameEntries.push([full1, sexe]);
+      if (full2 && full2 !== full1) nameEntries.push([full2, sexe]);
     });
+    nameEntries.sort((a, b) => b[0].length - a[0].length);
 
     const BLEU = '#2980b9';
     const ROSE = '#d63384';
 
-    function colorizeNode(el) {
-      const text = el.textContent.trim();
-      if (!text) return;
-      for (const [name, sexe] of Object.entries(genderMap)) {
-        if (text.includes(name) && name.length >= 3) {
-          el.style.color = sexe === 'F' ? ROSE : BLEU;
-          return;
-        }
-      }
-    }
-
     function scan() {
-      // Cartes élèves : les noms sont généralement dans des h2, h3, span, strong, p
-      document.querySelectorAll('h2, h3, .font-bold, [data-student-name]').forEach(el => {
-        const text = el.textContent.trim();
-        if (genderMap[text]) {
-          el.style.color = genderMap[text] === 'F' ? ROSE : BLEU;
+      // Scanner tous les éléments visibles pour trouver les noms d'élèves
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => {
+          const tag = n.parentElement?.tagName;
+          if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || tag === 'INPUT') return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+
+      nodes.forEach(node => {
+        const text = node.textContent.trim();
+        if (!text || text.length < 3) return;
+        for (const [name, sexe] of nameEntries) {
+          if (text.includes(name)) {
+            const el = node.parentElement;
+            if (el) el.style.color = sexe === 'F' ? ROSE : BLEU;
+            return;
+          }
         }
       });
     }
 
     // Scanner au chargement + observer les mutations
+    let scanTimer = null;
+    function debouncedScan() {
+      clearTimeout(scanTimer);
+      scanTimer = setTimeout(scan, 200);
+    }
     setTimeout(scan, 1000);
-    const obs = new MutationObserver(() => scan());
+    const obs = new MutationObserver(debouncedScan);
     obs.observe(document.body, { childList: true, subtree: true });
   }
 
