@@ -8,6 +8,7 @@
   'use strict';
 
   const MIN_GAP = 5;
+  const SNAP_RADIUS = 3; // magnétisme vers multiples de 10
   const COLORS = {
     mi:  { bg: '#f87171', label: '#dc2626' },  // red
     mf:  { bg: '#fb923c', label: '#ea580c' },  // orange
@@ -185,6 +186,9 @@
     function onMove(ev) {
       const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
       let pct = Math.round((clientX - barRect.left) / barRect.width * 100);
+      // Snap to nearest multiple of 10 if within SNAP_RADIUS
+      const nearest10 = Math.round(pct / 10) * 10;
+      if (Math.abs(pct - nearest10) <= SNAP_RADIUS) pct = nearest10;
       pct = clamp(pct, 0, 100);
 
       if (key === 'mf') mfVal = clamp(pct, 0, msVal - MIN_GAP);
