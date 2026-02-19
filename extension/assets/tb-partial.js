@@ -761,24 +761,24 @@
     } catch (_) {}
     if (!students.length) return;
 
-    // Construire une liste de noms complets triés par longueur décroissante
-    const nameEntries = [];
+    // Map : texte → genre (NOM, Prénom, et NOM Prénom)
+    const genderMap = {};
     students.forEach(s => {
       const nom = (s.nom || '').trim();
       const prenom = (s.prenom || '').trim();
       const sexe = (s.sexe || '').toUpperCase().startsWith('F') ? 'F' : 'M';
+      if (nom) genderMap[nom] = sexe;
+      if (prenom) genderMap[prenom] = sexe;
       const full1 = (nom + ' ' + prenom).trim();
       const full2 = (prenom + ' ' + nom).trim();
-      if (full1) nameEntries.push([full1, sexe]);
-      if (full2 && full2 !== full1) nameEntries.push([full2, sexe]);
+      if (full1) genderMap[full1] = sexe;
+      if (full2) genderMap[full2] = sexe;
     });
-    nameEntries.sort((a, b) => b[0].length - a[0].length);
 
     const BLEU = '#2980b9';
     const ROSE = '#d63384';
 
     function scan() {
-      // Scanner tous les éléments visibles pour trouver les noms d'élèves
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode: n => {
           const tag = n.parentElement?.tagName;
@@ -791,18 +791,15 @@
 
       nodes.forEach(node => {
         const text = node.textContent.trim();
-        if (!text || text.length < 3) return;
-        for (const [name, sexe] of nameEntries) {
-          if (text.includes(name)) {
-            const el = node.parentElement;
-            if (el) el.style.color = sexe === 'F' ? ROSE : BLEU;
-            return;
-          }
+        if (!text || text.length < 2) return;
+        const sexe = genderMap[text];
+        if (sexe !== undefined) {
+          const el = node.parentElement;
+          if (el) el.style.color = sexe === 'F' ? ROSE : BLEU;
         }
       });
     }
 
-    // Scanner au chargement + observer les mutations
     let scanTimer = null;
     function debouncedScan() {
       clearTimeout(scanTimer);
@@ -813,6 +810,5 @@
     obs.observe(document.body, { childList: true, subtree: true });
   }
 
-  // Lancer après un délai pour que la liste soit chargée
   setTimeout(colorStudentNames, 2000);
 })();
