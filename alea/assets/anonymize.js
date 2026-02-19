@@ -5,29 +5,19 @@
 (function () {
   'use strict';
 
-  /* ── Listes de mathématicien(ne)s (tous avec Prénom Nom) ── */
+  /* ── Listes de mathématicien(ne)s célèbres (tous avec Prénom Nom) ── */
   const FEMMES = [
     'Sophie Germain', 'Emmy Noether', 'Ada Lovelace', 'Maryam Mirzakhani',
-    'Sophie Kowalevski', 'Karen Uhlenbeck', 'Claire Voisin', 'Julia Robinson',
-    'Ingrid Daubechies', 'Mary Cartwright', 'Nalini Joshi', 'Maria Agnesi',
-    'Florence Nightingale', 'Cathleen Morawetz', 'Marian Rejewski',
-    'Amalie Noether', 'Dorothy Vaughan', 'Katherine Johnson', 'Marie Curie',
-    'Hélène Rasiowa', 'Ruth Moufang', 'Olga Ladyzhenskaya', 'Maryna Viazovska',
-    'Lisa Piccirillo', 'June Barrow-Green', 'Alicia Stott', 'Grace Hopper',
-    'Rózsa Péter', 'Olga Taussky-Todd', 'Dana Scott', 'Sara Zahedi',
-    'Fan Chung', 'Vera Pless', 'Doris Schattschneider', 'Joan Birman'
+    'Marie Curie', 'Sophie Kowalevski', 'Karen Uhlenbeck', 'Claire Voisin',
+    'Katherine Johnson', 'Ingrid Daubechies', 'Maria Agnesi', 'Grace Hopper',
+    'Dorothy Vaughan', 'Julia Robinson', 'Maryna Viazovska'
   ];
 
   const HOMMES = [
     'Leonhard Euler', 'Carl Gauss', 'Blaise Pascal', 'Alan Turing',
-    'Henri Poincaré', 'Pierre Fermat', 'Évariste Galois', 'Bernhard Riemann',
-    'Isaac Newton', 'René Descartes', 'Joseph Fourier', 'Gottfried Leibniz',
-    'Srinivasa Ramanujan', 'David Hilbert', 'Georg Cantor', 'Niels Abel',
-    'Augustin Cauchy', 'Karl Weierstrass', 'André Weil', 'Alexander Grothendieck',
-    'John Nash', 'Paul Erdős', 'Andrew Wiles', 'Cédric Villani',
-    'Grigori Perelman', 'Terence Tao', 'Pierre-Simon Laplace', 'Adrien Legendre',
-    'Charles Hermite', 'Émile Borel', 'Jean Dieudonné', 'Laurent Schwartz',
-    'Jacques Hadamard', 'Camille Jordan', 'Joseph Liouville'
+    'Henri Poincaré', 'Pierre Fermat', 'Évariste Galois', 'Isaac Newton',
+    'René Descartes', 'Srinivasa Ramanujan', 'David Hilbert', 'Georg Cantor',
+    'Andrew Wiles', 'Cédric Villani', 'Terence Tao'
   ];
 
   /* ── Prénoms féminins courants (normalisés sans accents, minuscules) ── */
