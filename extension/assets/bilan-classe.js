@@ -13,7 +13,10 @@
     danger: [231, 76, 60], dark: [44, 62, 80], light: [236, 240, 241], white: [255, 255, 255]
   };
   const hex = rgb => '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('');
-  const SEUIL_TBM = 90, SEUIL_MS = 70, SEUIL_MF = 30;
+  function getThresholds() {
+    try { const c = JSON.parse(localStorage.getItem('evaluationConfig') || '{}'); return { tbm: c.seuilTBM ?? 90, ms: c.seuilMS ?? 70, mf: c.seuilMF ?? 30 }; }
+    catch (_) { return { tbm: 90, ms: 70, mf: 30 }; }
+  }
   const compColorMap = {
     modeliser: [155, 89, 182], calculer: [52, 152, 219], raisonner: [46, 204, 113],
     communiquer: [230, 126, 34], representer: [231, 76, 60], chercher: [241, 196, 15],
@@ -27,9 +30,10 @@
     return { modeliser: 'Modéliser', calculer: 'Calculer', raisonner: 'Raisonner', communiquer: 'Communiquer', representer: 'Représenter', chercher: 'Chercher' }[k] || k.charAt(0).toUpperCase() + k.slice(1);
   }
   function levelFromPct(p) {
-    if (p >= SEUIL_TBM) return { code: 'TBM', label: 'Très Bonne Maîtrise', color: C.success };
-    if (p >= SEUIL_MS) return { code: 'MS', label: 'Maîtrise Satisfaisante', color: C.primary };
-    if (p >= SEUIL_MF) return { code: 'MF', label: 'Maîtrise Fragile', color: C.warning };
+    const s = getThresholds();
+    if (p >= s.tbm) return { code: 'TBM', label: 'Très Bonne Maîtrise', color: C.success };
+    if (p >= s.ms) return { code: 'MS', label: 'Maîtrise Satisfaisante', color: C.primary };
+    if (p >= s.mf) return { code: 'MF', label: 'Maîtrise Fragile', color: C.warning };
     return { code: 'MI', label: 'Maîtrise Insuffisante', color: C.danger };
   }
   function fmt(n) { return n % 1 === 0 ? String(n) : n.toFixed(1); }
