@@ -213,10 +213,11 @@
       return { idx: i, titre: ex.titre || `Exercice ${i + 1}`, totalPts: ex.questions.reduce((s, q) => s + q.points, 0), pct: cs.pct, lvl: levelFromPct(cs.pct), comps: exComps };
     });
 
-    // Acquis analysis
-    const acquis = exData.filter(e => e.pct >= 70);
-    const renforcer = exData.filter(e => e.pct >= 30 && e.pct < 70);
-    const nonAcquis = exData.filter(e => e.pct < 30);
+    // Acquis analysis (use configurable thresholds)
+    const th = getThresholds();
+    const acquis = exData.filter(e => e.pct >= th.ms);
+    const renforcer = exData.filter(e => e.pct >= th.mf && e.pct < th.ms);
+    const nonAcquis = exData.filter(e => e.pct < th.mf);
 
     // Histogram HTML (canvas)
     const histId = 'bc-hist-' + Date.now();
@@ -327,15 +328,15 @@
         <h3 style="margin:0 0 10px;font-size:15px;color:${hex(C.dark)}">Analyse des acquis</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
           <div style="background:${hex(C.success)}15;border:2px solid ${hex(C.success)};border-radius:8px;padding:14px">
-            <h4 style="margin:0 0 8px;font-size:13px;color:${hex(C.success)}">✅ Acquis (≥70%)</h4>
+            <h4 style="margin:0 0 8px;font-size:13px;color:${hex(C.success)}">✅ Acquis (≥${th.ms}%)</h4>
             ${acquis.length ? acquis.map(e => `<div style="padding:4px 0;font-size:12px;color:${hex(C.dark)}"><strong>Ex ${e.idx + 1}</strong> — ${e.titre} <span style="color:${hex(C.success)};font-weight:600">(${Math.round(e.pct)}%)</span></div>`).join('') : '<div style="font-size:12px;color:#999;font-style:italic">Aucun</div>'}
           </div>
           <div style="background:${hex(C.warning)}15;border:2px solid ${hex(C.warning)};border-radius:8px;padding:14px">
-            <h4 style="margin:0 0 8px;font-size:13px;color:${hex(C.warning)}">⚠️ À renforcer (30-70%)</h4>
+            <h4 style="margin:0 0 8px;font-size:13px;color:${hex(C.warning)}">⚠️ À renforcer (${th.mf}-${th.ms}%)</h4>
             ${renforcer.length ? renforcer.map(e => `<div style="padding:4px 0;font-size:12px;color:${hex(C.dark)}"><strong>Ex ${e.idx + 1}</strong> — ${e.titre} <span style="color:${hex(C.warning)};font-weight:600">(${Math.round(e.pct)}%)</span></div>`).join('') : '<div style="font-size:12px;color:#999;font-style:italic">Aucun</div>'}
           </div>
           <div style="background:${hex(C.danger)}15;border:2px solid ${hex(C.danger)};border-radius:8px;padding:14px">
-            <h4 style="margin:0 0 8px;font-size:13px;color:${hex(C.danger)}">❌ Non acquis (<30%)</h4>
+            <h4 style="margin:0 0 8px;font-size:13px;color:${hex(C.danger)}">❌ Non acquis (<${th.mf}%)</h4>
             ${nonAcquis.length ? nonAcquis.map(e => `<div style="padding:4px 0;font-size:12px;color:${hex(C.dark)}"><strong>Ex ${e.idx + 1}</strong> — ${e.titre} <span style="color:${hex(C.danger)};font-weight:600">(${Math.round(e.pct)}%)</span></div>`).join('') : '<div style="font-size:12px;color:#999;font-style:italic">Aucun</div>'}
           </div>
         </div>
@@ -656,11 +657,12 @@
     doc.text('ANALYSE DES ACQUIS', M, y);
     y += 7;
 
+    const th2 = getThresholds();
     const thirdW = (W - 8) / 3;
     const sections = [
-      { title: 'Acquis (≥70%)', items: exData.filter(e => e.pct >= 70), color: C.success },
-      { title: 'À renforcer (30-70%)', items: exData.filter(e => e.pct >= 30 && e.pct < 70), color: C.warning },
-      { title: 'Non acquis (<30%)', items: exData.filter(e => e.pct < 30), color: C.danger },
+      { title: `Acquis (≥${th2.ms}%)`, items: exData.filter(e => e.pct >= th2.ms), color: C.success },
+      { title: `À renforcer (${th2.mf}-${th2.ms}%)`, items: exData.filter(e => e.pct >= th2.mf && e.pct < th2.ms), color: C.warning },
+      { title: `Non acquis (<${th2.mf}%)`, items: exData.filter(e => e.pct < th2.mf), color: C.danger },
     ];
     const maxItems = Math.max(...sections.map(s => s.items.length), 1);
     const sectionH = Math.max(20, 13 + maxItems * 6);
