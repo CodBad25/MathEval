@@ -761,24 +761,47 @@
     } catch (_) {}
     if (!students.length) return;
 
-    // Map : texte → genre (NOM, Prénom, et NOM Prénom)
-    const genderMap = {};
-    students.forEach(s => {
-      const nom = (s.nom || '').trim();
-      const prenom = (s.prenom || '').trim();
-      const sexe = (s.sexe || '').toUpperCase().startsWith('F') ? 'F' : 'M';
-      if (nom) genderMap[nom] = sexe;
-      if (prenom) genderMap[prenom] = sexe;
-      const full1 = (nom + ' ' + prenom).trim();
-      const full2 = (prenom + ' ' + nom).trim();
-      if (full1) genderMap[full1] = sexe;
-      if (full2) genderMap[full2] = sexe;
-    });
-
     const BLEU = '#2980b9';
     const ROSE = '#d63384';
 
+    function buildGenderMap() {
+      const genderMap = {};
+      const anonMap = window.__anonymize?.active ? window.__anonymize.map : null;
+
+      students.forEach(s => {
+        const nom = (s.nom || '').trim();
+        const prenom = (s.prenom || '').trim();
+        const sexe = (s.sexe || '').toUpperCase().startsWith('F') ? 'F' : 'M';
+
+        // Vrais noms
+        if (nom) genderMap[nom] = sexe;
+        if (prenom) genderMap[prenom] = sexe;
+        const full1 = (nom + ' ' + prenom).trim();
+        const full2 = (prenom + ' ' + nom).trim();
+        if (full1) genderMap[full1] = sexe;
+        if (full2) genderMap[full2] = sexe;
+
+        // Noms anonymisés (si mode 🎭 actif)
+        if (anonMap) {
+          if (anonMap[nom]) genderMap[anonMap[nom]] = sexe;
+          if (anonMap[prenom]) genderMap[anonMap[prenom]] = sexe;
+          const fakeFull = anonMap[full1] || anonMap[full2];
+          if (fakeFull) {
+            genderMap[fakeFull] = sexe;
+            const parts = fakeFull.split(' ');
+            if (parts.length > 1) {
+              genderMap[parts[parts.length - 1]] = sexe;
+              genderMap[parts.slice(0, -1).join(' ')] = sexe;
+            }
+          }
+        }
+      });
+      return genderMap;
+    }
+
     function scan() {
+      const genderMap = buildGenderMap();
+
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode: n => {
           const tag = n.parentElement?.tagName;
