@@ -751,4 +751,60 @@
   } else {
     init();
   }
+
+  /* ── Coloration noms élèves bleu/rose selon le genre ── */
+  function colorStudentNames() {
+    let students = [];
+    try {
+      const raw = localStorage.getItem('studentsList');
+      if (raw) students = JSON.parse(raw);
+    } catch (_) {}
+    if (!students.length) return;
+
+    // Construire un map nom complet → genre
+    const genderMap = {};
+    students.forEach(s => {
+      const nom = (s.nom || '').trim();
+      const prenom = (s.prenom || '').trim();
+      const sexe = (s.sexe || '').toUpperCase();
+      const full1 = (nom + ' ' + prenom).trim();
+      const full2 = (prenom + ' ' + nom).trim();
+      if (full1) genderMap[full1] = sexe;
+      if (full2) genderMap[full2] = sexe;
+      if (nom) genderMap[nom] = sexe;
+      if (prenom) genderMap[prenom] = sexe;
+    });
+
+    const BLEU = '#2980b9';
+    const ROSE = '#d63384';
+
+    function colorizeNode(el) {
+      const text = el.textContent.trim();
+      if (!text) return;
+      for (const [name, sexe] of Object.entries(genderMap)) {
+        if (text.includes(name) && name.length >= 3) {
+          el.style.color = sexe === 'F' ? ROSE : BLEU;
+          return;
+        }
+      }
+    }
+
+    function scan() {
+      // Cartes élèves : les noms sont généralement dans des h2, h3, span, strong, p
+      document.querySelectorAll('h2, h3, .font-bold, [data-student-name]').forEach(el => {
+        const text = el.textContent.trim();
+        if (genderMap[text]) {
+          el.style.color = genderMap[text] === 'F' ? ROSE : BLEU;
+        }
+      });
+    }
+
+    // Scanner au chargement + observer les mutations
+    setTimeout(scan, 1000);
+    const obs = new MutationObserver(() => scan());
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Lancer après un délai pour que la liste soit chargée
+  setTimeout(colorStudentNames, 2000);
 })();
