@@ -5,19 +5,29 @@
 (function () {
   'use strict';
 
-  /* ── Listes de mathématicien(ne)s ─────────────────────── */
+  /* ── Listes de mathématicien(ne)s (tous avec Prénom Nom) ── */
   const FEMMES = [
     'Sophie Germain', 'Emmy Noether', 'Ada Lovelace', 'Maryam Mirzakhani',
-    'Hypatia', 'Sophie Kowalevski', 'Karen Uhlenbeck', 'Claire Voisin',
-    'Julia Robinson', 'Ingrid Daubechies', 'Mary Cartwright', 'Nalini Joshi',
-    'Maria Agnesi', 'Florence Nightingale', 'Cathleen Morawetz'
+    'Sophie Kowalevski', 'Karen Uhlenbeck', 'Claire Voisin', 'Julia Robinson',
+    'Ingrid Daubechies', 'Mary Cartwright', 'Nalini Joshi', 'Maria Agnesi',
+    'Florence Nightingale', 'Cathleen Morawetz', 'Marian Rejewski',
+    'Amalie Noether', 'Dorothy Vaughan', 'Katherine Johnson', 'Marie Curie',
+    'Hélène Rasiowa', 'Ruth Moufang', 'Olga Ladyzhenskaya', 'Maryna Viazovska',
+    'Lisa Piccirillo', 'June Barrow-Green', 'Alicia Stott', 'Grace Hopper',
+    'Rózsa Péter', 'Olga Taussky-Todd', 'Dana Scott', 'Sara Zahedi',
+    'Fan Chung', 'Vera Pless', 'Doris Schattschneider', 'Joan Birman'
   ];
 
   const HOMMES = [
     'Leonhard Euler', 'Carl Gauss', 'Blaise Pascal', 'Alan Turing',
     'Henri Poincaré', 'Pierre Fermat', 'Évariste Galois', 'Bernhard Riemann',
-    'Archimède', 'Pythagore', 'Isaac Newton', 'René Descartes',
-    'Joseph Fourier', 'Gottfried Leibniz', 'Srinivasa Ramanujan'
+    'Isaac Newton', 'René Descartes', 'Joseph Fourier', 'Gottfried Leibniz',
+    'Srinivasa Ramanujan', 'David Hilbert', 'Georg Cantor', 'Niels Abel',
+    'Augustin Cauchy', 'Karl Weierstrass', 'André Weil', 'Alexander Grothendieck',
+    'John Nash', 'Paul Erdős', 'Andrew Wiles', 'Cédric Villani',
+    'Grigori Perelman', 'Terence Tao', 'Pierre-Simon Laplace', 'Adrien Legendre',
+    'Charles Hermite', 'Émile Borel', 'Jean Dieudonné', 'Laurent Schwartz',
+    'Jacques Hadamard', 'Camille Jordan', 'Joseph Liouville'
   ];
 
   /* ── Prénoms féminins courants (normalisés sans accents, minuscules) ── */
@@ -191,8 +201,16 @@
   let shuffledGrid = null; // référence au conteneur mélangé
 
   function findStudentGrid() {
-    return document.getElementById('bpdf-student-grid')
-      || document.querySelector('[class*="grid"]');
+    // 1) ID explicite (panneau aperçu bilans)
+    const byId = document.getElementById('bpdf-student-grid');
+    if (byId) return byId;
+    // 2) Chercher la grille Svelte qui contient des cartes élèves (la plus peuplée)
+    const grids = document.querySelectorAll('[class*="grid"]');
+    let best = null, bestCount = 0;
+    grids.forEach(g => {
+      if (g.children.length > bestCount) { best = g; bestCount = g.children.length; }
+    });
+    return bestCount >= 2 ? best : null;
   }
 
   function shuffleStudentCards() {
@@ -254,8 +272,9 @@
       toast('🎭 Noms anonymisés (ordre mélangé)', 'info');
     } else {
       if (observer) { observer.disconnect(); observer = null; }
-      replaceInTextNodes(document.body, mapInverse);
+      // Restaurer l'ordre AVANT le remplacement de texte (sinon Svelte re-rend et perd data-orig-order)
       restoreStudentCards();
+      replaceInTextNodes(document.body, mapInverse);
       window.__anonymize = { active: false, map: null, inverse: null };
       toast('Noms restaurés (ordre original)', 'info');
     }
