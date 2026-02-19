@@ -17,7 +17,7 @@
     'Leonhard Euler', 'Carl Gauss', 'Blaise Pascal', 'Alan Turing',
     'Henri Poincaré', 'Pierre Fermat', 'Évariste Galois', 'Isaac Newton',
     'René Descartes', 'Srinivasa Ramanujan', 'David Hilbert', 'Georg Cantor',
-    'Andrew Wiles', 'Cédric Villani', 'François Viète'
+    'Andrew Wiles', 'Augustin Cauchy', 'François Viète'
   ];
 
   /* ── Prénoms féminins courants (normalisés sans accents, minuscules) ── */
