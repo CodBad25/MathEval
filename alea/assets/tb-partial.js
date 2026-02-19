@@ -754,81 +754,40 @@
 
   /* ── Coloration noms élèves bleu/rose selon le genre ── */
   function colorStudentNames() {
-    let students = [];
-    try {
-      const raw = localStorage.getItem('studentsList');
-      if (raw) students = JSON.parse(raw);
-    } catch (_) {}
-    if (!students.length) return;
-
     const BLEU = '#2980b9';
     const ROSE = '#d63384';
 
-    function buildGenderMap() {
-      const genderMap = {};
-      const anonMap = window.__anonymize?.active ? window.__anonymize.map : null;
-
-      students.forEach(s => {
-        const nom = (s.nom || '').trim();
-        const prenom = (s.prenom || '').trim();
-        const sexe = (s.sexe || '').toUpperCase().startsWith('F') ? 'F' : 'M';
-
-        // Vrais noms
-        if (nom) genderMap[nom] = sexe;
-        if (prenom) genderMap[prenom] = sexe;
-        const full1 = (nom + ' ' + prenom).trim();
-        const full2 = (prenom + ' ' + nom).trim();
-        if (full1) genderMap[full1] = sexe;
-        if (full2) genderMap[full2] = sexe;
-
-        // Noms anonymisés (si mode 🎭 actif)
-        if (anonMap) {
-          if (anonMap[nom]) genderMap[anonMap[nom]] = sexe;
-          if (anonMap[prenom]) genderMap[anonMap[prenom]] = sexe;
-          const fakeFull = anonMap[full1] || anonMap[full2];
-          if (fakeFull) {
-            genderMap[fakeFull] = sexe;
-            const parts = fakeFull.split(' ');
-            if (parts.length > 1) {
-              genderMap[parts[parts.length - 1]] = sexe;
-              genderMap[parts.slice(0, -1).join(' ')] = sexe;
-            }
-          }
-        }
-      });
-      return genderMap;
-    }
-
     function scan() {
-      const genderMap = buildGenderMap();
+      let students = [];
+      try { students = JSON.parse(localStorage.getItem('studentsList') || '[]'); } catch (_) {}
+      if (!students.length) return;
 
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: n => {
-          const tag = n.parentElement?.tagName;
-          if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || tag === 'INPUT') return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        }
-      });
-      const nodes = [];
-      while (walker.nextNode()) nodes.push(walker.currentNode);
+      // Trouver la grille de cartes élèves
+      const grid = document.querySelector('[class*="grid"]');
+      if (!grid) return;
+      const cards = Array.from(grid.children);
 
-      nodes.forEach(node => {
-        const text = node.textContent.trim();
-        if (!text || text.length < 2) return;
-        const sexe = genderMap[text];
-        if (sexe !== undefined) {
-          const el = node.parentElement;
-          if (el) el.style.color = sexe === 'F' ? ROSE : BLEU;
+      cards.forEach((card, i) => {
+        const s = students[i];
+        if (!s) return;
+        const color = (s.sexe || '').toUpperCase().startsWith('F') ? ROSE : BLEU;
+        // Colorer les 2 premiers éléments texte de la carte (NOM et Prénom)
+        const els = card.querySelectorAll('span, p, h2, h3, div');
+        let colored = 0;
+        for (const el of els) {
+          const text = el.textContent.trim();
+          if (text && el.children.length === 0 && text.length < 40 && colored < 2) {
+            el.style.color = color;
+            colored++;
+          }
+          if (colored >= 2) break;
         }
       });
     }
 
     let scanTimer = null;
-    function debouncedScan() {
-      clearTimeout(scanTimer);
-      scanTimer = setTimeout(scan, 200);
-    }
-    setTimeout(scan, 1000);
+    function debouncedScan() { clearTimeout(scanTimer); scanTimer = setTimeout(scan, 300); }
+    setTimeout(scan, 1500);
     const obs = new MutationObserver(debouncedScan);
     obs.observe(document.body, { childList: true, subtree: true });
   }
