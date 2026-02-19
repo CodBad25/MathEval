@@ -609,9 +609,16 @@
 
   /* ── Sync Button ──────────────────────────────────── */
   function createBtn() {
-    // Masquer le bouton "Cloud" de auth-global.js (doublon)
-    const authBtn = document.getElementById('matheval-auth-indicator');
-    if (authBtn) authBtn.style.display = 'none';
+    // Masquer le bouton "Cloud" de auth-global.js (doublon) — avec observer pour le timing
+    function hideAuthBtn() {
+      const ab = document.getElementById('matheval-auth-indicator');
+      if (ab) { ab.style.display = 'none'; return true; }
+      return false;
+    }
+    hideAuthBtn();
+    const hideObs = new MutationObserver(() => { if (hideAuthBtn()) hideObs.disconnect(); });
+    hideObs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => hideObs.disconnect(), 10000);
 
     // Masquer "Vue d'ensemble X élèves"
     hideVueEnsemble();
