@@ -15,43 +15,40 @@
     const LS_KEY = 'dnb2_tour_completed';
 
     // Définition des étapes. Les sélecteurs ciblent `[data-tour="..."]`
-    // Une étape peut être :
-    //  - Info (type par défaut) : bouton "Suivant →" pour avancer
-    //  - Interactive : l'utilisateur doit effectuer une action concrète.
-    //    La clé `interactive` décrit quelle action attendre :
-    //       { type: 'click-tab-change'  } → clic sur un onglet différent
-    //       { type: 'focus-toggle'      } → toggle du mode Focus
-    //       { type: 'hover-competence'  } → survol ≥ 1s sur un bouton de compétence
-    //       { type: 'click-quickbtn'    } → clic sur un bouton TB/TF/NR par question
-    //    Sur ces étapes, "Suivant" devient "Passer cette étape" (fallback).
+    // Types d'interactions supportés :
+    //   { type: 'click-tab-change'    } → clic sur un onglet différent
+    //   { type: 'focus-toggle'        } → toggle du mode Focus (F / bouton)
+    //   { type: 'hover-competence'    } → survol ≥ 800 ms sur un bouton de compétence
+    //   { type: 'click-quickbtn'      } → clic sur un bouton TB/TF/NR par question
+    //   { type: 'click-validate-btn'  } → clic sur "Valider la correction" (ouvre la modale)
+    //   { type: 'drag-redaction'      } → changement de valeur du curseur Rédaction
+    //   { type: 'click-return-btn'    } → clic sur "Valider et revenir à la liste"
     const STEPS = [
         {
             target: '[data-tour="candidate-bar"]',
             title: "📋 La barre de correction",
-            description: "Voici la zone principale : numéro du candidat en cours, progression globale et score total sur 24 points.",
+            description: "Le candidat n°999 est un candidat fictif pour vous montrer l'outil. Vous voyez ici son numéro, sa progression et son score total sur 24 points.",
             position: 'bottom'
         },
         {
             target: '[data-tour="exercise-tabs"]',
             title: "📑 Les onglets d'exercices",
-            description: "Naviguez entre les 6 exercices du sujet. Chaque icône rappelle le thème. L'onglet actif est bleu.",
+            description: "Naviguez entre les 6 exercices du sujet. Chaque icône rappelle le thème, l'onglet actif est bleu.",
             instruction: "👉 Cliquez sur un autre onglet pour essayer",
             position: 'bottom',
             interactive: { type: 'click-tab-change' }
         },
         {
-            target: '[data-tour="focus-btn"]',
-            title: "⛶ Mode Focus",
-            description: "Passez en plein écran pour maximiser la place dédiée à la correction. Masque la barre supérieure et utilise tout l'écran.",
-            instruction: "👉 Appuyez sur la touche F (ou cliquez le bouton)",
-            position: 'left',
-            interactive: { type: 'focus-toggle' }
+            target: '[data-tour="progress-indicator"]',
+            title: "🔵 La puce de progression",
+            description: "Cette petite puce en haut à gauche de chaque question montre son état : gris = pas commencée, orange = partiellement corrigée, vert = terminée avec tous les points.",
+            position: 'bottom'
         },
         {
-            target: '[data-tour="exercise-quickbtns"]',
-            title: "⚡ Notes rapides globales",
-            description: "Ces trois boutons appliquent une note TB (parfait), TF (zéro) ou NR (non rendue) à toutes les questions de l'exercice d'un seul clic. Utile pour un exercice totalement raté ou parfait.",
-            position: 'left'
+            target: '[data-tour="score-display"]',
+            title: "📊 Le score de la question",
+            description: "Le score attribué s'affiche en bas à droite de chaque question : « X / Y pts ». Il se met à jour en temps réel quand vous cliquez sur les compétences ou les boutons rapides.",
+            position: 'top'
         },
         {
             target: '[data-tour="notation-guide"]',
@@ -62,10 +59,10 @@
         {
             target: '[data-tour="competence-btn"]',
             title: "🎯 Boutons de compétences",
-            description: "Chaque question est évaluée sur une ou plusieurs compétences. Au survol, une bulle explique précisément pourquoi la compétence est évaluée sur cette question.",
-            instruction: "👉 Survolez un bouton de compétence pour voir sa description",
+            description: "Chaque clic ajoute 0,5 pt à la compétence. Recliquez pour en ajouter encore. Pour repartir à zéro, faites un appui long (maintenez le clic enfoncé > 400 ms). Au survol, une bulle explique pourquoi cette compétence est évaluée sur cette question.",
+            instruction: "👉 Cliquez sur un bouton de compétence pour essayer",
             position: 'top',
-            interactive: { type: 'hover-competence' }
+            interactive: { type: 'click-competence' }
         },
         {
             target: '[data-tour="question-quickbtns"]',
@@ -76,9 +73,51 @@
             interactive: { type: 'click-quickbtn' }
         },
         {
+            target: '[data-tour="exercise-quickbtns"]',
+            title: "⚡ Notes rapides globales",
+            description: "Ces trois boutons appliquent une note TB (parfait), TF (zéro) ou NR (non rendue) à toutes les questions de l'exercice d'un seul clic. Utile pour un exercice totalement raté ou parfait.",
+            position: 'left'
+        },
+        {
+            target: '[data-tour="focus-btn"]',
+            title: "⛶ Mode Focus",
+            description: "Passez en plein écran pour maximiser la place dédiée à la correction.",
+            instruction: "👉 Appuyez sur la touche F (ou cliquez le bouton)",
+            position: 'left',
+            interactive: { type: 'focus-toggle' }
+        },
+        {
             target: '[data-tour="validate-btn"]',
-            title: "✅ Et après ?",
-            description: "Quand toutes les questions d'un candidat sont traitées, ce bouton ouvrira le bilan final : note effective sur 20, réussite par exercice, niveaux de maîtrise par compétence, et un curseur pour attribuer les points de Rédaction / Justifications (0 à 2).",
+            title: "✅ Valider la correction",
+            description: "Maintenant que toutes les questions sont notées, cliquez sur « Valider la correction » pour ouvrir le bilan final.",
+            instruction: "👉 Cliquez sur « Valider la correction »",
+            position: 'top',
+            interactive: { type: 'click-validate-btn' }
+        },
+        {
+            target: '[data-tour="validation-main-score"]',
+            title: "🏆 La note finale",
+            description: "Le gros badge affiche la note effective sur 20 (plafonnée), et la ligne en italique en dessous indique la note réelle sur 26 avec le pourcentage. Le niveau de maîtrise global (TBM / MS / MF / MI) est reflété par la couleur.",
+            position: 'right'
+        },
+        {
+            target: '[data-tour="redaction-slider"]',
+            title: "📝 Rédaction / Justifications",
+            description: "Attribuez 0 à 2 points pour la qualité de rédaction et les justifications de la copie. Les boutons de validation restent grisés tant que vous n'avez pas attribué ces points.",
+            instruction: "👉 Faites glisser le curseur pour attribuer une note",
+            position: 'right',
+            interactive: { type: 'drag-redaction' }
+        },
+        {
+            target: '[data-tour="comment-textarea"]',
+            title: "💬 Commentaire global",
+            description: "Zone libre pour écrire un commentaire destiné à l'élève. Le bouton « 🎤 Dictée vocale » juste au-dessus permet de dicter à la voix plutôt que de taper au clavier.",
+            position: 'top'
+        },
+        {
+            target: '[data-tour="validate-return-btn"]',
+            title: "🎯 Fin de la correction",
+            description: "Cliquez sur « Valider et revenir à la liste » pour valider définitivement cette copie et retourner à la vue d'ensemble. Vous pouvez aussi enchaîner directement avec le candidat suivant via le bouton cyan au milieu.",
             position: 'top'
         }
     ];
@@ -246,12 +285,63 @@
                 const handler = (e) => {
                     const btn = e.target.closest('.quick-btn-main');
                     if (!btn) return;
-                    // Le clic déclenche setQuestionScoreWithNavigation()
-                    // On attend un peu que l'action soit exécutée avant d'avancer
                     setTimeout(goNext, 450);
                 };
                 document.addEventListener('click', handler, true);
                 return () => document.removeEventListener('click', handler, true);
+            }
+
+            // -- Étape compétence : cliquer sur un bouton de compétence --
+            case 'click-competence': {
+                const handler = (e) => {
+                    const btn = e.target.closest('.competence-btn');
+                    if (!btn) return;
+                    setTimeout(goNext, 500);
+                };
+                document.addEventListener('click', handler, true);
+                return () => document.removeEventListener('click', handler, true);
+            }
+
+            // -- Étape 10 : cliquer sur "Valider la correction" → ouvre la modale --
+            case 'click-validate-btn': {
+                const handler = (e) => {
+                    const btn = e.target.closest('#validateBtn, [data-tour="validate-btn"]');
+                    if (!btn) return;
+                    // validateCorrection() ouvre la modale. Attendre qu'elle soit visible.
+                    setTimeout(() => {
+                        const modal = document.getElementById('validationModal');
+                        if (modal && modal.classList.contains('active')) {
+                            goNext();
+                        } else {
+                            // Retry : la modale peut mettre un peu de temps à s'ouvrir
+                            setTimeout(() => goNext(), 400);
+                        }
+                    }, 350);
+                };
+                document.addEventListener('click', handler, true);
+                return () => document.removeEventListener('click', handler, true);
+            }
+
+            // -- Étape 12 : déplacer le curseur Rédaction/Justifications --
+            case 'drag-redaction': {
+                let triggered = false;
+                // Écouter les clics sur le slider (track + marques)
+                const onTrackInteraction = (e) => {
+                    if (triggered) return;
+                    const slider = e.target.closest('.redaction-slider-track, .redaction-slider-mark');
+                    if (!slider) return;
+                    triggered = true;
+                    // Attendre que l'action de set soit appliquée
+                    setTimeout(goNext, 500);
+                };
+                document.addEventListener('click', onTrackInteraction, true);
+                document.addEventListener('mouseup', onTrackInteraction, true);
+                document.addEventListener('touchend', onTrackInteraction, true);
+                return () => {
+                    document.removeEventListener('click', onTrackInteraction, true);
+                    document.removeEventListener('mouseup', onTrackInteraction, true);
+                    document.removeEventListener('touchend', onTrackInteraction, true);
+                };
             }
         }
         return null;
@@ -405,6 +495,19 @@
         if (overlayEl) overlayEl.classList.remove('active');
         try { localStorage.setItem(LS_KEY, '1'); } catch (e) {}
         window.removeEventListener('resize', onResize);
+
+        // Si on était en mode démo, restaurer l'état original de l'app et
+        // rediriger vers l'accueil pour que l'utilisateur repartie sur du propre
+        if (isDemoMode) {
+            // Fermer la modale de validation si elle est ouverte
+            const vm = document.getElementById('validationModal');
+            if (vm) vm.classList.remove('active');
+            restoreAppStateAfterDemo();
+            // Retour à l'accueil (plus propre que de rester sur mainPage avec des candidats disparus)
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 400);
+        }
     }
 
     // Expose pour utilisation externe (bouton "Découverte" dans un futur menu)
@@ -469,10 +572,154 @@
         hintEl.textContent = msg;
     }
 
-    // Auto-start si ?tour=1 dans l'URL
+    // ------------------------------------------------------------------------
+    //  MODE DÉMO : crée un candidat fictif n°999 avec scores variés,
+    //  sauvegarde l'état original, et restaure à la fin du tour.
+    // ------------------------------------------------------------------------
+    const DEMO_CANDIDATE_NUMBER = 999;
+    let savedAppState = null; // Snapshot pour restauration
+    let isDemoMode = false;
+
+    function saveAppStateForDemo() {
+        savedAppState = {
+            candidates: JSON.parse(JSON.stringify(appState.candidates || [])),
+            activeCandidates: JSON.parse(JSON.stringify(appState.activeCandidates || [])),
+            scores: JSON.parse(JSON.stringify(appState.scores || {})),
+            quickButtonStates: JSON.parse(JSON.stringify(appState.quickButtonStates || {})),
+            presentationScores: JSON.parse(JSON.stringify(appState.presentationScores || {})),
+            candidateComments: JSON.parse(JSON.stringify(appState.candidateComments || {})),
+            validatedCandidates: JSON.parse(JSON.stringify(appState.validatedCandidates || {})),
+            currentCandidateIndex: appState.currentCandidateIndex,
+            currentExerciseIndex: appState.currentExerciseIndex,
+            currentTab: appState.currentTab,
+            correctionMode: appState.correctionMode,
+            modeSelected: appState.modeSelected
+        };
+    }
+
+    function restoreAppStateAfterDemo() {
+        if (!savedAppState) return;
+        Object.assign(appState, savedAppState);
+        savedAppState = null;
+        isDemoMode = false;
+        try { saveData(); } catch (e) {}
+    }
+
+    // Pré-remplit des scores variés sur toutes les questions de tous les exercices
+    // pour le candidat démo. Le but : montrer vert / orange / rouge / gris côte à côte.
+    function fillDemoCandidateScores(n) {
+        if (!appState.scores[n])            appState.scores[n] = {};
+        if (!appState.quickButtonStates[n]) appState.quickButtonStates[n] = {};
+
+        // Pattern visuel : alterner TB / TF / NR / partiel / non-traité
+        const patterns = ['tb', 'tf', 'nr', 'partial', 'tb', 'tb', 'tf', 'partial'];
+        let patternIdx = 0;
+
+        Object.keys(exercisesData).forEach(exKey => {
+            const ex = exercisesData[exKey];
+            if (!ex || !ex.questions) return;
+
+            appState.scores[n][exKey] = {};
+            appState.quickButtonStates[n][exKey] = {};
+
+            ex.questions.forEach((q) => {
+                const pat = patterns[patternIdx % patterns.length];
+                patternIdx++;
+                const qScore = { score: 0, competences: {} };
+
+                if (pat === 'tb') {
+                    appState.quickButtonStates[n][exKey][q.id] = 'tb';
+                    qScore.score = q.points;
+                    (q.competences || []).forEach(c => { qScore.competences[c.name] = c.points; });
+                } else if (pat === 'tf') {
+                    appState.quickButtonStates[n][exKey][q.id] = 'tf';
+                    (q.competences || []).forEach(c => { qScore.competences[c.name] = 0; });
+                } else if (pat === 'nr') {
+                    appState.quickButtonStates[n][exKey][q.id] = 'nr';
+                    (q.competences || []).forEach(c => { qScore.competences[c.name] = 0; });
+                } else if (pat === 'partial') {
+                    // Score partiel via compétences (sans bouton rapide)
+                    const comps = q.competences || [];
+                    comps.forEach((c, idx) => {
+                        if (idx === 0) {
+                            qScore.competences[c.name] = c.points; // première comp : full
+                            qScore.score += c.points;
+                        } else {
+                            qScore.competences[c.name] = 0; // autres : zéro
+                        }
+                    });
+                }
+                appState.scores[n][exKey][q.id] = qScore;
+            });
+        });
+
+        // Un exercice entier non commencé (le dernier) pour montrer les puces grises
+        const lastExKey = Object.keys(exercisesData).sort().pop();
+        if (lastExKey) {
+            delete appState.scores[n][lastExKey];
+            delete appState.quickButtonStates[n][lastExKey];
+        }
+
+        // Pas de presentationScore → le curseur sera à "— / 2" au début (option b pédagogique)
+        if (appState.presentationScores) delete appState.presentationScores[n];
+    }
+
+    function startDemoTour() {
+        isDemoMode = true;
+        saveAppStateForDemo();
+
+        // Remplacer les candidats par un seul candidat démo
+        const demoCandidate = { number: DEMO_CANDIDATE_NUMBER, active: true };
+        appState.candidates = [demoCandidate];
+        appState.activeCandidates = [demoCandidate];
+        appState.currentCandidateIndex = 0;
+        appState.currentExerciseIndex = 1;
+        appState.currentTab = 'exercise1';
+        appState.correctionMode = 'candidate';
+        appState.modeSelected = true;
+
+        // Nettoyer les anciens scores pour le candidat démo et pré-remplir
+        if (appState.scores) delete appState.scores[DEMO_CANDIDATE_NUMBER];
+        if (appState.quickButtonStates) delete appState.quickButtonStates[DEMO_CANDIDATE_NUMBER];
+        fillDemoCandidateScores(DEMO_CANDIDATE_NUMBER);
+
+        // Aller directement sur la page de correction
+        if (typeof showPage === 'function') showPage('mainPage');
+        if (typeof renderExerciseTabs === 'function') renderExerciseTabs();
+        if (typeof renderExerciseTabContents === 'function') renderExerciseTabContents();
+        if (typeof showTab === 'function') showTab('exercise1');
+        if (typeof loadCurrentCandidate === 'function') loadCurrentCandidate();
+
+        // Démarrer le tour après un petit délai pour laisser le rendu se faire
+        setTimeout(() => {
+            hideWaitingBanner();
+            startTour();
+        }, 700);
+    }
+
+    // Auto-start si ?tour=1 dans l'URL (ou ?tour=demo pour le mode démo complet)
     function initAutoStart() {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('tour') !== '1') return;
+        const tourParam = params.get('tour');
+        if (!tourParam) return;
+
+        // Mode démo : candidat fictif + pré-remplissage + tour complet avec modale
+        if (tourParam === 'demo') {
+            console.log('🎓 Tour en mode DÉMO : candidat fictif + scores variés');
+            // Attendre que l'auto-import du config soit terminé
+            const waitForExercises = () => {
+                if (typeof exercisesData !== 'undefined' && Object.keys(exercisesData).length > 0) {
+                    startDemoTour();
+                } else {
+                    setTimeout(waitForExercises, 200);
+                }
+            };
+            waitForExercises();
+            return;
+        }
+
+        // Mode classique : attente du démarrage de la correction par l'utilisateur
+        if (tourParam !== '1') return;
 
         console.log('🎓 Tour guidé : ?tour=1 détecté');
 

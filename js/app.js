@@ -5929,7 +5929,7 @@ function renderExerciseContent(exerciseNumber) {
         
         html += `
             <div class="question-card" data-question-id="${question.id}">
-                <div class="question-progress-indicator progress-indicator ${questionProgressState}"></div>
+                <div class="question-progress-indicator progress-indicator ${questionProgressState}" data-tour="progress-indicator"></div>
                 <div class="question-header">
                     <div class="question-title-section">
                         <div class="question-title">${question.title} (${question.points} pts)</div>
@@ -6018,7 +6018,7 @@ function renderExerciseContent(exerciseNumber) {
                             <span class="btn-icon">↻</span>
                         </button>
                     </div>
-                    <div class="score-display" id="score_${exerciseNumber}_${question.id}">
+                    <div class="score-display" id="score_${exerciseNumber}_${question.id}" data-tour="score-display">
                         ${candidateScore} / ${question.points} pts
                     </div>
                 </div>

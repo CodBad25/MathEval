@@ -1116,12 +1116,12 @@
             
             <div class="validation-body-row">
                 <div class="main-score-container">
-                    <div class="main-score-badge" id="validationMainScore">17/20</div>
+                    <div class="main-score-badge" id="validationMainScore" data-tour="validation-main-score">17/20</div>
                     <div class="raw-score-details" id="validationRawScore"></div>
                     <div class="score-nr" id="validationNR"></div>
 
                     <!-- Curseur Rédaction / Justifications (0 / 0.5 / 1 / 1.5 / 2) -->
-                    <div class="redaction-slider-container" id="redactionSliderContainer">
+                    <div class="redaction-slider-container" id="redactionSliderContainer" data-tour="redaction-slider">
                         <div class="redaction-slider-header">
                             <span class="redaction-slider-label">📝 Rédaction / Justifications</span>
                             <span class="redaction-slider-value" id="redactionSliderValue">— / 2</span>
@@ -1169,16 +1169,16 @@
                         🎤 Dictée vocale
                     </button>
                 </div>
-                <textarea id="validationComment" placeholder="Saisissez un commentaire global sur la copie..." rows="4"></textarea>
+                <textarea id="validationComment" data-tour="comment-textarea" placeholder="Saisissez un commentaire global sur la copie..." rows="4"></textarea>
                 <div class="voice-status" id="voiceStatus" style="display: none;">
                     <span class="voice-indicator">🔴 Écoute en cours...</span>
                 </div>
             </div>
-            
+
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeValidationModal()">Annuler</button>
                 <button class="btn-validate-next" onclick="confirmValidationAndNext()" id="btnValidateNext">➡️ Valider et candidat suivant</button>
-                <button class="btn-validate" onclick="confirmValidationAndReturn()">✅ Valider et revenir à la liste</button>
+                <button class="btn-validate" data-tour="validate-return-btn" onclick="confirmValidationAndReturn()">✅ Valider et revenir à la liste</button>
             </div>
         </div>
     </div>
@@ -1419,6 +1419,6 @@
     <script src="js/modules/pdfGenerator.js?v=20251110003"></script>
     <script src="js/app.js?v=20251105017"></script>
     <!-- Tour guidé DNB Blanc 2 (vanilla, chargé en dernier) -->
-    <script src="js/tour.js?v=20260411006"></script>
+    <script src="js/tour.js?v=20260411007"></script>
 </body>
 </html>
