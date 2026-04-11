@@ -109,7 +109,26 @@
             font-size: 0.92em;
             color: #475569;
             line-height: 1.55;
-            margin-bottom: 18px;
+            margin-bottom: 14px;
+        }
+
+        /* Instruction d'action interactive (affichée uniquement sur les étapes actives) */
+        .dnb2-tour-instruction {
+            display: none;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            background: linear-gradient(135deg, #fff7e6 0%, #ffedd5 100%);
+            border-left: 4px solid #fd7e14;
+            border-radius: 8px;
+            font-size: 0.92em;
+            font-weight: 600;
+            color: #7c2d12;
+            line-height: 1.4;
+            animation: dnb2-tour-instr-pulse 1.6s ease-in-out infinite;
+        }
+        @keyframes dnb2-tour-instr-pulse {
+            0%, 100% { background: linear-gradient(135deg, #fff7e6 0%, #ffedd5 100%); }
+            50%      { background: linear-gradient(135deg, #fffef0 0%, #fff3de 100%); }
         }
 
         .dnb2-tour-footer {
@@ -166,6 +185,20 @@
         .dnb2-tour-btn-next:hover {
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(118, 75, 162, 0.4);
+        }
+        /* Étape interactive : le bouton "Suivant" devient un "Passer cette étape" plus discret */
+        .dnb2-tour-btn-next.is-skip {
+            background: white;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+            box-shadow: none;
+            font-weight: 500;
+        }
+        .dnb2-tour-btn-next.is-skip:hover {
+            background: #f8fafc;
+            color: #334155;
+            transform: none;
+            box-shadow: none;
         }
 
         @media (max-width: 560px) {
@@ -2616,29 +2649,220 @@
             .container {
                 padding: 10px;
             }
-            
+
+            /* Onglets d'exercices : flex horizontal avec scroll plutôt que colonne */
             .main-tabs {
-                flex-direction: column;
-                gap: 2px;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 4px;
+                padding: 6px;
             }
-            
             .main-tab {
-                justify-content: center;
+                flex-shrink: 0;
+                padding: 8px 12px;
+                font-size: 0.85em;
             }
-            
+
             .questions-grid {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
-            
+
             .stats-row {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
-            
+
             .candidates-grid {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
                 gap: 8px;
+            }
+
+            /* Top-bar : wrap pour éviter le débordement */
+            .top-bar {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 10px;
+            }
+            .top-bar h1 {
+                font-size: 1.15em;
+                flex: 1 1 100%;
+                text-align: center;
+            }
+            .top-bar-buttons {
+                display: flex;
+                gap: 6px;
+                justify-content: center;
+                flex: 1 1 100%;
+            }
+            .top-bar-buttons button {
+                font-size: 0.8em;
+                padding: 6px 10px;
+            }
+
+            /* Barre de correction (main-header) : wrap en colonne */
+            .main-header {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 10px 12px;
+            }
+            .candidate-info {
+                flex: 1 1 100%;
+                justify-content: space-between;
+            }
+            .candidate-title {
+                font-size: 1.05em;
+            }
+            .score-info {
+                flex: 1 1 100%;
+                justify-content: space-between;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .progress-info, .total-score {
+                font-size: 0.85em;
+                padding: 6px 10px;
+            }
+            .focus-mode-btn {
+                font-size: 0.82em;
+                padding: 6px 10px;
+            }
+            .focus-mode-btn .focus-label {
+                display: none;
+            }
+
+            /* Modale de validation : layout en 1 colonne sur mobile */
+            .validation-synthesis-modal {
+                max-height: 98vh;
+                max-width: 100%;
+                width: 100%;
+                margin: 5px;
+            }
+            .validation-body-row {
+                flex-direction: column;
+                gap: 10px;
+                padding: 8px 10px;
+            }
+            .main-score-container {
+                min-width: 0;
+                width: 100%;
+                padding: 12px 14px;
+            }
+            .main-score-badge {
+                font-size: 1.6em;
+                padding: 8px 18px;
+            }
+            .competences-table-container {
+                width: 100%;
+            }
+            .competences-table {
+                font-size: 0.8em;
+            }
+            .competences-table th,
+            .competences-table td {
+                padding: 5px 6px;
+            }
+
+            /* Grille NR : marque plus petite */
+            .nr-grid-question {
+                width: 12px;
+                height: 12px;
+            }
+            .nr-grid-exercise-name {
+                width: 50px;
+                font-size: 0.68em;
+            }
+
+            /* Badges d'exercices en haut de la modale : plus compacts */
+            .exercises-badges-container {
+                padding: 4px 8px;
+                gap: 3px;
+            }
+            .exercise-badge {
+                min-width: 52px;
+            }
+            .exercise-badge-name {
+                font-size: 0.62em;
+            }
+            .exercise-badge-score {
+                font-size: 0.7em;
+                padding: 2px 4px;
+            }
+
+            /* Navigation boutons bas de page */
+            .navigation-buttons {
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 8px 6px;
+            }
+            .nav-btn {
+                font-size: 0.8em;
+                padding: 8px 10px;
+                flex: 1 1 auto;
+            }
+
+            /* Boutons actions modale de validation */
+            .modal-actions {
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 8px 10px;
+            }
+            .btn-cancel, .btn-validate, .btn-validate-next {
+                font-size: 0.82em;
+                padding: 8px 10px;
+                flex: 1 1 auto;
+            }
+
+            /* Curseur Rédaction : padding plus confortable au tactile */
+            .redaction-slider-track {
+                height: 12px;
+                margin: 0 18px 28px 18px;
+            }
+            .redaction-slider-thumb {
+                width: 22px;
+                height: 22px;
+                border-width: 3px;
+            }
+            .redaction-slider-mark {
+                font-size: 0.75em;
+                padding: 4px 6px;
+            }
+
+            /* Comment section : garder lisible */
+            .comment-section {
+                padding: 6px 10px 8px;
+            }
+            .comment-section textarea {
+                font-size: 14px;
+                height: 60px;
+            }
+
+            /* Tour guidé : tooltip collée au bord, pas de calcul de position complexe */
+            .dnb2-tour-tooltip {
+                width: calc(100vw - 16px) !important;
+                left: 8px !important;
+                right: 8px !important;
+                top: auto !important;
+                bottom: 12px !important;
+                transform: none !important;
+                max-height: 50vh;
+                overflow-y: auto;
+                padding: 12px 14px 10px 14px;
+            }
+            .dnb2-tour-title { font-size: 1em; }
+            .dnb2-tour-description { font-size: 0.85em; line-height: 1.45; }
+            .dnb2-tour-instruction { font-size: 0.85em; padding: 8px 10px; }
+            .dnb2-tour-waiting-banner {
+                left: 8px;
+                right: 8px;
+                max-width: none;
+                transform: none;
+                padding: 10px 12px;
+            }
+            @keyframes dnb2-tour-slideup {
+                from { opacity: 0; transform: translateY(20px); }
+                to   { opacity: 1; transform: translateY(0); }
             }
         }
 

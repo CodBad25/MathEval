@@ -15,60 +15,71 @@
     const LS_KEY = 'dnb2_tour_completed';
 
     // Définition des étapes. Les sélecteurs ciblent `[data-tour="..."]`
+    // Une étape peut être :
+    //  - Info (type par défaut) : bouton "Suivant →" pour avancer
+    //  - Interactive : l'utilisateur doit effectuer une action concrète.
+    //    La clé `interactive` décrit quelle action attendre :
+    //       { type: 'click-tab-change'  } → clic sur un onglet différent
+    //       { type: 'focus-toggle'      } → toggle du mode Focus
+    //       { type: 'hover-competence'  } → survol ≥ 1s sur un bouton de compétence
+    //       { type: 'click-quickbtn'    } → clic sur un bouton TB/TF/NR par question
+    //    Sur ces étapes, "Suivant" devient "Passer cette étape" (fallback).
     const STEPS = [
         {
             target: '[data-tour="candidate-bar"]',
             title: "📋 La barre de correction",
-            description: "Voici la zone principale : numéro du candidat en cours, progression globale et score total. Tout reste à portée de regard pendant la correction.",
+            description: "Voici la zone principale : numéro du candidat en cours, progression globale et score total sur 24 points.",
             position: 'bottom'
         },
         {
             target: '[data-tour="exercise-tabs"]',
             title: "📑 Les onglets d'exercices",
-            description: "Naviguez entre les 6 exercices du sujet. L'onglet actif est mis en évidence en bleu. Chaque icône représente le thème de l'exercice.",
-            position: 'bottom'
+            description: "Naviguez entre les 6 exercices du sujet. Chaque icône rappelle le thème. L'onglet actif est bleu.",
+            instruction: "👉 Cliquez sur un autre onglet pour essayer",
+            position: 'bottom',
+            interactive: { type: 'click-tab-change' }
         },
         {
             target: '[data-tour="focus-btn"]',
             title: "⛶ Mode Focus",
-            description: "Cliquez sur ce bouton (ou appuyez sur F) pour passer en plein écran et masquer la barre supérieure. Idéal pour se concentrer sur la correction.",
-            position: 'left'
+            description: "Passez en plein écran pour maximiser la place dédiée à la correction. Masque la barre supérieure et utilise tout l'écran.",
+            instruction: "👉 Appuyez sur la touche F (ou cliquez le bouton)",
+            position: 'left',
+            interactive: { type: 'focus-toggle' }
         },
         {
             target: '[data-tour="exercise-quickbtns"]',
             title: "⚡ Notes rapides globales",
-            description: "Ces trois boutons appliquent une note TB (parfait), TF (zéro) ou NR (non rendue) à toutes les questions de l'exercice d'un seul clic.",
+            description: "Ces trois boutons appliquent une note TB (parfait), TF (zéro) ou NR (non rendue) à toutes les questions de l'exercice d'un seul clic. Utile pour un exercice totalement raté ou parfait.",
             position: 'left'
         },
         {
             target: '[data-tour="notation-guide"]',
             title: "📋 Guide de notation",
-            description: "Ce bloc jaune indique précisément comment attribuer les points pour cette question. À consulter avant chaque correction pour rester cohérent.",
+            description: "Le post-it jaune sous chaque énoncé indique précisément comment attribuer les points pour cette question. Consultez-le avant de noter pour rester cohérent entre les copies.",
             position: 'bottom'
         },
         {
             target: '[data-tour="competence-btn"]',
             title: "🎯 Boutons de compétences",
-            description: "Cliquez pour ajouter des points par compétence. Au survol, une bulle explique pourquoi cette compétence est évaluée sur cette question précise.",
-            position: 'top'
+            description: "Chaque question est évaluée sur une ou plusieurs compétences. Au survol, une bulle explique précisément pourquoi la compétence est évaluée sur cette question.",
+            instruction: "👉 Survolez un bouton de compétence pour voir sa description",
+            position: 'top',
+            interactive: { type: 'hover-competence' }
         },
         {
             target: '[data-tour="question-quickbtns"]',
             title: "✓ Notes rapides par question",
-            description: "Les boutons TB / TF / NR permettent d'évaluer une question en un clic : TB = tous les points, TF = zéro, NR = non rendue.",
-            position: 'top'
+            description: "Les boutons TB / TF / NR évaluent une question en un clic : TB = tous les points, TF = zéro, NR = non rendue par l'élève.",
+            instruction: "👉 Cliquez sur TB, TF ou NR pour essayer",
+            position: 'top',
+            interactive: { type: 'click-quickbtn' }
         },
         {
             target: '[data-tour="validate-btn"]',
-            title: "✅ Valider la correction",
-            description: "Quand toutes les questions sont traitées, cliquez ici pour ouvrir le bilan : note effective sur 20, réussite par exercice, niveaux de maîtrise par compétence.",
+            title: "✅ Et après ?",
+            description: "Quand toutes les questions d'un candidat sont traitées, ce bouton ouvrira le bilan final : note effective sur 20, réussite par exercice, niveaux de maîtrise par compétence, et un curseur pour attribuer les points de Rédaction / Justifications (0 à 2).",
             position: 'top'
-        },
-        {
-            target: null,
-            title: "⚠️ Avant de valider : la Rédaction / Justifications",
-            description: "Dans la fenêtre de bilan, n'oubliez pas d'attribuer les points de Rédaction / Justifications (0 à 2 pts) via le curseur. Les boutons de validation restent grisés tant que ce choix n'est pas fait.",
-            position: 'center'
         }
     ];
 
@@ -76,6 +87,19 @@
     let overlayEl = null;
     let tooltipEl = null;
     let spotlightEl = null;
+    // Fonction de cleanup pour l'étape interactive courante (détache les listeners)
+    let currentInteractiveCleanup = null;
+
+    // Avance à l'étape suivante (ou termine le tour si dernière)
+    function goNext() {
+        if (currentInteractiveCleanup) { currentInteractiveCleanup(); currentInteractiveCleanup = null; }
+        if (currentStep < STEPS.length - 1) { currentStep++; renderStep(); }
+        else { endTour(); }
+    }
+    function goPrev() {
+        if (currentInteractiveCleanup) { currentInteractiveCleanup(); currentInteractiveCleanup = null; }
+        if (currentStep > 0) { currentStep--; renderStep(); }
+    }
 
     // ------------------------------------------------------------------------
     //  Création du DOM du tour (une seule fois)
@@ -85,9 +109,6 @@
 
         overlayEl = document.createElement('div');
         overlayEl.className = 'dnb2-tour-overlay';
-        overlayEl.addEventListener('click', (e) => {
-            if (e.target === overlayEl) { /* pas de fermeture au clic fond */ }
-        });
 
         spotlightEl = document.createElement('div');
         spotlightEl.className = 'dnb2-tour-spotlight';
@@ -102,8 +123,9 @@
             </div>
             <div class="dnb2-tour-title"></div>
             <div class="dnb2-tour-description"></div>
+            <div class="dnb2-tour-instruction"></div>
             <div class="dnb2-tour-footer">
-                <button class="dnb2-tour-btn dnb2-tour-btn-skip" type="button">Passer</button>
+                <button class="dnb2-tour-btn dnb2-tour-btn-skip" type="button">Quitter</button>
                 <div class="dnb2-tour-nav">
                     <button class="dnb2-tour-btn dnb2-tour-btn-prev" type="button">← Précédent</button>
                     <button class="dnb2-tour-btn dnb2-tour-btn-next" type="button">Suivant →</button>
@@ -115,13 +137,8 @@
 
         tooltipEl.querySelector('.dnb2-tour-close').addEventListener('click', endTour);
         tooltipEl.querySelector('.dnb2-tour-btn-skip').addEventListener('click', endTour);
-        tooltipEl.querySelector('.dnb2-tour-btn-prev').addEventListener('click', () => {
-            if (currentStep > 0) { currentStep--; renderStep(); }
-        });
-        tooltipEl.querySelector('.dnb2-tour-btn-next').addEventListener('click', () => {
-            if (currentStep < STEPS.length - 1) { currentStep++; renderStep(); }
-            else { endTour(); }
-        });
+        tooltipEl.querySelector('.dnb2-tour-btn-prev').addEventListener('click', goPrev);
+        tooltipEl.querySelector('.dnb2-tour-btn-next').addEventListener('click', goNext);
 
         // Keyboard : Echap = quitter, flèches = naviguer
         document.addEventListener('keydown', onKeyDown);
@@ -130,11 +147,98 @@
     function onKeyDown(e) {
         if (!overlayEl || !overlayEl.classList.contains('active')) return;
         if (e.key === 'Escape') { endTour(); }
-        else if (e.key === 'ArrowRight') {
-            if (currentStep < STEPS.length - 1) { currentStep++; renderStep(); }
-        } else if (e.key === 'ArrowLeft') {
-            if (currentStep > 0) { currentStep--; renderStep(); }
+        else if (e.key === 'ArrowRight') { goNext(); }
+        else if (e.key === 'ArrowLeft') { goPrev(); }
+    }
+
+    // ------------------------------------------------------------------------
+    //  Étapes interactives : attache un écouteur qui déclenche goNext()
+    //  Retourne une fonction de cleanup à appeler quand on quitte l'étape
+    // ------------------------------------------------------------------------
+    function attachInteractiveListener(interactive) {
+        switch (interactive.type) {
+
+            // -- Étape 2 : cliquer sur un onglet différent de celui actif --
+            case 'click-tab-change': {
+                const tabsContainer = document.getElementById('mainTabs');
+                if (!tabsContainer) return null;
+                const initialActive = tabsContainer.querySelector('.main-tab.active');
+                const initialTabKey = initialActive ? initialActive.getAttribute('data-tab') : null;
+
+                const handler = (e) => {
+                    const tab = e.target.closest('.main-tab');
+                    if (!tab) return;
+                    const tabKey = tab.getAttribute('data-tab');
+                    if (tabKey && tabKey !== initialTabKey) {
+                        setTimeout(goNext, 350);
+                    }
+                };
+                tabsContainer.addEventListener('click', handler, true);
+                return () => tabsContainer.removeEventListener('click', handler, true);
+            }
+
+            // -- Étape 3 : activer/désactiver le mode Focus --
+            case 'focus-toggle': {
+                const initialFocus = document.body.classList.contains('focus-mode');
+                const observer = new MutationObserver(() => {
+                    const nowFocus = document.body.classList.contains('focus-mode');
+                    if (nowFocus !== initialFocus) {
+                        observer.disconnect();
+                        // Si l'utilisateur a activé focus, on le désactive après 900 ms
+                        // pour que le reste du tour (qui surligne des éléments) se voie bien
+                        if (nowFocus) {
+                            setTimeout(() => {
+                                try {
+                                    if (typeof toggleFocusMode === 'function') toggleFocusMode();
+                                } catch (e) {}
+                                setTimeout(goNext, 300);
+                            }, 900);
+                        } else {
+                            setTimeout(goNext, 300);
+                        }
+                    }
+                });
+                observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+                return () => observer.disconnect();
+            }
+
+            // -- Étape 6 : survoler un bouton de compétence (≥ 800 ms) --
+            case 'hover-competence': {
+                let timer = null;
+                const handleEnter = (e) => {
+                    const btn = e.target.closest('.competence-btn');
+                    if (!btn) return;
+                    if (timer) clearTimeout(timer);
+                    timer = setTimeout(goNext, 800);
+                };
+                const handleLeave = (e) => {
+                    const btn = e.target.closest('.competence-btn');
+                    if (!btn) return;
+                    if (timer) { clearTimeout(timer); timer = null; }
+                };
+                document.addEventListener('mouseenter', handleEnter, true);
+                document.addEventListener('mouseleave', handleLeave, true);
+                return () => {
+                    document.removeEventListener('mouseenter', handleEnter, true);
+                    document.removeEventListener('mouseleave', handleLeave, true);
+                    if (timer) clearTimeout(timer);
+                };
+            }
+
+            // -- Étape 7 : cliquer sur un bouton TB/TF/NR par question --
+            case 'click-quickbtn': {
+                const handler = (e) => {
+                    const btn = e.target.closest('.quick-btn-main');
+                    if (!btn) return;
+                    // Le clic déclenche setQuestionScoreWithNavigation()
+                    // On attend un peu que l'action soit exécutée avant d'avancer
+                    setTimeout(goNext, 450);
+                };
+                document.addEventListener('click', handler, true);
+                return () => document.removeEventListener('click', handler, true);
+            }
         }
+        return null;
     }
 
     // ------------------------------------------------------------------------
@@ -144,17 +248,42 @@
         const step = STEPS[currentStep];
         if (!step) return;
 
+        // Nettoyer l'écouteur de l'étape précédente si elle était interactive
+        if (currentInteractiveCleanup) { currentInteractiveCleanup(); currentInteractiveCleanup = null; }
+
         // Texte
         tooltipEl.querySelector('.dnb2-tour-progress').textContent =
             `Étape ${currentStep + 1} / ${STEPS.length}`;
         tooltipEl.querySelector('.dnb2-tour-title').textContent = step.title;
         tooltipEl.querySelector('.dnb2-tour-description').textContent = step.description;
 
+        // Instruction interactive (affichée si étape interactive)
+        const instrEl = tooltipEl.querySelector('.dnb2-tour-instruction');
+        if (step.interactive && step.instruction) {
+            instrEl.textContent = step.instruction;
+            instrEl.style.display = 'block';
+        } else {
+            instrEl.textContent = '';
+            instrEl.style.display = 'none';
+        }
+
         // Boutons navigation
         const prevBtn = tooltipEl.querySelector('.dnb2-tour-btn-prev');
         const nextBtn = tooltipEl.querySelector('.dnb2-tour-btn-next');
         prevBtn.disabled = (currentStep === 0);
-        nextBtn.textContent = (currentStep === STEPS.length - 1) ? 'Terminer ✓' : 'Suivant →';
+        if (step.interactive) {
+            // Pendant une étape interactive, le bouton principal devient "Passer cette étape"
+            nextBtn.textContent = 'Passer cette étape';
+            nextBtn.classList.add('is-skip');
+        } else {
+            nextBtn.textContent = (currentStep === STEPS.length - 1) ? 'Terminer ✓' : 'Suivant →';
+            nextBtn.classList.remove('is-skip');
+        }
+
+        // Attacher l'écouteur de l'action interactive si présent
+        if (step.interactive) {
+            currentInteractiveCleanup = attachInteractiveListener(step.interactive);
+        }
 
         // Cible
         const targetEl = step.target ? document.querySelector(step.target) : null;
@@ -256,6 +385,7 @@
     }
 
     function endTour() {
+        if (currentInteractiveCleanup) { currentInteractiveCleanup(); currentInteractiveCleanup = null; }
         if (overlayEl) overlayEl.classList.remove('active');
         try { localStorage.setItem(LS_KEY, '1'); } catch (e) {}
         window.removeEventListener('resize', onResize);
