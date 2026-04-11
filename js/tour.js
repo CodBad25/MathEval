@@ -706,15 +706,23 @@
         // Mode démo : candidat fictif + pré-remplissage + tour complet avec modale
         if (tourParam === 'demo') {
             console.log('🎓 Tour en mode DÉMO : candidat fictif + scores variés');
-            // Attendre que l'auto-import du config soit terminé
-            const waitForExercises = () => {
-                if (typeof exercisesData !== 'undefined' && Object.keys(exercisesData).length > 0) {
-                    startDemoTour();
+            // CRUCIAL : attendre que l'auto-import soit VRAIMENT terminé.
+            // Sans ça, exercisesData est déjà rempli par les exos hardcodés
+            // par défaut dans app.js, et startDemoTour() serait appelé AVANT
+            // que l'auto-import ne résolve son fetch() → conflit + écrasement
+            // des candidates par Object.assign(appState, data.appState).
+            const waitForAutoImport = () => {
+                if (appState._configImported === true &&
+                    typeof exercisesData !== 'undefined' &&
+                    Object.keys(exercisesData).length > 0) {
+                    // Encore un petit délai pour que le showPage de l'auto-import
+                    // ait terminé avant qu'on prenne la main
+                    setTimeout(startDemoTour, 150);
                 } else {
-                    setTimeout(waitForExercises, 200);
+                    setTimeout(waitForAutoImport, 200);
                 }
             };
-            waitForExercises();
+            waitForAutoImport();
             return;
         }
 
