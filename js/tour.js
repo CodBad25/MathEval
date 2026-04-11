@@ -653,12 +653,11 @@
             });
         });
 
-        // Un exercice entier non commencé (le dernier) pour montrer les puces grises
-        const lastExKey = Object.keys(exercisesData).sort().pop();
-        if (lastExKey) {
-            delete appState.scores[n][lastExKey];
-            delete appState.quickButtonStates[n][lastExKey];
-        }
+        // IMPORTANT : toutes les questions doivent avoir un statut (pas de "non
+        // commencée") pour éviter le confirm() bloquant "Attention ! Seulement
+        // X/Y questions traitées" quand l'utilisateur clique "Valider" à l'étape 10.
+        // Les puces grises "pas commencée" ne sont donc pas visibles sur ce candidat
+        // démo, mais c'est un compromis acceptable pour que le tour se déroule fluide.
 
         // Pas de presentationScore → le curseur sera à "— / 2" au début (option b pédagogique)
         if (appState.presentationScores) delete appState.presentationScores[n];
