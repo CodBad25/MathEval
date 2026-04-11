@@ -995,6 +995,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 15px;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e9ecef;
@@ -2805,6 +2807,22 @@
                 font-size: 0.8em;
                 padding: 8px 10px;
                 flex: 1 1 auto;
+            }
+
+            /* Header d'exercice : autoriser le wrap des boutons Réinitialiser hors viewport */
+            .exercise-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .exercise-actions {
+                flex-wrap: wrap;
+                width: 100%;
+                justify-content: flex-start;
+                gap: 6px;
+            }
+            .exercise-reset-btn {
+                font-size: 11px;
+                padding: 5px 9px;
             }
 
             /* Boutons actions modale de validation */
