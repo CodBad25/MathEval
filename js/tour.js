@@ -275,26 +275,52 @@
             <span class="dnb2-tour-waiting-icon">🎓</span>
             <div class="dnb2-tour-waiting-text">
                 <strong>Visite guidée en attente</strong>
-                <span>Saisissez les candidats puis cliquez sur « Commencer la correction » pour lancer la visite.</span>
+                <span class="dnb2-tour-waiting-hint">Démarrez la correction pour lancer la visite.</span>
             </div>
             <button class="dnb2-tour-waiting-cancel" type="button" title="Annuler la visite">×</button>
         `;
         document.body.appendChild(waitingBannerEl);
         waitingBannerEl.querySelector('.dnb2-tour-waiting-cancel').addEventListener('click', () => {
             hideWaitingBanner();
-            // Retirer ?tour=1 de l'URL pour ne pas rejouer au refresh
             try {
                 const url = new URL(window.location.href);
                 url.searchParams.delete('tour');
                 window.history.replaceState({}, '', url);
             } catch (e) {}
         });
+        updateWaitingBannerMessage();
     }
     function hideWaitingBanner() {
         if (waitingBannerEl) {
             waitingBannerEl.remove();
             waitingBannerEl = null;
         }
+    }
+    // Adapte le message du bandeau à la page actuellement active
+    function updateWaitingBannerMessage() {
+        if (!waitingBannerEl) return;
+        const hintEl = waitingBannerEl.querySelector('.dnb2-tour-waiting-hint');
+        if (!hintEl) return;
+        const activePage = document.querySelector('.main-page.active, .setup-page.active, .candidates-page.active, .candidates-overview-page.active, [id$="Page"].active');
+        const pageId = activePage ? activePage.id : '';
+        let msg;
+        switch (pageId) {
+            case 'setupPage':
+                msg = 'Saisissez les numéros des candidats puis cliquez sur « Continuer ».';
+                break;
+            case 'candidatesPage':
+                msg = 'Cliquez sur « Commencer la correction » pour lancer la visite.';
+                break;
+            case 'candidatesOverviewPage':
+                msg = 'Cliquez sur une carte candidat pour démarrer la correction et la visite guidée.';
+                break;
+            case 'mainPage':
+                msg = 'Démarrage de la visite…';
+                break;
+            default:
+                msg = 'Démarrez la correction d\'un candidat pour lancer la visite.';
+        }
+        hintEl.textContent = msg;
     }
 
     // Auto-start si ?tour=1 dans l'URL
@@ -322,16 +348,25 @@
         // Afficher le bandeau d'attente
         showWaitingBanner();
 
-        // Observer les changements sur mainPage (activation par showPage('mainPage'))
-        const mainPage = document.getElementById('mainPage');
-        if (!mainPage) {
-            console.warn('🎓 #mainPage introuvable — tour non démarré');
-            return;
-        }
+        // Observer les changements de classe sur toutes les pages du workflow
+        // (pour mettre à jour le message + détecter l'activation de mainPage)
+        const pageIds = [
+            'configurationPage', 'automatismesSelectionPage', 'dnbSelectionPage',
+            'baremeDesignPage', 'setupPage', 'candidatesPage',
+            'candidatesOverviewPage', 'mainPage'
+        ];
         const observer = new MutationObserver(() => {
+            updateWaitingBannerMessage();
             if (tryStart()) observer.disconnect();
         });
-        observer.observe(mainPage, { attributes: true, attributeFilter: ['class', 'style'] });
+        pageIds.forEach(id => {
+            const page = document.getElementById(id);
+            if (page) {
+                observer.observe(page, { attributes: true, attributeFilter: ['class', 'style'] });
+            }
+        });
+        // Première mise à jour du message
+        updateWaitingBannerMessage();
     }
 
     // Gestion robuste du DOMContentLoaded : si le DOM est déjà prêt quand ce
