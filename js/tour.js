@@ -178,15 +178,19 @@
             }
 
             // -- Étape 3 : activer/désactiver le mode Focus --
+            // On écoute directement le clic sur le bouton Focus + la touche F
+            // (plus fiable qu'un MutationObserver sur body.classList qui peut
+            // avoir des faux positifs quand d'autres classes changent).
             case 'focus-toggle': {
-                const initialFocus = document.body.classList.contains('focus-mode');
-                const observer = new MutationObserver(() => {
-                    const nowFocus = document.body.classList.contains('focus-mode');
-                    if (nowFocus !== initialFocus) {
-                        observer.disconnect();
-                        // Si l'utilisateur a activé focus, on le désactive après 900 ms
-                        // pour que le reste du tour (qui surligne des éléments) se voie bien
-                        if (nowFocus) {
+                let triggered = false;
+                const onFocusAction = () => {
+                    if (triggered) return;
+                    triggered = true;
+                    // Laisser le temps à app.js de compléter le toggle
+                    setTimeout(() => {
+                        if (document.body.classList.contains('focus-mode')) {
+                            // Le focus a été activé : on le désactive automatiquement
+                            // après 900 ms pour que le reste du tour reste visible
                             setTimeout(() => {
                                 try {
                                     if (typeof toggleFocusMode === 'function') toggleFocusMode();
@@ -196,10 +200,22 @@
                         } else {
                             setTimeout(goNext, 300);
                         }
-                    }
-                });
-                observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-                return () => observer.disconnect();
+                    }, 120);
+                };
+                const focusBtn = document.getElementById('focusModeBtn');
+                const onBtnClick = () => onFocusAction();
+                const onKeyF = (e) => {
+                    if (e.key !== 'f' && e.key !== 'F') return;
+                    const tag = (e.target.tagName || '').toLowerCase();
+                    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+                    onFocusAction();
+                };
+                if (focusBtn) focusBtn.addEventListener('click', onBtnClick);
+                document.addEventListener('keydown', onKeyF);
+                return () => {
+                    if (focusBtn) focusBtn.removeEventListener('click', onBtnClick);
+                    document.removeEventListener('keydown', onKeyF);
+                };
             }
 
             // -- Étape 6 : survoler un bouton de compétence (≥ 800 ms) --
