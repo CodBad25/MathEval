@@ -375,14 +375,14 @@
             {
               "name": "Représenter",
               "color": "#6f42c1",
-              "description": "Créer des représentations graphiques, schémas",
+              "description": "Construire un schéma à main levée : carré + triangle équilatéral intérieur + triangle isocèle extérieur",
               "points": 0.5,
               "increment": 0.5
             },
             {
               "name": "Communiquer",
               "color": "#ffc107",
-              "description": "Expliquer, justifier, présenter une solution",
+              "description": "Ajouter les codages géométriques corrects (côtés égaux, angles, marques)",
               "points": 0.5,
               "increment": 0.5
             }
@@ -399,7 +399,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Appliquer la formule du périmètre : P = 2 × π × r avec r = 3 cm",
               "points": 1,
               "increment": 0.5
             }
@@ -416,7 +416,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Diviser un nombre décimal par 10 (77,6 ÷ 10)",
               "points": 1,
               "increment": 0.5
             }
@@ -432,7 +432,7 @@
             {
               "name": "Chercher",
               "color": "#fd7e14",
-              "description": "Chercher, expérimenter, tester",
+              "description": "Lire les 5 valeurs du diagramme et identifier l'opération à effectuer (somme)",
               "points": 1,
               "increment": 0.5
             }
@@ -449,14 +449,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Effectuer la division 49 298 ÷ 302 pour obtenir la densité",
               "points": 0.5,
               "increment": 0.5
             },
             {
               "name": "Modéliser",
               "color": "#17a2b8",
-              "description": "Traduire un problème en langage mathématique",
+              "description": "Comprendre que la densité = nombre d'habitants ÷ superficie",
               "points": 0.5,
               "increment": 0.5
             }
@@ -473,7 +473,7 @@
             {
               "name": "Modéliser",
               "color": "#17a2b8",
-              "description": "Traduire un problème en langage mathématique",
+              "description": "Traduire le tracé d'un pentagone régulier de 147 px en algorithme Scratch (boucle)",
               "points": 1,
               "increment": 0.5
             }
@@ -496,14 +496,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer",
+              "description": "Effectuer les opérations pour vérifier : circuit 1 = 280 s et circuit 2 = 350 s",
               "points": 0.5,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner",
+              "description": "Comprendre le lien entre longueur, vitesse et durée pour chaque circuit",
               "points": 0.5,
               "increment": 0.5
             }
@@ -520,7 +520,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer",
+              "description": "Décomposer 280 et 350 en produit de facteurs premiers (280 = 2³×5×7 ; 350 = 2×5²×7)",
               "points": 1,
               "increment": 0.5
             }
@@ -537,7 +537,7 @@
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner",
+              "description": "Utiliser la périodicité : 2800 = 10 × 280 (Camille) et identifier la position de Dominique sur 350",
               "points": 0.5,
               "increment": 0.5
             }
@@ -554,14 +554,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer",
+              "description": "Calculer le PPCM(280 ; 350) et le convertir en minutes + secondes",
               "points": 0.25,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner",
+              "description": "Identifier que la question demande le PPCM : la première fois où les deux se retrouvent au départ",
               "points": 0.25,
               "increment": 0.5
             }
@@ -584,7 +584,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Appliquer le programme de calcul pas à pas avec x = 5 pour vérifier que le résultat est 6",
               "points": 0.5,
               "increment": 0.5
             }
@@ -601,14 +601,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Appliquer les étapes du programme à x littéralement et simplifier l'expression obtenue",
               "points": 0.25,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner, démontrer, argumenter",
+              "description": "Comprendre qu'il faut généraliser : remplacer un nombre par x et suivre les opérations",
               "points": 0.25,
               "increment": 0.5
             }
@@ -625,14 +625,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Développer (x + 1)(x − 4) par double distributivité et comparer avec l'expression de q1",
               "points": 0.25,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner, démontrer, argumenter",
+              "description": "Reconnaître qu'il faut prouver l'égalité en développant la forme factorisée",
               "points": 0.25,
               "increment": 0.5
             }
@@ -649,7 +649,7 @@
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner, démontrer, argumenter",
+              "description": "Utiliser la forme factorisée (x + 1)(x − 4) : un produit est nul si un des facteurs est nul → x = −1 ou x = 4",
               "points": 0.5,
               "increment": 0.5
             }
@@ -666,7 +666,7 @@
             {
               "name": "Modéliser",
               "color": "#17a2b8",
-              "description": "Traduire un problème en langage mathématique",
+              "description": "Traduire le programme de calcul en code Scratch : ligne 4 = x × x, ligne 6 = y − 3×x",
               "points": 1,
               "increment": 0.5
             }
@@ -689,7 +689,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Additionner les deux longueurs du segment [DB] : 250 m + 750 m = 1 000 m",
               "points": 0.5,
               "increment": 0.5
             }
@@ -706,14 +706,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Appliquer le théorème de Pythagore dans ABD : AD² = AB² − BD² puis √",
               "points": 0.5,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Tenir une démarche logique, argumenter",
+              "description": "Identifier que ABD est rectangle en B pour appliquer Pythagore",
               "points": 0.5,
               "increment": 0.5
             }
@@ -730,7 +730,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Appliquer la définition du sinus : sin(EAB) = côté opposé / hypoténuse",
               "points": 0.5,
               "increment": 0.5
             }
@@ -747,7 +747,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Utiliser la fonction inverse arcsin pour obtenir l'angle en degrés",
               "points": 0.5,
               "increment": 0.5
             }
@@ -764,7 +764,7 @@
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Tenir une démarche logique, argumenter",
+              "description": "Démontrer le parallélisme : (AB) et (DC) sont toutes deux perpendiculaires à une même droite",
               "points": 0.5,
               "increment": 0.5
             }
@@ -781,14 +781,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Appliquer Thalès (ou agrandissement) pour obtenir CD = 1 500 m à partir des longueurs connues",
               "points": 0.5,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Tenir une démarche logique, argumenter",
+              "description": "Identifier la configuration de Thalès (ou triangles semblables) à partir des droites parallèles",
               "points": 0.5,
               "increment": 0.5
             }
@@ -805,14 +805,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Calculer le périmètre du jardin, puis la durée = périmètre ÷ vitesse (1,1 m/s) et comparer à 3600 s",
               "points": 0.5,
               "increment": 0.5
             },
             {
               "name": "Chercher",
               "color": "#fd7e14",
-              "description": "Identifier et mettre en œuvre une stratégie",
+              "description": "Identifier les données nécessaires (longueurs des 4 côtés) et choisir la méthode de comparaison",
               "points": 0.5,
               "increment": 0.5
             }
@@ -835,7 +835,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Calculer l'étendue = valeur maximale − valeur minimale (160 − 75 = 85 €)",
               "points": 0.5,
               "increment": 0.5
             }
@@ -852,7 +852,7 @@
             {
               "name": "Modéliser",
               "color": "#17a2b8",
-              "description": "Traduire en langage mathématique une situation",
+              "description": "Écrire une formule tableur correcte : =SOMME(B2:F2) ou équivalent avec le signe =",
               "points": 1,
               "increment": 0.5
             }
@@ -869,7 +869,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Additionner les nombres de paires vendues sur toutes les périodes de 2022",
               "points": 0.5,
               "increment": 0.5
             }
@@ -886,7 +886,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Calculer le chiffre d'affaires total : somme de (prix × quantité) pour chaque modèle",
               "points": 0.5,
               "increment": 0.5
             }
@@ -903,7 +903,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Effectuer des calculs numériques et littéraux",
+              "description": "Diviser le montant total (q4) par le nombre total de paires (q3) et arrondir au centime",
               "points": 0.5,
               "increment": 0.5
             }
@@ -926,7 +926,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Appliquer le programme de calcul à x = −8 pour vérifier : (−8+3)(−8−4) = (−5)(−12) = 60",
               "points": 0.5,
               "increment": 0.5
             }
@@ -943,14 +943,14 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Résoudre l'équation produit : x + 3 = 0 ou x − 4 = 0 → x = −3 ou x = 4",
               "points": 0.25,
               "increment": 0.5
             },
             {
               "name": "Raisonner",
               "color": "#dc3545",
-              "description": "Raisonner, démontrer, argumenter",
+              "description": "Utiliser la propriété : un produit est nul ssi l'un de ses facteurs est nul",
               "points": 0.25,
               "increment": 0.5
             }
@@ -967,7 +967,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Développer (x + 3)(x − 4) par double distributivité et simplifier pour obtenir x² − x − 12",
               "points": 0.5,
               "increment": 0.5
             }
@@ -984,7 +984,7 @@
             {
               "name": "Calculer",
               "color": "#28a745",
-              "description": "Calculer, appliquer des techniques",
+              "description": "Substituer x = 1/2 dans f(x) = x² − x − 12 et calculer avec des fractions",
               "points": 0.5,
               "increment": 0.5
             }
@@ -1001,14 +1001,14 @@
             {
               "name": "Représenter",
               "color": "#6f42c1",
-              "description": "Créer des représentations graphiques",
+              "description": "Lire graphiquement : tracer la droite horizontale y = −6 et repérer ses intersections avec la courbe de f",
               "points": 0.25,
               "increment": 0.5
             },
             {
               "name": "Chercher",
               "color": "#fd7e14",
-              "description": "Chercher, expérimenter",
+              "description": "Identifier qu'un antécédent de −6 est une abscisse x tel que f(x) = −6",
               "points": 0.25,
               "increment": 0.5
             }
@@ -1025,7 +1025,7 @@
             {
               "name": "Modéliser",
               "color": "#17a2b8",
-              "description": "Traduire un problème en langage mathématique",
+              "description": "Traduire g(x) = 3x − 7 en formule tableur : =3*A2-7 (avec référence relative à A2)",
               "points": 0.5,
               "increment": 0.5
             }
@@ -1042,7 +1042,7 @@
             {
               "name": "Représenter",
               "color": "#6f42c1",
-              "description": "Créer des représentations graphiques",
+              "description": "Placer deux points de g (ex: g(0) = −7 et g(3) = 2) et tracer la droite",
               "points": 0.5,
               "increment": 0.5
             }
@@ -1059,14 +1059,14 @@
             {
               "name": "Représenter",
               "color": "#6f42c1",
-              "description": "Créer des représentations graphiques",
+              "description": "Lire graphiquement les abscisses où les courbes de f et g se croisent",
               "points": 0.25,
               "increment": 0.5
             },
             {
               "name": "Chercher",
               "color": "#fd7e14",
-              "description": "Chercher, expérimenter",
+              "description": "Comprendre que f(x) = g(x) correspond géométriquement aux intersections des deux courbes",
               "points": 0.25,
               "increment": 0.5
             }

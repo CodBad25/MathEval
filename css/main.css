@@ -1502,6 +1502,43 @@
             border-radius: 10px;
             border: 1px solid #e9ecef;
             box-sizing: border-box;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        /* Mise en évidence quand le curseur n'est pas encore attribué (signal visuel) */
+        .redaction-slider-container.needs-attribution {
+            border-color: #fd7e14;
+            box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.25);
+            animation: pulse-attention 1.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-attention {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.25); }
+            50%      { box-shadow: 0 0 0 6px rgba(253, 126, 20, 0.15); }
+        }
+
+        /* Animation shake quand l'utilisateur clique "Valider" sans avoir attribué */
+        .redaction-slider-container.shake {
+            animation: shake-attention 0.5s ease;
+        }
+
+        @keyframes shake-attention {
+            0%, 100% { transform: translateX(0); }
+            20%      { transform: translateX(-8px); }
+            40%      { transform: translateX(8px); }
+            60%      { transform: translateX(-6px); }
+            80%      { transform: translateX(6px); }
+        }
+
+        /* Boutons de validation grisés tant que la Rédaction n'est pas attribuée */
+        .disabled-pending-redaction {
+            opacity: 0.4 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(60%) !important;
+        }
+        .disabled-pending-redaction:hover {
+            background: inherit !important;
+            border-color: inherit !important;
         }
 
         .redaction-slider-header {

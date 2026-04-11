@@ -146,9 +146,10 @@ function initRedactionSlider(candidateNumber) {
     // Mémoriser le candidat courant (utilisé par les handlers attachés une seule fois)
     _redactionSliderCurrentCandidate = candidateNumber;
 
-    // Valeur actuelle pour ce candidat
+    // Valeur actuelle pour ce candidat (null = non attribué → boutons validation grisés)
     const current = getPresentationScore(candidateNumber);
     updateRedactionSliderUI(current);
+    updateValidationButtonsState(candidateNumber);
 
     // Attacher les listeners une seule fois (flag sur le track lui-même)
     if (track.dataset.sliderInit === 'true') return;
@@ -219,6 +220,46 @@ function refreshValidationModalScores(candidateNumber) {
 
     // Appliquer la couleur selon le niveau de maîtrise basé sur la note effective
     mainScoreEl.style.background = getMasteryLevel(details.effectivePercentage).gradient;
+
+    // Mettre à jour l'état des boutons de validation selon l'attribution de Rédaction
+    updateValidationButtonsState(candidateNumber);
+}
+
+// Désactive les boutons de validation tant que le score de Rédaction n'est pas attribué
+function updateValidationButtonsState(candidateNumber) {
+    const redactionScore = getPresentationScore(candidateNumber);
+    const isAttributed = (redactionScore !== null && redactionScore !== undefined);
+
+    const btnValidateNext = document.getElementById('btnValidateNext');
+    const btnValidateReturn = document.querySelector('.btn-validate');
+    const sliderContainer = document.getElementById('redactionSliderContainer');
+
+    // Tooltip d'explication
+    const disabledTitle = '⚠️ Veuillez d\'abord attribuer les points de Rédaction / Justifications';
+
+    if (!isAttributed) {
+        // Griser les 2 boutons de validation
+        if (btnValidateNext) {
+            btnValidateNext.classList.add('disabled-pending-redaction');
+            btnValidateNext.title = disabledTitle;
+        }
+        if (btnValidateReturn) {
+            btnValidateReturn.classList.add('disabled-pending-redaction');
+            btnValidateReturn.title = disabledTitle;
+        }
+        // Highlight visuel du curseur Rédaction pour attirer l'œil
+        if (sliderContainer) sliderContainer.classList.add('needs-attribution');
+    } else {
+        if (btnValidateNext) {
+            btnValidateNext.classList.remove('disabled-pending-redaction');
+            btnValidateNext.title = '';
+        }
+        if (btnValidateReturn) {
+            btnValidateReturn.classList.remove('disabled-pending-redaction');
+            btnValidateReturn.title = '';
+        }
+        if (sliderContainer) sliderContainer.classList.remove('needs-attribution');
+    }
 }
 
 // === SYSTÈME DE NAVIGATION ENTRE PAGES ===
@@ -7434,15 +7475,35 @@ function saveValidationData() {
     updateOverviewIfVisible();
 }
 
+// Vérifie si la Rédaction/Justifications a été attribuée pour le candidat courant
+function ensureRedactionAttributed() {
+    const candidate = appState.activeCandidates[appState.currentCandidateIndex];
+    if (!candidate) return true;
+    const score = getPresentationScore(candidate.number);
+    if (score === null || score === undefined) {
+        alert('⚠️ Veuillez d\'abord attribuer les points de Rédaction / Justifications (curseur 0 à 2) avant de valider cette copie.');
+        // Attirer l'attention sur le curseur
+        const sliderContainer = document.getElementById('redactionSliderContainer');
+        if (sliderContainer) {
+            sliderContainer.classList.add('shake');
+            setTimeout(() => sliderContainer.classList.remove('shake'), 600);
+        }
+        return false;
+    }
+    return true;
+}
+
 function confirmValidationAndNext() {
+    if (!ensureRedactionAttributed()) return;
+
     // Arrêter la dictée vocale si elle est en cours
     if (isListening && recognition) {
         recognition.stop();
     }
-    
+
     saveValidationData();
     closeValidationModal();
-    
+
     // Passer au candidat suivant
     if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
         nextCandidate();
@@ -7450,11 +7511,13 @@ function confirmValidationAndNext() {
 }
 
 function confirmValidationAndReturn() {
+    if (!ensureRedactionAttributed()) return;
+
     // Arrêter la dictée vocale si elle est en cours
     if (isListening && recognition) {
         recognition.stop();
     }
-    
+
     saveValidationData();
     closeValidationModal();
     
