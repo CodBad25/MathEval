@@ -8266,7 +8266,16 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Correcteur Universel - Initialisation');
 
     // 📦 Auto-import JSON depuis URL : ?config=chemin/vers/config.json
-    const configUrl = new URLSearchParams(window.location.search).get('config');
+    // Ou, si on est sur le domaine dédié DNB Blanc 2 (rewrite Vercel qui masque
+    // le query string), charger dnb-blanc-2.json par défaut.
+    let configUrl = new URLSearchParams(window.location.search).get('config');
+    if (!configUrl) {
+        const host = window.location.hostname;
+        if (host.startsWith('dnb2-') || host.startsWith('dnb-blanc-2-')) {
+            configUrl = 'dnb-blanc-2.json';
+            console.log('🏷️ Domaine DNB Blanc 2 détecté — chargement de la config par défaut');
+        }
+    }
     if (configUrl) {
         console.log('📦 Auto-import config depuis:', configUrl);
         fetch(configUrl)
