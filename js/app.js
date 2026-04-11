@@ -4371,6 +4371,7 @@ function generateCandidates() {
 
     renderCandidatesGrid();
     updateCandidatesStats();
+    saveData(); // 💾 Persister immédiatement les candidats générés
 
     // Afficher la page de validation des candidats (pas encore l'étape 5)
     showPage('candidatesPage');
@@ -4400,6 +4401,7 @@ function toggleCandidate(number) {
         candidate.active = !candidate.active;
         renderCandidatesGrid();
         updateCandidatesStats();
+        saveData(); // 💾 Persister l'état actif/éliminé
     }
 }
 
@@ -4417,6 +4419,7 @@ function updateCandidatesStats() {
 
 function startCorrection() {
     appState.activeCandidates = appState.candidates.filter(c => c.active);
+    saveData(); // 💾 Persister la liste active
 
     if (appState.activeCandidates.length === 0) {
         alert('Aucun candidat actif sélectionné !');
@@ -4995,7 +4998,7 @@ function autoNavigateAfterQuickButton() {
             nextCandidate();
         } else {
             // Dernier candidat : passer à l'exercice suivant, candidat 1
-            if (appState.currentExerciseIndex < 5) {
+            if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
                 appState.currentCandidateIndex = 0; // Retour au premier candidat
                 nextExercise();
             } else {
@@ -5006,22 +5009,12 @@ function autoNavigateAfterQuickButton() {
     } else if (appState.correctionMode === 'candidate') {
         // Mode par candidat : corriger tous les exercices pour le même candidat
         // → passer à l'exercice suivant (même candidat)
-        if (appState.currentExerciseIndex < 5) {
+        if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
             // Passer à l'exercice suivant pour le même candidat
             nextExercise();
         } else {
-            // Dernier exercice : candidat terminé, proposer validation
-            const candidate = appState.activeCandidates[appState.currentCandidateIndex];
-            if (confirm('🎉 Candidat terminé ! Voulez-vous valider la correction maintenant ?')) {
-                validateCorrection();
-            } else {
-                // Passer au candidat suivant, exercice 1
-                if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
-                    appState.currentExerciseIndex = 1;
-                    nextCandidate();
-                    showTab('exercise1');
-                }
-            }
+            // Dernier exercice : ouvrir directement la modale de validation (stylée)
+            validateCorrection();
         }
     }
 }
@@ -5091,7 +5084,7 @@ function autoNavigateAfterCompetenceCorrection(originalExerciseNumber, questionI
         if (exerciseState === 'completed' || exerciseState === 'perfect') {
             // TOUT l'exercice est terminé → passer à l'exercice suivant
             console.log('✅ NAVIGATION AUTOMATIQUE DÉCLENCHÉE !');
-            if (appState.currentExerciseIndex < 5) {
+            if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
                 console.log(`📍 Passage de l'exercice ${appState.currentExerciseIndex} vers ${appState.currentExerciseIndex + 1}`);
                 nextExercise();
             } else {
@@ -5946,7 +5939,7 @@ function previousExercise() {
         // Si on est au premier exercice, passer au candidat précédent et au dernier exercice
         if (appState.currentCandidateIndex > 0) {
             appState.currentCandidateIndex--;
-            appState.currentExerciseIndex = 5;
+            appState.currentExerciseIndex = Object.keys(exercisesData).length;
             loadCurrentCandidate();
             showTab(`exercise${appState.currentExerciseIndex}`);
         }
@@ -5954,7 +5947,7 @@ function previousExercise() {
 }
 
 function nextExercise() {
-    if (appState.currentExerciseIndex < 5) {
+    if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
         appState.currentExerciseIndex++;
         showTab(`exercise${appState.currentExerciseIndex}`);
     } else {
@@ -6032,7 +6025,7 @@ function updateNavigationButtons() {
     } else {
         // Mode par exercice
         const isFirstExerciseFirstCandidate = appState.currentExerciseIndex === 1 && appState.currentCandidateIndex === 0;
-        const isLastExerciseLastCandidate = appState.currentExerciseIndex === 5 && appState.currentCandidateIndex === appState.activeCandidates.length - 1;
+        const isLastExerciseLastCandidate = appState.currentExerciseIndex === Object.keys(exercisesData).length && appState.currentCandidateIndex === appState.activeCandidates.length - 1;
         
         prevBtn.disabled = isFirstExerciseFirstCandidate;
         nextBtn.disabled = isLastExerciseLastCandidate;
@@ -6171,14 +6164,30 @@ function renderCandidatesOverview() {
             mainScoreClass = 'in-progress';
         }
         
-        // Génération des scores par exercice avec couleurs et noms
-        const exerciseNames = ['🎲', '📐', '☐', '💻', '📈']; // Icônes des exercices
-        const exerciseScoresHtml = details.exerciseScores.map((ex, index) => {
+        // Génération des scores par exercice avec couleurs et icônes thématiques
+        const themeIconsCard = {
+            'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+            'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+            'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+            'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+            'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️',
+            'probabilité': '🎲', 'qcm': '☐', 'algorithme': '💻'
+        };
+        const getCardIcon = (title) => {
+            const lower = (title || '').toLowerCase();
+            for (const [k, v] of Object.entries(themeIconsCard)) {
+                if (lower.includes(k)) return v;
+            }
+            return '📝';
+        };
+        const exerciseScoresHtml = details.exerciseScores.map((ex) => {
             const scoreColor = getExerciseScoreColor(ex, ex.exerciseNumber, candidate.number);
-            
+            const exercise = exercisesData[ex.exerciseNumber];
+            const icon = getCardIcon(exercise?.title);
+
             return `
                 <div class="exercise-score-container">
-                    <div class="exercise-icon">${exerciseNames[index]}</div>
+                    <div class="exercise-icon">${icon}</div>
                     <div class="exercise-score" style="background: ${scoreColor} !important; color: white !important;">${ex.score}/${ex.maxScore}</div>
                 </div>
             `;
@@ -6769,34 +6778,53 @@ function calculateCompetencesScores(candidateNumber) {
 function renderExercisesValidation(candidateNumber) {
     const container = document.getElementById('exercisesValidationGrid');
     container.innerHTML = '';
-    
+
     // Récupérer les scores par exercice depuis calculateCandidateDetails
     const details = calculateCandidateDetails(candidateNumber);
-    
-    const exercisesInfo = [
-        { name: 'Probabilités', icon: '🎲' },
-        { name: 'Géométrie', icon: '📐' },
-        { name: 'QCM', icon: '☐' },
-        { name: 'Algorithmes', icon: '💻' },
-        { name: 'Fonctions', icon: '📈' }
-    ];
-    
-    details.exerciseScores.forEach((exerciseScore, index) => {
-        const exerciseInfo = exercisesInfo[index];
-        
+
+    // Icônes thématiques basées sur le titre de l'exercice (même logique que renderExerciseTabs)
+    const themeIcons = {
+        'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+        'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+        'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+        'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+        'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️',
+        'probabilité': '🎲', 'qcm': '☐', 'algorithme': '💻'
+    };
+    function getExerciseIcon(title) {
+        const lower = (title || '').toLowerCase();
+        for (const [keyword, icon] of Object.entries(themeIcons)) {
+            if (lower.includes(keyword)) return icon;
+        }
+        return '📝';
+    }
+    function getShortTitle(title) {
+        if (!title) return '';
+        const parts = title.split(':');
+        let shortTitle = parts.length > 1 ? parts[1].trim() : title.replace(/^Exercice \d+ -?\s*/, '');
+        if (shortTitle.length > 20) shortTitle = shortTitle.substring(0, 17) + '...';
+        return shortTitle;
+    }
+
+    details.exerciseScores.forEach((exerciseScore) => {
+        const exercise = exercisesData[exerciseScore.exerciseNumber];
+        const title = exercise?.title || `Exercice ${exerciseScore.exerciseNumber}`;
+        const icon = getExerciseIcon(title);
+        const name = getShortTitle(title);
+
         // Utiliser la fonction getExerciseScoreColor pour déterminer la couleur
         const scoreColor = getExerciseScoreColor(exerciseScore, exerciseScore.exerciseNumber, candidateNumber);
-        
+
         const badge = document.createElement('div');
         badge.className = 'exercise-badge';
         badge.innerHTML = `
-            <div class="exercise-badge-icon">${exerciseInfo.icon}</div>
-            <div class="exercise-badge-name">${exerciseInfo.name}</div>
+            <div class="exercise-badge-icon">${icon}</div>
+            <div class="exercise-badge-name">${name}</div>
             <div class="exercise-badge-score" style="background: ${scoreColor} !important;">
                 ${exerciseScore.score}/${exerciseScore.maxScore}
             </div>
         `;
-        
+
         container.appendChild(badge);
     });
 }
@@ -7108,24 +7136,76 @@ function updateOverviewIfVisible() {
 }
 
 // === SAUVEGARDE ===
+// Clé localStorage pour la persistance des corrections (propre à la branche DNB2)
+const DNB2_STORAGE_KEY = 'dnb2_correction_state';
+
 function saveData() {
-    const dataToSave = {
-        appState: appState,
-        exercisesData: exercisesData
-    };
-    // Note: localStorage n'est pas disponible dans cet environnement
-    // La sauvegarde se ferait normalement ici
-    console.log('Données sauvegardées:', dataToSave);
-    
+    try {
+        const dataToSave = {
+            candidates: appState.candidates || [],
+            activeCandidates: appState.activeCandidates || [],
+            scores: appState.scores || {},
+            quickButtonStates: appState.quickButtonStates || {},
+            validatedCandidates: appState.validatedCandidates || {},
+            candidateComments: appState.candidateComments || {},
+            currentCandidateIndex: appState.currentCandidateIndex || 0,
+            currentExerciseIndex: appState.currentExerciseIndex || 1,
+            correctionMode: appState.correctionMode || null,
+            modeSelected: appState.modeSelected || false,
+            savedAt: Date.now()
+        };
+        localStorage.setItem(DNB2_STORAGE_KEY, JSON.stringify(dataToSave));
+        console.log(`💾 Sauvegardé (${dataToSave.candidates.length} candidats, ${Object.keys(dataToSave.scores).length} avec scores)`);
+    } catch (e) {
+        console.error('❌ Erreur sauvegarde localStorage:', e);
+    }
+
     // Mettre à jour la vue d'ensemble après chaque sauvegarde
-    updateOverviewIfVisible();
+    try { updateOverviewIfVisible(); } catch (e) { /* ignore */ }
 }
 
 function loadData() {
-    // Note: localStorage n'est pas disponible dans cet environnement
-    // Le chargement se ferait normalement ici
-    console.log('Chargement des données...');
+    try {
+        const raw = localStorage.getItem(DNB2_STORAGE_KEY);
+        if (!raw) {
+            console.log('📂 Aucune donnée sauvegardée à charger');
+            return false;
+        }
+        const saved = JSON.parse(raw);
+        // Restaurer uniquement les clés sauvegardées (ne pas écraser exercisesData ni baremeConfig)
+        if (Array.isArray(saved.candidates) && saved.candidates.length > 0) {
+            appState.candidates = saved.candidates;
+        }
+        if (Array.isArray(saved.activeCandidates) && saved.activeCandidates.length > 0) {
+            appState.activeCandidates = saved.activeCandidates;
+        }
+        if (saved.scores && Object.keys(saved.scores).length > 0) appState.scores = saved.scores;
+        if (saved.quickButtonStates && Object.keys(saved.quickButtonStates).length > 0) appState.quickButtonStates = saved.quickButtonStates;
+        if (saved.validatedCandidates && Object.keys(saved.validatedCandidates).length > 0) appState.validatedCandidates = saved.validatedCandidates;
+        if (saved.candidateComments && Object.keys(saved.candidateComments).length > 0) appState.candidateComments = saved.candidateComments;
+        if (typeof saved.currentCandidateIndex === 'number') appState.currentCandidateIndex = saved.currentCandidateIndex;
+        if (typeof saved.currentExerciseIndex === 'number') appState.currentExerciseIndex = saved.currentExerciseIndex;
+        if (saved.correctionMode) appState.correctionMode = saved.correctionMode;
+        if (typeof saved.modeSelected === 'boolean') appState.modeSelected = saved.modeSelected;
+        const savedDate = saved.savedAt ? new Date(saved.savedAt).toLocaleString('fr-FR') : '?';
+        console.log(`✅ Données restaurées depuis localStorage: ${appState.candidates?.length || 0} candidats, ${Object.keys(appState.scores || {}).length} avec scores (sauvegarde du ${savedDate})`);
+        return true;
+    } catch (e) {
+        console.error('❌ Erreur chargement localStorage:', e);
+        return false;
+    }
 }
+
+// 🛡️ Sauvegarde de sécurité : déclenchée à chaque changement de page / fermeture d'onglet
+window.addEventListener('beforeunload', () => {
+    try { saveData(); } catch (e) { /* ignore */ }
+});
+// 🛡️ Sauvegarde aussi quand la page passe en arrière-plan (mobile, changement d'onglet)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        try { saveData(); } catch (e) { /* ignore */ }
+    }
+});
 
 // === OUTILS DE TEST ET ANIMATIONS ===
 
@@ -7760,10 +7840,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     Object.keys(exercisesData).forEach(k => delete exercisesData[k]);
                     Object.assign(exercisesData, data.exercisesData);
                     // Marquer les étapes 1-3 comme complétées (config déjà prête)
+                    // Et désactiver complètement les modales de guidage (pas de sens en auto-import)
                     if (typeof workflowState !== 'undefined') {
                         workflowState.completedSteps = [1, 2, 3];
                         workflowState.currentStep = 4;
+                        workflowState.modalShown = { 1: true, 2: true, 3: true, 4: true, 5: true };
+                        workflowState.disableGuidance = true;
                     }
+                    // Neutraliser showGuidanceModal pour cette session
+                    if (typeof window.showGuidanceModal === 'function') {
+                        window.showGuidanceModal = function() {
+                            console.log('🔕 Modale de guidage désactivée (auto-import)');
+                        };
+                    }
+                    // Restaurer les corrections précédentes depuis localStorage
+                    loadData();
                     // Aller directement à la page candidats ou correction
                     if (appState.candidates && appState.candidates.length > 0) {
                         renderCandidatesOverview();
@@ -7798,8 +7889,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initAutomatismesData();
     
     // Charger les numéros de candidats depuis localStorage (DEV MODE)
-    const savedStartNumber = localStorage.getItem('dnb_dev_startNumber') || '150';
-    const savedEndNumber = localStorage.getItem('dnb_dev_endNumber') || '170';
+    const savedStartNumber = localStorage.getItem('dnb_dev_startNumber') || '1';
+    const savedEndNumber = localStorage.getItem('dnb_dev_endNumber') || '17';
     
     const startNumberInput = document.getElementById('startNumber');
     const endNumberInput = document.getElementById('endNumber');
