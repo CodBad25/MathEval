@@ -41,7 +41,7 @@
         {
             target: '[data-tour="progress-indicator"]',
             title: "🔵 La puce de progression",
-            description: "Cette petite puce en haut à gauche de chaque question montre son état : gris = pas commencée, orange = partiellement corrigée, vert = terminée avec tous les points.",
+            description: "Cette petite puce en haut à droite de chaque question montre son état de correction : gris = pas commencée, orange = partiellement corrigée, vert = terminée avec tous les points.",
             position: 'bottom'
         },
         {
