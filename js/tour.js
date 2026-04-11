@@ -265,30 +265,81 @@
     window.startDnb2Tour = startTour;
     window.endDnb2Tour = endTour;
 
-    // Auto-start si ?tour=1 dans l'URL
-    document.addEventListener('DOMContentLoaded', () => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('tour') === '1') {
-            // Attendre que l'app soit rendue avant de démarrer
-            // (les data-tour dépendent de l'affichage de la page de correction)
-            setTimeout(() => {
-                // Si on est sur la page de correction (mainPage visible), démarrer
-                const mainPage = document.getElementById('mainPage');
-                if (mainPage && mainPage.classList.contains('active')) {
-                    startTour();
-                } else {
-                    // Attendre que la page soit affichée
-                    const observer = new MutationObserver(() => {
-                        if (mainPage && mainPage.classList.contains('active')) {
-                            observer.disconnect();
-                            setTimeout(startTour, 400);
-                        }
-                    });
-                    if (mainPage) {
-                        observer.observe(mainPage, { attributes: true, attributeFilter: ['class'] });
-                    }
-                }
-            }, 1000);
+    // Bandeau flottant qui invite l'utilisateur à démarrer la correction
+    let waitingBannerEl = null;
+    function showWaitingBanner() {
+        if (waitingBannerEl) return;
+        waitingBannerEl = document.createElement('div');
+        waitingBannerEl.className = 'dnb2-tour-waiting-banner';
+        waitingBannerEl.innerHTML = `
+            <span class="dnb2-tour-waiting-icon">🎓</span>
+            <div class="dnb2-tour-waiting-text">
+                <strong>Visite guidée en attente</strong>
+                <span>Saisissez les candidats puis cliquez sur « Commencer la correction » pour lancer la visite.</span>
+            </div>
+            <button class="dnb2-tour-waiting-cancel" type="button" title="Annuler la visite">×</button>
+        `;
+        document.body.appendChild(waitingBannerEl);
+        waitingBannerEl.querySelector('.dnb2-tour-waiting-cancel').addEventListener('click', () => {
+            hideWaitingBanner();
+            // Retirer ?tour=1 de l'URL pour ne pas rejouer au refresh
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('tour');
+                window.history.replaceState({}, '', url);
+            } catch (e) {}
+        });
+    }
+    function hideWaitingBanner() {
+        if (waitingBannerEl) {
+            waitingBannerEl.remove();
+            waitingBannerEl = null;
         }
-    });
+    }
+
+    // Auto-start si ?tour=1 dans l'URL
+    function initAutoStart() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tour') !== '1') return;
+
+        console.log('🎓 Tour guidé : ?tour=1 détecté');
+
+        const tryStart = () => {
+            const mainPage = document.getElementById('mainPage');
+            if (mainPage && mainPage.classList.contains('active')) {
+                console.log('🎓 mainPage active, démarrage du tour');
+                hideWaitingBanner();
+                // Petit délai pour laisser les onglets et les questions se rendre
+                setTimeout(() => startTour(), 600);
+                return true;
+            }
+            return false;
+        };
+
+        // Essai immédiat
+        if (tryStart()) return;
+
+        // Afficher le bandeau d'attente
+        showWaitingBanner();
+
+        // Observer les changements sur mainPage (activation par showPage('mainPage'))
+        const mainPage = document.getElementById('mainPage');
+        if (!mainPage) {
+            console.warn('🎓 #mainPage introuvable — tour non démarré');
+            return;
+        }
+        const observer = new MutationObserver(() => {
+            if (tryStart()) observer.disconnect();
+        });
+        observer.observe(mainPage, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+
+    // Gestion robuste du DOMContentLoaded : si le DOM est déjà prêt quand ce
+    // script s'exécute (cas normal car tour.js est chargé après app.js),
+    // on lance init() immédiatement. Sinon on attend l'événement.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAutoStart);
+    } else {
+        initAutoStart();
+    }
 })();

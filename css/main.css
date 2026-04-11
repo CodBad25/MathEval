@@ -177,6 +177,64 @@
             .dnb2-tour-description { font-size: 0.85em; }
         }
 
+        /* Bandeau flottant d'attente de démarrage du tour */
+        .dnb2-tour-waiting-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99997;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(118, 75, 162, 0.45);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            max-width: 480px;
+            animation: dnb2-tour-slideup 0.4s ease-out;
+        }
+        @keyframes dnb2-tour-slideup {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to   { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .dnb2-tour-waiting-icon {
+            font-size: 1.8em;
+            line-height: 1;
+        }
+        .dnb2-tour-waiting-text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 0.88em;
+            line-height: 1.35;
+            flex: 1;
+        }
+        .dnb2-tour-waiting-text strong {
+            font-size: 1.02em;
+            font-weight: 700;
+        }
+        .dnb2-tour-waiting-cancel {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 1.3em;
+            cursor: pointer;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+        }
+        .dnb2-tour-waiting-cancel:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
