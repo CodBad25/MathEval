@@ -1,0 +1,70 @@
+{
+  "seed": "mnt0tkvg7dtb",
+  "locked": true,
+  "selectedAutomatismes": ["3AutoG02-1", "3AutoG08-1", "3AutoP05-1", "3AutoI01-1"],
+  "selectedExercises": [
+    "dnb_2024_06_etrangers_2",
+    "dnb_2018_05_pondichery_4",
+    "dnb_2025_06_polynesie_2",
+    "dnb_2023_06_metropole_1",
+    "dnb_2023_06_metropole_5"
+  ],
+  "baremeConfig": {
+    "totalMax": 26,
+    "exercises": {
+      "1": {
+        "titre": "Automatismes",
+        "totalPoints": 6,
+        "selectedCompetences": ["Représenter", "Communiquer", "Calculer", "Chercher", "Modéliser"],
+        "questionPoints": { "q0": 1, "q1": 1, "q2": 1, "q3": 1, "q4": 1, "q5": 1 },
+        "questionCompetences": {
+          "q0": ["Représenter", "Communiquer"],
+          "q1": ["Calculer"],
+          "q2": ["Calculer"],
+          "q3": ["Chercher"],
+          "q4": ["Calculer", "Modéliser"],
+          "q5": ["Modéliser"]
+        },
+        "remarque": "Q3 (77,6÷10) et Q5 (densité) à coder en dur — pas d'automatisme MathALÉA"
+      },
+      "2": {
+        "titre": "Circuits d'entraînement (PGCD/PPCM)",
+        "dnbId": "dnb_2024_06_etrangers_2",
+        "totalPoints": 3,
+        "selectedCompetences": ["Calculer", "Raisonner"],
+        "questionPoints": { "q0": 1, "q1": 1, "q2": 0.5, "q3": 0.5 }
+      },
+      "3": {
+        "titre": "Programme de calcul",
+        "dnbId": "dnb_2018_05_pondichery_4",
+        "totalPoints": 3,
+        "selectedCompetences": ["Calculer", "Raisonner", "Modéliser"],
+        "questionPoints": { "q0": 0.5, "q1": 0.5, "q2": 0.5, "q3": 0.5, "q4": 1 }
+      },
+      "4": {
+        "titre": "Jardin botanique (géométrie)",
+        "dnbId": "dnb_2025_06_polynesie_2",
+        "totalPoints": 5,
+        "selectedCompetences": ["Calculer", "Raisonner", "Chercher"],
+        "questionPoints": { "q0": 0.5, "q1": 1, "q2": 0.5, "q3": 0.5, "q4": 0.5, "q5": 1, "q6": 1 }
+      },
+      "5": {
+        "titre": "Lunettes de soleil (tableur/stats)",
+        "dnbId": "dnb_2023_06_metropole_1",
+        "totalPoints": 3,
+        "selectedCompetences": ["Calculer", "Modéliser"],
+        "questionPoints": { "q0": 0.5, "q1": 1, "q2": 0.5, "q3": 0.5, "q4": 0.5 }
+      },
+      "6": {
+        "titre": "Fonctions",
+        "dnbId": "dnb_2023_06_metropole_5",
+        "totalPoints": 4,
+        "selectedCompetences": ["Calculer", "Raisonner", "Représenter", "Modéliser", "Chercher"],
+        "questionPoints": { "q0": 0.5, "q1": 0.5, "q2": 0.5, "q3": 0.5, "q4": 0.5, "q5": 0.5, "q6": 0.5, "q7": 0.5 }
+      }
+    },
+    "redactionJustification": 2
+  },
+  "baremeSource": "Barème DNB blanc 2.xlsx — Mélodie",
+  "sujetSource": "sujets/option_B_12pt.pdf"
+}

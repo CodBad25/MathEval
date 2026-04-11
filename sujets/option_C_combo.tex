@@ -1,0 +1,559 @@
+% ════════════════════════════════════════════════════════════════
+%  DNB BLANC N°2 — Collège Gaston Chaissac, Pouzauges
+%  Session du jeudi 9 avril 2026
+%  OPTION C — Police 12pt + regroupements naturels
+%  Compilé avec : pdflatex option_C_combo.tex
+% ════════════════════════════════════════════════════════════════
+
+\documentclass[a4paper,12pt]{article}
+
+%% ─── Encodage et langue ──────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+%% Formatage des nombres : espace fine comme séparateur des milliers
+\newcommand{\np}[1]{\numprint{#1}}
+\usepackage[autolanguage]{numprint}
+
+%% ─── Police professionnelle ──────────────────────────────────
+\usepackage{fourier}
+
+%% ─── Mise en page ────────────────────────────────────────────
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\setlength{\parindent}{0pt}
+
+%% ─── Mathématiques ───────────────────────────────────────────
+\usepackage{amsmath, amssymb}
+
+%% ─── Listes ──────────────────────────────────────────────────
+\usepackage{enumitem}
+
+%% ─── Tableaux ────────────────────────────────────────────────
+\usepackage{tabularx, array, multirow}
+
+%% ─── Graphiques ──────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, positioning}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+%% ─── Boîtes ──────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+
+%% ─── Scratch ─────────────────────────────────────────────────
+\usepackage{scratch3}
+
+%% ─── Divers ──────────────────────────────────────────────────
+\usepackage{xcolor}
+
+%% ─── Commandes exercice ──────────────────────────────────────
+\newcommand{\exercice}[2]{%
+  \newpage
+  \noindent{\Large\bfseries Exercice #1\hspace{0.3em}{\normalfont\normalsize(#2 points)}}%
+  \par\vspace{0.7cm}%
+}
+%% Exercice enchaîné (sans saut de page)
+\newcommand{\exercicesuite}[2]{%
+  \vspace{0.8cm}%
+  \noindent\rule{\textwidth}{0.4pt}%
+  \vspace{0.4cm}\par%
+  \noindent{\Large\bfseries Exercice #1\hspace{0.3em}{\normalfont\normalsize(#2 points)}}%
+  \par\vspace{0.7cm}%
+}
+
+% ══════════════════════════════════════════════════════════════
+\begin{document}
+\thispagestyle{fancy}
+
+% ──────────────────────────────────────────────────────────────
+%  PAGE DE GARDE
+% ──────────────────────────────────────────────────────────────
+
+\begin{flushleft}
+{\fontsize{12}{14}\selectfont\textit{Collège Gaston CHAISSAC}}\\[2pt]
+{\fontsize{12}{14}\selectfont\textit{POUZAUGES}}
+\end{flushleft}
+
+\vspace{1.5cm}
+
+\begin{center}
+  {\LARGE\bfseries DIPLÔME NATIONAL DU BREVET}\\[0.6cm]
+  {\large SESSION DU JEUDI 9 AVRIL 2026}\\[0.3cm]
+  {\large DURÉE : 2\,H \;--\; 100 POINTS}
+\end{center}
+
+\vspace{1cm}
+
+% Encadré central gris
+\begin{center}
+\begin{tcolorbox}[
+  width=12cm,
+  colback=gray!25,
+  colframe=gray!25,
+  arc=4pt,
+  boxrule=0pt,
+  halign=center,
+  top=10pt, bottom=10pt
+]
+  {\normalsize Épreuve de :}\\[0.5cm]
+  {\Large\bfseries MATHÉMATIQUES}\\[0.4cm]
+  {\large\itshape SERIE DNB BLANC N°2}\\[0.5cm]
+  % Badge blanc
+  \begin{tcolorbox}[
+    width=7cm,
+    colback=white,
+    colframe=black,
+    arc=3pt,
+    boxrule=0.5pt,
+    halign=center,
+    top=4pt, bottom=4pt
+  ]
+    {\normalsize\bfseries BREVET BLANC}
+  \end{tcolorbox}
+\end{tcolorbox}
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+  L'utilisation de la calculatrice est autorisée (circ.\ 99-186 du 16 novembre 1999)\\[0.3cm]
+  Le sujet est composé de six exercices indépendants.\\[0.15cm]
+  Le candidat peut les traiter dans l'ordre qui lui convient.
+\end{center}
+
+\vspace{0.8cm}
+
+% Tableau barème
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|p{5cm}|p{3cm}|}
+  \hline
+  Exercice 1 & 6 points  \\ \hline
+  Exercice 2 & 4 points  \\ \hline
+  Exercice 3 & 5 points  \\ \hline
+  Exercice 4 & 7 points  \\ \hline
+  Exercice 5 & 8 points  \\ \hline
+  Exercice 6 & 5 points  \\ \hline
+  \multicolumn{2}{|c|}{\small Barème indicatif} \\ \hline
+\end{tabular}
+\end{center}
+
+\vfill
+
+% Encadré instructions
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{%
+  \textbf{Toutes les réponses doivent être justifiées,}\quad sauf si une indication contraire est donnée.\\[0.2cm]
+  Pour chaque question, si le travail n'est pas terminé, laisser tout de même une trace de la recherche.\\[0.1cm]
+  Elle sera prise en compte dans la notation.%
+}}
+\end{center}
+
+\vspace{0.5cm}
+
+% ──────────────────────────────────────────────────────────────
+%  EXERCICE 1 — Automatismes
+% ──────────────────────────────────────────────────────────────
+\exercice{1}{6}
+
+\begin{enumerate}[label=\textbf{\arabic*)}, leftmargin=1.2cm, itemsep=0.7cm]
+
+\item ABCD est un carré et CDE est un triangle équilatéral (E est à l'intérieur du carré ABCD).\\
+BCF est un triangle isocèle en F (F est à l'extérieur du carré ABCD).\\
+Représenter cette configuration par un schéma à main levée et ajouter les codages nécessaires.
+
+\item Calculer le périmètre d'un cercle de rayon 3~cm.
+
+\item Calculer : $77{,}6 \div 10$
+
+\item Le diagramme suivant représente les ventes d'un magasin sur une semaine :
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  ybar,
+  bar width=1.2cm,
+  symbolic x coords={Lundi,Mardi,Mercredi,Jeudi,Vendredi},
+  xtick=data,
+  nodes near coords,
+  nodes near coords style={font=\bfseries\small},
+  ymin=0, ymax=58,
+  ytick={0,10,...,50},
+  width=12cm, height=7.5cm,
+  enlarge x limits=0.15,
+  axis lines*=left,
+  ymajorgrids=false,
+  axis line style={thick},
+  tick style={thick},
+  every tick label/.style={font=\small},
+  fill=green!50!black,
+  draw=green!70!black,
+]
+\addplot coordinates {(Lundi,33) (Mardi,49) (Mercredi,48) (Jeudi,30) (Vendredi,32)};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+Quel est le total des ventes sur la semaine ?
+
+\item Une ville compte \np{49298} habitants pour une superficie de 302~km$^2$. Quelle est sa densité de population ?
+
+\item Écrire un script Scratch qui dessine un polygone régulier à 5 côtés de 147 pixels de côté.
+
+\end{enumerate}
+
+% ──────────────────────────────────────────────────────────────
+%  EXERCICE 2 — Circuits d'entraînement
+% ──────────────────────────────────────────────────────────────
+\exercice{2}{4}
+
+Un entraîneur de sport prépare deux circuits d'entraînement contenant plusieurs exercices de cardio et de renforcement musculaire :
+
+\begin{itemize}[label=\textbullet, itemsep=2pt]
+  \item un circuit commence à l'exercice 1 et se termine en revenant à l'exercice 1 ;
+  \item le circuit 1 contient cinq exercices. Chaque exercice dure 40 secondes et doit être suivi de 16 secondes de repos permettant de se rendre à l'exercice suivant ;
+  \item le circuit 2 contient dix exercices. Chaque exercice dure 30 secondes et doit être suivi de 5 secondes de repos permettant de se rendre à l'exercice suivant.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[line cap=round,baseline={(C)}]
+  \draw[<-, >=stealth] (0,2.9)--(0,3.5) node[above]{Départ / Arrivée};
+  \foreach \ex in {1,...,5}{
+    \draw[line width=1.5pt] (162-\ex*72:2) circle (0.2);
+    \node at (162-\ex*72:2.7) {Ex~\ex};
+    \draw (162-\ex*72:2)--(90-\ex*72:2);
+  }
+  \node (C) at(0,0) {Circuit 1};
+\end{tikzpicture}
+\hfill
+\begin{tikzpicture}[line cap=round,baseline={(C)}]
+  \draw[<-, >=stealth] (0,2.9)--(0,3.5) node[above]{Départ / Arrivée};
+  \foreach \ex in {1,...,10}{
+    \draw[line width=1.5pt] (126-\ex*36:2) circle (0.2);
+    \node at (126-\ex*36:2.7) {Ex~\ex};
+    \draw (126-\ex*36:2)--(90-\ex*36:2);
+  }
+  \node (C) at(0,0) {Circuit 2};
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}[itemsep=4pt]
+  \item Montrer que le circuit 1 s'effectue en 280 secondes et que le circuit 2 s'effectue en 350 secondes.
+  \item Donner la décomposition en produit de facteurs premiers de $280$ et de $350$.
+  \item Une séance d'entraînement est constituée de plusieurs tours du même circuit.
+
+  Au coup de sifflet de l'entraîneur, Camille commence une séance d'entraînement sur le circuit~1 et Dominique sur le circuit~2.
+  \begin{enumerate}[label=\alph*., itemsep=4pt]
+    \item Expliquer pourquoi, lorsque \np{2800} secondes se sont écoulées à partir du coup de sifflet, Camille se trouve de nouveau au départ du circuit~1.
+
+    Préciser où se trouve Dominique sur le circuit~2 lorsque \np{2800} secondes se sont écoulées.
+
+    \item Après le coup de sifflet, combien de temps faut-il à Camille et Dominique pour se retrouver en même temps pour la première fois au départ de leur circuit ? Exprimer cette durée en minute et seconde.
+  \end{enumerate}
+\end{enumerate}
+
+% ──────────────────────────────────────────────────────────────
+%  EXERCICE 3 — Programme de calcul
+% ──────────────────────────────────────────────────────────────
+\exercice{3}{5}
+
+On considère le programme de calcul ci-dessous :
+
+\begin{center}
+\begin{tabular}{|l|}
+  \hline
+  $\bullet~$Choisir un nombre \\
+  $\bullet~$Mettre ce nombre au carré \\
+  $\bullet~$Soustraire le triple du nombre de départ \\
+  $\bullet~$Soustraire 4 \\
+  \hline
+\end{tabular}
+\end{center}
+
+\smallskip
+
+\begin{enumerate}[itemsep=4pt]
+  \item Montrer que si on choisit 5 comme nombre de départ, le résultat du programme est 6.
+  \item On choisit $x$ comme nombre de départ.
+
+  Exprimer le résultat du programme en fonction de $x$.
+  \item Vérifier que l'on peut écrire ce résultat sous la forme $(x + 1)(x - 4)$.
+  \item Déterminer les nombres à choisir au départ pour que le résultat du programme soit 0.
+  \item Juliette a écrit le programme ci-dessous :
+
+\begin{center}
+\begin{scratch}[num blocks]
+\blockinit{quand \greenflag est cliqué}
+\blockmove{demander \ovalnum{Choisir un nombre} et attendre}
+\blockvariable{mettre \selectmenu{x} à \ovalmove{réponse}}
+\blockvariable{mettre \selectmenu{y} à \ovaloperator{\ovalnum{\ldots}\,*\,\ovalnum{\ldots}}}
+\blockvariable{mettre \selectmenu{z} à \ovaloperator{\ovalnum{3}\,*\,\ovalnum{x}}}
+\blockvariable{mettre \selectmenu{Résultat} à \ovaloperator{\ovalnum{\ldots}\,-\,\ovalnum{\ldots}\,- 4}}
+\blocklook{dire \ovalnum{Résultat} pendant \ovalnum{5} secondes}
+\end{scratch}
+\end{center}
+\end{enumerate}
+
+\medskip
+
+Recopier et compléter sur la copie les lignes 4 et 6 du programme afin que celui-ci corresponde au programme de calcul encadré.
+
+% ──────────────────────────────────────────────────────────────
+%  EXERCICE 4 — Jardin botanique (enchaîné après ex 3)
+% ──────────────────────────────────────────────────────────────
+\exercicesuite{4}{7}
+
+Le jardin botanique d'une ville peut être représenté par le quadrilatère ABCD ci-dessous.
+
+\medskip
+
+\begin{minipage}{0.52\linewidth}
+\begin{tikzpicture}[scale=1.0, thick]
+  % Coordonnées
+  \coordinate (A) at (0,4.33);
+  \coordinate (B) at (2.5,4.33);
+  \coordinate (C) at (7.5,0);
+  \coordinate (D) at (0,0);
+  \coordinate (E) at (1.875,3.248);
+
+  % Remplissage gris
+  \fill[gray!25] (A) -- (B) -- (E) -- cycle;
+  \fill[gray!25] (D) -- (E) -- (C) -- cycle;
+
+  % Quadrilatère
+  \draw (A) -- (B) -- (C) -- (D) -- cycle;
+
+  % Diagonales (pointillés)
+  \draw[densely dotted, line width=1.2pt] (A) -- (C);
+  \draw[densely dotted, line width=1.2pt] (B) -- (D);
+
+  % Angles droits
+  \draw (0.25,4.33) -- (0.25,4.08) -- (0,4.08);
+  \draw (0.25,0) -- (0.25,0.25) -- (0,0.25);
+  % Angle droit en E (rotation ~18.4°)
+  \begin{scope}[shift={(E)}, rotate=-71.6]
+    \draw (0.2,0) -- (0.2,0.2) -- (0,0.2);
+  \end{scope}
+
+  % Labels
+  \node[above left]  at (A) {A};
+  \node[above right] at (B) {B};
+  \node[below right] at (C) {C};
+  \node[below left]  at (D) {D};
+  \node[left=4pt]    at (E) {E};
+\end{tikzpicture}
+\end{minipage}%
+\hfill
+\begin{minipage}{0.45\linewidth}
+On sait que :
+
+\smallskip
+
+$\bullet\;$ AB $= 500$~m, BE $= 250$~m et DE $= 750$~m ;
+
+\smallskip
+
+$\bullet\;$ les segments [AC] et [BD] se coupent au point E.
+
+\smallskip
+
+\emph{La figure ci-contre n'est pas à l'échelle.}
+\end{minipage}
+
+\bigskip
+
+\begin{enumerate}[itemsep=4pt]
+  \item Quelle est la longueur du segment [DB]\,?
+  \item En raisonnant dans le triangle rectangle ABD, montrer que la longueur du segment [AD], arrondie au mètre, est égale à environ $866$~m.
+  \item
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Calculer le sinus de l'angle $\widehat{\text{EAB}}$.
+    \item En déduire la mesure en degrés de l'angle $\widehat{\text{EAB}}$.
+  \end{enumerate}
+  \item
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Montrer que les droites (AB) et (DC) sont parallèles.
+    \item Montrer que la longueur du segment [CD] est égale à \np{1500}~m.
+  \end{enumerate}
+  \item Un piéton fait le tour du jardin botanique en marchant à la vitesse moyenne de 1,1~m/s.
+
+  Il lit sur son plan que la longueur du segment [BC] est environ égale à \np{1323}~m.
+
+  Le temps mis par le piéton pour faire le tour du jardin botanique est-il inférieur à une heure\,?
+\end{enumerate}
+
+% ──────────────────────────────────────────────────────────────
+%  EXERCICE 5 — Fonctions
+% ──────────────────────────────────────────────────────────────
+\exercice{5}{8}
+
+\begin{minipage}[t]{7.2cm}
+\begin{enumerate}
+\item On considère le programme A défini par le schéma ci-contre :
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Vérifier que le résultat est $60$ si le nombre choisi au départ est $-8$.
+    \item On appelle $x$ le nombre de départ et on admet que le résultat obtenu avec le programme de calcul est donné par l'expression :
+
+    $(x + 3)(x - 4)$.
+
+    Résoudre $(x + 3)(x - 4) = 0$.
+
+    En déduire quels nombres de départ il faut choisir pour obtenir 0 comme résultat.
+  \end{enumerate}
+\end{enumerate}
+\end{minipage}\hfill
+\begin{minipage}[t]{7.5cm}
+\vspace{0pt}
+\begin{center}
+\begin{tikzpicture}[
+  block/.style={draw, thick, rectangle, minimum width=1.4cm, minimum height=0.6cm},
+  arr/.style={->, >=Stealth, thick},
+  font=\small,
+  scale=1.0
+]
+  \node at (0,7.1) {Choisir un nombre};
+  \draw[arr] (0,6.8) -- (0,6.2);
+  \node[block] (top) at (0,5.8) {};
+
+  \node at (-2.3,4.8) {Ajouter 3};
+  \node at (2.7,4.8) {Soustraire 4};
+
+  \draw[arr] (0,5.4) -- (-2.9,3.9);
+  \draw[arr] (0,5.4) -- (2.9,3.9);
+
+  \node[block] (L) at (-2.9,3.5) {};
+  \node[block] (R) at (2.9,3.5) {};
+
+  \draw (L.south) -- (0,1.4);
+  \draw (R.south) -- (0,1.4);
+
+  \node[align=center] at (0,2.45) {Multiplier les deux\\résultats};
+
+  \draw[arr] (0,1.4) -- (0,0.8);
+  \node[block] (bot) at (0,0.4) {};
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\medskip
+
+\begin{enumerate}[resume]
+\item On rappelle que $x$ désigne le nombre de départ du programme de calcul et que le résultat obtenu avec le programme de calcul est donné par l'expression : $(x + 3)(x - 4)$.
+
+On appelle $f$ la fonction qui, à $x$, associe le résultat du programme de calcul.
+
+La représentation graphique $\mathcal{C}_f$ de la fonction $f$ est donnée ci-après.
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Montrer que $f(x) = x^2 - x - 12$.
+    \item Calculer $f\!\left(\dfrac{1}{2}\right)$.
+    \item Déterminer graphiquement les antécédents de $-6$ par la fonction $f$.
+
+    On pourra éventuellement laisser les traits de construction sur \textbf{le graphique}.
+  \end{enumerate}
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  axis lines=middle,
+  xmin=-5, xmax=6.2,
+  ymin=-12.9, ymax=12,
+  xtick={-4,-3,...,5},
+  ytick={-12,-11,...,11},
+  minor tick num=0,
+  grid=major,
+  grid style={gray!30, thin},
+  width=12cm,
+  height=14cm,
+  axis line style={thick, ->, >=Stealth},
+  every tick label/.style={font=\scriptsize},
+  xlabel={}, ylabel={},
+  clip=true,
+]
+\addplot[blue, thick, smooth, domain=-4.6:5.6, samples=300] {x^2 - x - 12};
+\node[blue, left, font=\small] at (axis cs:-3.8,10) {$\mathcal{C}_f$};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\begin{minipage}[t]{10cm}
+\begin{enumerate}[resume]
+\item On considère la fonction $g$ définie par $g(x) = 3x - 7$.
+
+On a utilisé un tableur pour réaliser un tableau de valeurs de cette fonction.
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Quelle formule a-t-on écrite dans la cellule B2 avant de l'étirer vers le bas\,?
+    \item Tracer la représentation graphique de la fonction $g$ dans le repère sur \textbf{le graphique précédent}.
+    \item Déterminer graphiquement les nombres qui ont la même image par les fonctions $f$ et $g$. On pourra laisser apparents les traits de construction sur \textbf{le graphique}.
+  \end{enumerate}
+\end{enumerate}
+\end{minipage}\hfill
+\begin{minipage}[t]{4.5cm}
+\vspace{0pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+  \hline
+     & A    & B       \\ \hline
+  1  & $x$  & $g(x)$  \\ \hline
+  2  & $-5$ & $-22$   \\ \hline
+  3  & $-4$ & $-19$   \\ \hline
+  4  & $-3$ & $-16$   \\ \hline
+  5  & $-2$ & $-13$   \\ \hline
+  6  & $-1$ & $-10$   \\ \hline
+  7  & $0$  & $-7$    \\ \hline
+  8  & $1$  & $-4$    \\ \hline
+  9  & $2$  & $-1$    \\ \hline
+  10 & $3$  & $2$     \\ \hline
+  11 & $4$  & $5$     \\ \hline
+  12 & $5$  & $8$     \\ \hline
+  13 & $6$  & $11$    \\ \hline
+\end{tabular}
+\end{center}
+\end{minipage}
+
+% ──────────────────────────────────────────────────────────────
+%  EXERCICE 6 — Lunettes de soleil (enchaîné après ex 5)
+% ──────────────────────────────────────────────────────────────
+\exercicesuite{6}{5}
+
+Un opticien vend différents modèles de lunettes de soleil.
+
+Il reporte dans le tableur ci-dessous des informations sur cinq modèles vendus pendant l'année 2022.
+
+\medskip
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\linewidth}{|c|>{\centering\arraybackslash}m{3.5cm}|*{6}{>{\centering\arraybackslash}X|}}
+  \hline
+     & \textsf{A} & \textsf{B} & \textsf{C} & \textsf{D} & \textsf{E} & \textsf{F} & \textsf{G} \\ \hline
+  \textsf{1} & \textbf{Lunettes de soleil} & \textbf{Modèle 1} & \textbf{Modèle 2} & \textbf{Modèle 3} & \textbf{Modèle 4} & \textbf{Modèle 5} & \textbf{Total} \\ \hline
+  \textsf{2} & \textbf{Nombre de paires de lunettes vendues} & \np{1200} & 950 & 875 & 250 & 300 &  \\ \hline
+  \textsf{3} & \textbf{Prix à l'unité en euro} & 75 & 100 & 110 & 140 & 160 &  \\ \hline
+\end{tabularx}
+\end{center}
+
+\medskip
+
+\begin{enumerate}[itemsep=4pt]
+  \item Montrer que l'étendue des prix de ces paires de lunettes de soleil est de 85 euros.
+  \item
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Quelle formule doit-on saisir dans la cellule G2 pour calculer le nombre total de paires de lunettes de soleil vendues en 2022\,?
+    \item Calculer le nombre total de paires de lunettes de soleil vendues en 2022.
+  \end{enumerate}
+  \item
+  \begin{enumerate}[label=\alph*., itemsep=3pt]
+    \item Calculer le montant total, en euros, des ventes des paires de lunettes de soleil en 2022.
+    \item Calculer le prix moyen d'une paire de lunettes de soleil vendue en 2022, arrondi au centime près.
+  \end{enumerate}
+\end{enumerate}
+
+\end{document}

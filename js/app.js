@@ -1525,7 +1525,9 @@ async function continueToSetup() {
         
         // Initialiser le barème pour tous les exercices (1-5)
         appState.baremeConfig.exercises = {};
-        appState.baremeConfig.totalMax = 20; // DNB 2025 est sur 20 points
+        // DNB 2025 est sur 20 points par défaut, configurable via ?totalMax=23 dans l'URL
+        const urlTotalMax = new URLSearchParams(window.location.search).get('totalMax');
+        appState.baremeConfig.totalMax = urlTotalMax ? parseInt(urlTotalMax) : 20;
         
         // Ex1 (Automatismes) : totalPoints = nombre de questions, 1 pt/question par défaut
         if (exercisesData[1]) {
@@ -3204,7 +3206,7 @@ function calculateTotalPoints() {
             let html = `
                 <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                     <div style="font-size: 1.1em; font-weight: bold; color: #2c3e50;">
-                        Total: <span style="color: ${total === 20 ? '#28a745' : (total > 20 ? '#dc3545' : '#2196f3')}">${total.toFixed(1)}</span> / 20 pts
+                        Total: <span style="color: ${total === appState.baremeConfig.totalMax ? '#28a745' : (total > appState.baremeConfig.totalMax ? '#dc3545' : '#2196f3')}">${total.toFixed(1)}</span> / ${appState.baremeConfig.totalMax} pts
                     </div>
                     <div style="flex: 1; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
             `;
@@ -3234,22 +3236,23 @@ function calculateTotalPoints() {
             detailsDiv.innerHTML = html;
         }
 
-        if (total > 20) {
+        const totalMax = appState.baremeConfig.totalMax || 20;
+        if (total > totalMax) {
             totalSpan.style.color = '#dc3545';
             if (warningDiv) {
                 warningDiv.style.display = 'block';
-                warningDiv.innerHTML = '⚠️ Le total dépasse 20 points';
+                warningDiv.innerHTML = `⚠️ Le total dépasse ${totalMax} points`;
             }
             if (btnContinue) btnContinue.disabled = true;
         } else if (total === 0) {
             totalSpan.style.color = '#6c757d';
             if (warningDiv) warningDiv.style.display = 'none';
             if (btnContinue) btnContinue.disabled = true;
-        } else if (total < 20) {
+        } else if (total < totalMax) {
             totalSpan.style.color = '#2196f3';
             if (warningDiv) {
                 warningDiv.style.display = 'block';
-                warningDiv.innerHTML = `ℹ️ Reste ${(20 - total).toFixed(1)} points à attribuer`;
+                warningDiv.innerHTML = `ℹ️ Reste ${(totalMax - total).toFixed(1)} points à attribuer`;
                 warningDiv.style.background = '#e3f2fd';
                 warningDiv.style.borderColor = '#2196f3';
                 warningDiv.style.color = '#1565c0';
@@ -3288,8 +3291,9 @@ function continueToCandidates() {
     if (hasError) return;
 
     const total = Object.values(appState.baremeConfig.exercises).reduce((sum, ex) => sum + ex.totalPoints, 0);
-    if (total > 20) {
-        alert('⚠️ Le total dépasse 20 points (nouveau barème DNB 2025)');
+    const totalMax = appState.baremeConfig.totalMax || 20;
+    if (total > totalMax) {
+        alert(`⚠️ Le total dépasse ${totalMax} points`);
         return;
     }
     
@@ -4212,34 +4216,50 @@ function renderExerciseTabs() {
     
     tabsContainer.innerHTML = '';
     
-    // Icônes par défaut pour les exercices
-    const defaultIcons = ['📝', '📐', '🔢', '💻', '📊', '🎯', '📈', '🧮'];
-    
+    // Icônes thématiques pour les exercices (basées sur le contenu)
+    const themeIcons = {
+        'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+        'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+        'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+        'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+        'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️'
+    };
+
+    function getExerciseIcon(title) {
+        const lower = (title || '').toLowerCase();
+        for (const [keyword, icon] of Object.entries(themeIcons)) {
+            if (lower.includes(keyword)) return icon;
+        }
+        return '📝';
+    }
+
     Object.keys(exercisesData).forEach((exerciseNum, index) => {
         const exercise = exercisesData[exerciseNum];
-        const icon = defaultIcons[index] || '📝';
+        const icon = getExerciseIcon(exercise.title);
         const isFirst = index === 0;
-        
+
         const button = document.createElement('button');
         button.className = `main-tab ${isFirst ? 'active' : ''}`;
         button.onclick = () => showTab(`exercise${exerciseNum}`);
-        
-        // Extraire juste le numéro et le thème du titre
-        let displayTitle = `Ex ${exerciseNum}`;
+
+        // Afficher "Ex N — Titre court"
+        let shortTitle = '';
         if (exercise.title) {
-            // Si le titre contient ":", prendre ce qui est après
             const parts = exercise.title.split(':');
             if (parts.length > 1) {
-                displayTitle = parts[1].trim();
+                shortTitle = parts[1].trim();
             } else {
-                // Sinon, garder le titre complet sauf "Exercice X -"
-                displayTitle = exercise.title.replace(/^Exercice \d+ -?\s*/, '');
+                shortTitle = exercise.title.replace(/^Exercice \d+ -?\s*/, '');
+            }
+            // Raccourcir si trop long
+            if (shortTitle.length > 25) {
+                shortTitle = shortTitle.substring(0, 22) + '...';
             }
         }
-        
+
         button.innerHTML = `
             <span class="tab-icon">${icon}</span>
-            <span>${displayTitle}</span>
+            <span>Ex${exerciseNum} — ${shortTitle}</span>
         `;
         
         tabsContainer.appendChild(button);
@@ -4404,9 +4424,14 @@ function startCorrection() {
     }
 
     // 🔧 Générer exercisesData depuis le barème et les exercices parsés
-    console.log('🎯 Génération de exercisesData avant la correction...');
-    exercisesData = generateExercisesDataFromSelection();
-    console.log('✅ exercisesData généré:', exercisesData);
+    // Si config importée via ?config=, exercisesData est déjà rempli — ne pas écraser
+    if (!appState._configImported) {
+        console.log('🎯 Génération de exercisesData avant la correction...');
+        exercisesData = generateExercisesDataFromSelection();
+        console.log('✅ exercisesData généré:', exercisesData);
+    } else {
+        console.log('📦 exercisesData déjà chargé depuis config importée, skip génération');
+    }
 
     // 🎯 Sélectionner automatiquement le mode "Par candidat" par défaut
     appState.correctionMode = 'candidate';
@@ -6402,9 +6427,16 @@ function startCorrectionFromOverview() {
 
     showPage('mainPage');
 
-    // Initialiser le sélecteur de mode (vide par défaut)
-    document.getElementById('correctionMode').value = appState.correctionMode;
-    updateCorrectionMode();
+    // Générer les onglets d'exercices dynamiquement
+    renderExerciseTabs();
+    renderExerciseTabContents();
+
+    // Initialiser le sélecteur de mode
+    const modeSelect = document.getElementById('correctionMode');
+    if (modeSelect) {
+        modeSelect.value = appState.correctionMode;
+        updateCorrectionMode();
+    }
 
     loadCurrentCandidate();
     renderAdminContent();
@@ -7713,6 +7745,40 @@ saveValidationData = function() {
 // === INITIALISATION ===
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Correcteur Universel - Initialisation');
+
+    // 📦 Auto-import JSON depuis URL : ?config=chemin/vers/config.json
+    const configUrl = new URLSearchParams(window.location.search).get('config');
+    if (configUrl) {
+        console.log('📦 Auto-import config depuis:', configUrl);
+        fetch(configUrl)
+            .then(r => r.json())
+            .then(data => {
+                if (data.appState && data.exercisesData) {
+                    Object.assign(appState, data.appState);
+                    appState._configImported = true;
+                    // Vider puis remplir exercisesData
+                    Object.keys(exercisesData).forEach(k => delete exercisesData[k]);
+                    Object.assign(exercisesData, data.exercisesData);
+                    // Marquer les étapes 1-3 comme complétées (config déjà prête)
+                    if (typeof workflowState !== 'undefined') {
+                        workflowState.completedSteps = [1, 2, 3];
+                        workflowState.currentStep = 4;
+                    }
+                    // Aller directement à la page candidats ou correction
+                    if (appState.candidates && appState.candidates.length > 0) {
+                        renderCandidatesOverview();
+                        showPage('candidatesOverviewPage');
+                    } else {
+                        showPage('setupPage');
+                    }
+                    console.log('✅ Config importée avec succès, exercisesData:', Object.keys(exercisesData));
+                } else {
+                    console.error('❌ JSON invalide');
+                }
+            })
+            .catch(err => console.error('❌ Erreur import config:', err));
+        return; // Ne pas continuer l'init normale
+    }
 
     // 🔒 Charger le seed verrouillé depuis URL/localStorage
     loadSeedFromStorage();
