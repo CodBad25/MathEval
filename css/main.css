@@ -10,11 +10,14 @@
         .dnb2-tour-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(2px);
             z-index: 99998;
             display: none;
-            pointer-events: auto;
+            /* Fond transparent : le vrai assombrissement vient du box-shadow du spotlight.
+               pointer-events: none est CRUCIAL pour que les clics sur les onglets, boutons,
+               etc. (étapes interactives) passent à travers l'overlay. Seule la tooltip,
+               via pointer-events: auto, capture les clics. */
+            pointer-events: none;
+            background: transparent;
         }
         .dnb2-tour-overlay.active {
             display: block;
@@ -56,6 +59,8 @@
             padding: 18px 20px 14px 20px;
             z-index: 99999;
             animation: dnb2-tour-slidein 0.3s ease-out;
+            /* La tooltip est le seul élément cliquable du tour (boutons Suivant/Passer/Quitter) */
+            pointer-events: auto;
         }
         @keyframes dnb2-tour-slidein {
             from { opacity: 0; transform: translateY(8px) scale(0.96); }
