@@ -49,6 +49,54 @@
             opacity: 1 !important;
         }
 
+        /* Sur la page de correction : prendre toute la largeur de l'écran
+           (la grille auto-fit créera plus de colonnes, moins de scroll vertical) */
+        .container:has(#mainPage.active) {
+            max-width: none;
+            padding: 10px 20px;
+        }
+
+        /* === MODE FOCUS : cache la top-bar (titre + boutons admin) pendant la correction === */
+        body.focus-mode .top-bar {
+            display: none !important;
+        }
+        body.focus-mode .container:has(#mainPage.active) {
+            padding-top: 12px;
+        }
+
+        /* Bouton Focus dans la barre de correction */
+        .focus-mode-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            margin-left: 4px;
+            background: white;
+            color: #4285f4;
+            border: 2px solid #4285f4;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+        .focus-mode-btn:hover {
+            background: #e8f0fe;
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+        .focus-mode-btn.active {
+            background: #28a745;
+            color: white;
+            border-color: #1e7e34;
+        }
+        .focus-mode-btn.active:hover {
+            background: #218838;
+        }
+        .focus-mode-btn .focus-icon {
+            font-size: 1.15em;
+        }
+
         /* === PAGE DE CONFIGURATION === */
         .setup-page {
             display: none;
@@ -378,11 +426,11 @@
 
         .main-tab {
             padding: 10px 15px;
-            border: none;
+            border: 2px solid transparent;
             border-radius: 8px;
             background: #f8f9fa;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             white-space: nowrap;
             font-weight: 500;
             color: #6c757d;
@@ -392,9 +440,22 @@
             gap: 6px;
         }
 
+        .main-tab:hover:not(.active) {
+            background: #e9ecef;
+            color: #495057;
+        }
+
         .main-tab.active {
-            background: #4285f4;
+            background: linear-gradient(135deg, #4285f4, #1a73e8);
             color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.35);
+            transform: translateY(-2px);
+            border-color: #1a73e8;
+        }
+
+        .main-tab.active .tab-icon {
+            filter: drop-shadow(0 0 3px rgba(255,255,255,0.6));
         }
 
         .tab-icon {
@@ -874,6 +935,30 @@
             font-size: 0.9em;
         }
 
+        /* === Guide de notation (remarques de notation par question) === */
+        .notation-guide {
+            background: #fff8dc;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin: 10px 0 12px 0;
+            border-left: 4px solid #fd7e14;
+            font-size: 0.88em;
+            box-shadow: 0 1px 3px rgba(253, 126, 20, 0.08);
+        }
+
+        .notation-guide-header {
+            font-weight: 700;
+            color: #8a5a00;
+            margin-bottom: 4px;
+            font-size: 0.95em;
+            letter-spacing: 0.2px;
+        }
+
+        .notation-guide-body {
+            color: #5a3d00;
+            line-height: 1.5;
+        }
+
         .answer-section {
             background: #f0f8f0;
             padding: 10px 12px;
@@ -1349,21 +1434,41 @@
             text-align: center;
         }
 
+        /* === Modale de validation : layout 2 colonnes (score+grille NR | tableau compétences) === */
+        .validation-body-row {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            padding: 10px 15px;
+            align-items: stretch;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
         .main-score-container {
-            padding: 2px 15px;
+            order: -1; /* Force à gauche */
+            padding: 18px 22px;
             text-align: center;
-            background: white;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 16px;
             flex-shrink: 0;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
         }
 
         .main-score-badge {
             display: inline-block;
-            padding: 3px 14px;
-            border-radius: 20px;
+            padding: 12px 22px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #17a2b8, #007bff);
             color: white;
-            font-size: 1.15em;
+            font-size: 2em;
             font-weight: bold;
-            margin-bottom: 0;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .score-details {
@@ -1378,12 +1483,292 @@
             font-weight: 500;
         }
 
+        /* Ligne de transparence "Note réelle" : 14,5/26 (55,8%) */
+        .raw-score-details {
+            color: #6c757d;
+            font-size: 0.78em;
+            font-weight: 500;
+            margin-top: 4px;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* === Curseur Rédaction / Justifications === */
+        .redaction-slider-container {
+            width: 100%;
+            margin-top: 14px;
+            padding: 10px 12px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            box-sizing: border-box;
+        }
+
+        .redaction-slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .redaction-slider-label {
+            font-size: 0.78em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .redaction-slider-value {
+            font-size: 1em;
+            font-weight: bold;
+            color: #adb5bd;
+            transition: color 0.2s ease;
+        }
+
+        .redaction-slider-value.level-0 { color: #dc3545; }
+        .redaction-slider-value.level-0\.5 { color: #fd7e14; }
+        .redaction-slider-value.level-1 { color: #ffc107; }
+        .redaction-slider-value.level-1\.5 { color: #17a2b8; }
+        .redaction-slider-value.level-2 { color: #28a745; }
+
+        .redaction-slider-track {
+            position: relative;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 16px 26px 16px;
+        }
+
+        .redaction-slider-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            border-radius: 5px;
+            background: #adb5bd;
+            transition: width 0.18s ease, background 0.18s ease;
+        }
+
+        .redaction-slider-fill.level-0 { background: #dc3545; }
+        .redaction-slider-fill.level-0\.5 { background: linear-gradient(90deg, #dc3545, #fd7e14); }
+        .redaction-slider-fill.level-1 { background: linear-gradient(90deg, #dc3545, #fd7e14, #ffc107); }
+        .redaction-slider-fill.level-1\.5 { background: linear-gradient(90deg, #dc3545, #fd7e14, #ffc107, #17a2b8); }
+        .redaction-slider-fill.level-2 { background: linear-gradient(90deg, #dc3545, #fd7e14, #ffc107, #17a2b8, #28a745); }
+
+        .redaction-slider-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            transform: translate(-50%, -50%);
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 3px solid #6c757d;
+            border-radius: 50%;
+            cursor: grab;
+            transition: left 0.18s ease, border-color 0.18s ease, transform 0.1s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        .redaction-slider-thumb.unset {
+            display: none;
+        }
+
+        .redaction-slider-thumb.level-0 { border-color: #dc3545; }
+        .redaction-slider-thumb.level-0\.5 { border-color: #fd7e14; }
+        .redaction-slider-thumb.level-1 { border-color: #ffc107; }
+        .redaction-slider-thumb.level-1\.5 { border-color: #17a2b8; }
+        .redaction-slider-thumb.level-2 { border-color: #28a745; }
+
+        .redaction-slider-thumb:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+        .redaction-slider-thumb:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .redaction-slider-marks {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            height: 1.1em;
+            margin-top: 6px;
+        }
+
+        .redaction-slider-mark {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            font-size: 0.7em;
+            color: #6c757d;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: background 0.15s ease, color 0.15s ease;
+            white-space: nowrap;
+        }
+
+        /* Chaque marque alignée exactement sous la position correspondante du thumb */
+        .redaction-slider-mark[data-value="0"]   { left: 0%; }
+        .redaction-slider-mark[data-value="0.5"] { left: 25%; }
+        .redaction-slider-mark[data-value="1"]   { left: 50%; }
+        .redaction-slider-mark[data-value="1.5"] { left: 75%; }
+        .redaction-slider-mark[data-value="2"]   { left: 100%; }
+
+        .redaction-slider-mark:hover {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        /* === Grille NR visuelle par exercice === */
+        .nr-grid-container {
+            margin-top: 12px;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .nr-grid-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .nr-grid-exercise {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 5px;
+            padding: 4px 6px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .nr-grid-exercise:last-child {
+            margin-bottom: 0;
+        }
+
+        .nr-grid-exercise-icon {
+            font-size: 1em;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nr-grid-exercise-name {
+            font-size: 0.72em;
+            font-weight: 500;
+            color: #495057;
+            width: 58px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 0;
+        }
+
+        .nr-grid-questions {
+            display: flex;
+            gap: 3px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .nr-grid-question {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            background: #dee2e6;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .nr-grid-question.answered {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+        }
+
+        .nr-grid-question.partial {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            box-shadow: 0 1px 3px rgba(253, 126, 20, 0.3);
+        }
+
+        .nr-grid-question.wrong {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            box-shadow: 0 1px 3px rgba(220, 53, 69, 0.3);
+        }
+
+        .nr-grid-question.nr {
+            background: #adb5bd;
+        }
+
+        .nr-grid-count {
+            font-size: 0.72em;
+            font-weight: 600;
+            color: #6c757d;
+            min-width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .nr-grid-count.all-answered {
+            color: #28a745;
+        }
+
+        .nr-grid-total {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .nr-grid-total-label {
+            color: #495057;
+        }
+
+        .nr-grid-total-value {
+            color: #28a745;
+        }
+
+        .nr-grid-total-value.has-nr {
+            color: #dc3545;
+        }
+
         .competences-table-container {
-            padding: 0 15px;
-            margin-bottom: 4px;
+            order: 1;
+            padding: 0;
+            margin-bottom: 0;
             flex: 1 1 auto;
             overflow-y: auto;
             min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .competences-table-container .competences-table {
+            height: 100%;
+        }
+
+        .competences-table-container .competences-table tbody {
+            height: 100%;
+        }
+
+        .competences-table-container .competences-table tbody tr {
+            height: 1px; /* Astuce : height 1px + td height 100% fait que les lignes se répartissent équitablement */
         }
 
         .competences-table {
@@ -1427,8 +1812,9 @@
         }
 
         .competences-table td {
-            padding: 3px 10px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
         }
 
         .competence-name {
@@ -1539,13 +1925,14 @@
 
         .comment-section textarea {
             width: 100%;
-            padding: 5px 10px;
+            padding: 8px 12px;
             border: 2px solid #e9ecef;
             border-radius: 6px;
             font-family: inherit;
-            font-size: 13px;
+            font-size: 14px;
             resize: none;
-            height: 34px;
+            height: 72px;
+            line-height: 1.4;
         }
 
         .comment-section textarea:focus {

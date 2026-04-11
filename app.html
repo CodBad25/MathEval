@@ -640,6 +640,10 @@
                 <div class="score-info">
                     <div class="progress-info" id="progressInfo">Progression : 0%</div>
                     <div class="total-score" id="totalScoreDisplay">Score: 0 / 20 points</div>
+                    <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="Mode focus (raccourci : F) — cache le header et passe en plein écran">
+                        <span class="focus-icon">⛶</span>
+                        <span class="focus-label">Focus</span>
+                    </button>
                 </div>
             </div>
 
@@ -1111,25 +1115,52 @@
                 <!-- Les badges d'exercices seront générés ici -->
             </div>
             
-            <div class="main-score-container">
-                <div class="main-score-badge" id="validationMainScore">17/20</div>
-                <div class="score-nr" id="validationNR"></div>
-            </div>
-            
-            <div class="competences-table-container">
-                <table class="competences-table">
-                    <thead>
-                        <tr>
-                            <th>Compétence</th>
-                            <th>% & Items</th>
-                            <th>Niveau</th>
-                            <th>Progression</th>
-                        </tr>
-                    </thead>
-                    <tbody id="competencesValidationTable">
-                        <!-- Les compétences seront générées ici -->
-                    </tbody>
-                </table>
+            <div class="validation-body-row">
+                <div class="main-score-container">
+                    <div class="main-score-badge" id="validationMainScore">17/20</div>
+                    <div class="raw-score-details" id="validationRawScore"></div>
+                    <div class="score-nr" id="validationNR"></div>
+
+                    <!-- Curseur Rédaction / Justifications (0 / 0.5 / 1 / 1.5 / 2) -->
+                    <div class="redaction-slider-container" id="redactionSliderContainer">
+                        <div class="redaction-slider-header">
+                            <span class="redaction-slider-label">📝 Rédaction / Justifications</span>
+                            <span class="redaction-slider-value" id="redactionSliderValue">— / 2</span>
+                        </div>
+                        <div class="redaction-slider-track" id="redactionSliderTrack">
+                            <div class="redaction-slider-fill" id="redactionSliderFill"></div>
+                            <div class="redaction-slider-thumb" id="redactionSliderThumb"></div>
+                            <!-- Marqueurs des paliers -->
+                            <div class="redaction-slider-marks">
+                                <span class="redaction-slider-mark" data-value="0">0</span>
+                                <span class="redaction-slider-mark" data-value="0.5">½</span>
+                                <span class="redaction-slider-mark" data-value="1">1</span>
+                                <span class="redaction-slider-mark" data-value="1.5">1½</span>
+                                <span class="redaction-slider-mark" data-value="2">2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nr-grid-container" id="nrGridContainer">
+                        <!-- Grille NR générée dynamiquement par JS -->
+                    </div>
+                </div>
+
+                <div class="competences-table-container">
+                    <table class="competences-table">
+                        <thead>
+                            <tr>
+                                <th>Compétence</th>
+                                <th>% & Items</th>
+                                <th>Niveau</th>
+                                <th>Progression</th>
+                            </tr>
+                        </thead>
+                        <tbody id="competencesValidationTable">
+                            <!-- Les compétences seront générées ici -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
             <div class="comment-section">

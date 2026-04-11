@@ -1,1 +1,1081 @@
-{"appState":{"selectedExercises":["dnb_2024_06_etrangers_2","dnb_2018_05_pondichery_4","dnb_2025_06_polynesie_2","dnb_2023_06_metropole_1","dnb_2023_06_metropole_5"],"baremeConfig":{"mode":"b","totalMax":26,"exercises":{"1":{"totalPoints":6,"selectedCompetences":["Représenter","Communiquer","Calculer","Chercher","Modéliser"],"pointsPerCompetence":{},"questionCompetences":{"q0":["Représenter","Communiquer"],"q1":["Calculer"],"q2":["Chercher"],"q3":["Modéliser"]},"questionPoints":{"q0":1.5,"q1":1.5,"q2":1.5,"q3":1.5},"isFixed":false},"2":{"totalPoints":3,"selectedCompetences":["Calculer","Raisonner"],"pointsPerCompetence":{},"questionPoints":{"q0":1,"q1":1,"q2":0.5,"q3":0.5},"dnbId":"dnb_2024_06_etrangers_2","questionCompetences":{"q0":["Calculer","Raisonner"],"q1":["Calculer"],"q2":["Raisonner"],"q3":["Calculer","Raisonner"]},"questionCompetencePoints":{"q0":{"Calculer":0.5,"Raisonner":0.5},"q1":{"Calculer":1},"q2":{"Raisonner":0.5},"q3":{"Calculer":0.3,"Raisonner":0.3}}},"3":{"totalPoints":3,"selectedCompetences":["Calculer","Raisonner","Modéliser"],"pointsPerCompetence":{"Calculer":1,"Raisonner":1,"Modéliser":1},"questionPoints":{"q0":0.5,"q1":0.5,"q2":0.5,"q3":0.5,"q4":0.5,"q5":0.5},"dnbId":"dnb_2018_05_pondichery_4","questionCompetences":{"q0":["Calculer","Raisonner"],"q1":["Calculer","Raisonner"],"q2":["Calculer","Raisonner"],"q3":["Calculer","Raisonner"],"q4":["Modéliser"],"q5":["Modéliser"]},"questionCompetencePoints":{"q0":{"Calculer":0.3,"Raisonner":0.3},"q1":{"Calculer":0.3,"Raisonner":0.3},"q2":{"Calculer":0.3,"Raisonner":0.3},"q3":{"Calculer":0.3,"Raisonner":0.3},"q4":{"Modéliser":1},"q5":{"Modéliser":0.5}}},"4":{"totalPoints":5,"selectedCompetences":["Calculer","Raisonner","Chercher"],"pointsPerCompetence":{},"questionPoints":{"q0":0.5,"q1":1,"q2":0.5,"q3":0.5,"q4":0.5,"q5":1,"q6":1},"dnbId":"dnb_2025_06_polynesie_2","questionCompetences":{"q0":["Calculer"],"q1":["Calculer","Raisonner"],"q2":["Calculer"],"q3":["Calculer"],"q4":["Raisonner"],"q5":["Calculer","Raisonner"],"q6":["Calculer","Chercher"]},"questionCompetencePoints":{"q0":{"Calculer":0.5},"q1":{"Calculer":0.5,"Raisonner":0.5},"q2":{"Calculer":0.5},"q3":{"Calculer":0.5},"q4":{"Raisonner":0.5},"q5":{"Calculer":0.5,"Raisonner":0.5},"q6":{"Calculer":0.5,"Chercher":0.5}}},"5":{"totalPoints":3,"selectedCompetences":["Calculer","Modéliser"],"pointsPerCompetence":{},"questionPoints":{"q0":0.5,"q1":1,"q2":0.5,"q3":0.5,"q4":0.5},"dnbId":"dnb_2023_06_metropole_1","questionCompetences":{"q0":["Calculer"],"q1":["Modéliser"],"q2":["Calculer"],"q3":["Calculer"],"q4":["Calculer"]},"questionCompetencePoints":{"q0":{"Calculer":0.5},"q1":{"Modéliser":1},"q2":{"Calculer":0.5},"q3":{"Calculer":0.5},"q4":{"Calculer":0.5}}},"6":{"totalPoints":4,"selectedCompetences":["Calculer","Raisonner","Représenter","Modéliser","Chercher"],"pointsPerCompetence":{"Calculer":0.8,"Raisonner":0.8,"Représenter":0.8,"Modéliser":0.8,"Chercher":0.8},"questionPoints":{"q0":0.5,"q1":1,"q2":0.5,"q3":0.5,"q4":0.5,"q5":1},"dnbId":"dnb_2023_06_metropole_5","questionCompetences":{"q0":["Calculer"],"q1":["Calculer","Raisonner"],"q2":["Calculer"],"q3":["Calculer"],"q4":["Représenter","Chercher"],"q5":["Modéliser"]},"questionCompetencePoints":{"q0":{"Calculer":0.5},"q1":{"Calculer":0.3,"Raisonner":0.3},"q2":{"Calculer":0.5},"q3":{"Calculer":0.5},"q4":{"Représenter":0.3,"Chercher":0.3},"q5":{"Modéliser":0.5}}}}},"exerciseSeed":"mnt0tkvg7dtb","exercisesLocked":true,"candidates":[],"scores":{}},"exercisesData":{"1":{"title":"Exercice 1 : Automatismes","totalPoints":6,"isAutomatismes":true,"questions":[{"id":"q0","title":"Question 1","points":1,"statement":"ABCD est un carré et CDE est un triangle équilatéral (E est à l'intérieur du carré ABCD). BCF est un triangle isocèle en F (F est à l'extérieur du carré ABCD). Représenter cette configuration par un schéma à main levée et ajouter les codages nécessaires.","answer":"Schéma avec : carré ABCD (4 angles droits, 4 côtés égaux), triangle équilatéral CDE (3 côtés égaux) à l'intérieur, triangle isocèle BCF (2 côtés égaux BC=CF) à l'extérieur.","competences":[{"name":"Représenter","color":"#6f42c1","description":"Créer des représentations graphiques, schémas","points":0.5,"increment":0.5},{"name":"Communiquer","color":"#ffc107","description":"Expliquer, justifier, présenter une solution","points":0.5,"increment":0.5}]},{"id":"q1","title":"Question 2","points":1,"statement":"Calculer le périmètre d'un cercle de rayon 3 cm.","answer":"Périmètre = 2 × π × r = 2 × π × 3 = 6π ≈ 18,85 cm","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":1,"increment":0.5}]},{"id":"q2","title":"Question 3","points":1,"statement":"Calculer : 77,6 ÷ 10","answer":"77,6 ÷ 10 = 7,76","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":1,"increment":0.5}]},{"id":"q3","title":"Question 4","points":1,"statement":"Le diagramme suivant représente les ventes d'un magasin sur une semaine : Lundi 33, Mardi 49, Mercredi 48, Jeudi 30, Vendredi 32. Quel est le total des ventes sur la semaine ?","answer":"Total = 33 + 49 + 48 + 30 + 32 = 192 ventes","competences":[{"name":"Chercher","color":"#fd7e14","description":"Chercher, expérimenter, tester","points":1,"increment":0.5}]},{"id":"q4","title":"Question 5","points":1,"statement":"Une ville compte 49 298 habitants pour une superficie de 302 km². Quelle est sa densité de population ?","answer":"Densité = 49 298 ÷ 302 ≈ 163,2 habitants/km²","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.5,"increment":0.5},{"name":"Modéliser","color":"#17a2b8","description":"Traduire un problème en langage mathématique","points":0.5,"increment":0.5}]},{"id":"q5","title":"Question 6","points":1,"statement":"Écrire un script Scratch qui dessine un polygone régulier à 5 côtés de 147 pixels de côté.","answer":"Répéter 5 fois : Avancer de 147, Tourner de 360÷5 = 72 degrés","competences":[{"name":"Modéliser","color":"#17a2b8","description":"Traduire un problème en langage mathématique","points":1,"increment":0.5}]}]},"2":{"title":"Exercice 2 : Circuits d'entraînement (PGCD/PPCM)","totalPoints":3,"questions":[{"id":"q0","title":"Question 1","points":1,"statement":"Montrer que le circuit 1 s'effectue en 280 secondes et que le circuit 2 s'effectue en 350 secondes.","answer":"Circuit 1 : $5 \\times (40 + 16) = 5 \\times 56 = 280$ s.<br>Circuit 2 : $10 \\times (30 + 5) = 10 \\times 35 = 350$ s.","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer","points":0.5,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Raisonner","points":0.5,"increment":0.5}]},{"id":"q1","title":"Question 2","points":1,"statement":"Donner la décomposition en produit de facteurs premiers de $280$ et de $350$.","answer":"$280 = 2^3 \\times 5 \\times 7$<br>$350 = 2 \\times 5^2 \\times 7$","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer","points":1,"increment":0.5}]},{"id":"q2","title":"Question 3.a","points":0.5,"statement":"Expliquer pourquoi, lorsque 2 800 secondes se sont écoulées, Camille se trouve de nouveau au départ du circuit 1. Préciser où se trouve Dominique sur le circuit 2.","answer":"$2\\,800 = 10 \\times 280$ donc Camille a fait 10 tours : elle est au départ.<br>$2\\,800 = 8 \\times 350$ donc Dominique a fait 8 tours : elle est aussi au départ.","competences":[{"name":"Raisonner","color":"#dc3545","description":"Raisonner","points":0.5,"increment":0.5}]},{"id":"q3","title":"Question 3.b","points":0.5,"statement":"Après le coup de sifflet, combien de temps faut-il à Camille et Dominique pour se retrouver en même temps pour la première fois au départ de leur circuit ? Exprimer cette durée en minute et seconde.","answer":"PPCM$(280, 350) = 2^3 \\times 5^2 \\times 7 = 1\\,400$ s = 23 min 20 s.","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer","points":0.25,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Raisonner","points":0.25,"increment":0.5}]}]},"3":{"title":"Exercice 3 : Programme de calcul","totalPoints":3,"questions":[{"id":"q0","title":"Question 1","points":0.5,"statement":"Montrer que si on choisit 5 comme nombre de départ, le résultat du programme est 6.","answer":"On calcule : 5² = 25, puis 25 − 3×5 = 25 − 15 = 10, puis 10 − 4 = 6. Le résultat est bien 6.","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.5,"increment":0.5}]},{"id":"q1","title":"Question 2","points":0.5,"statement":"On choisit $x$ comme nombre de départ. Exprimer le résultat du programme en fonction de $x$.","answer":"$x^2 - 3x - 4$","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.25,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Raisonner, démontrer, argumenter","points":0.25,"increment":0.5}]},{"id":"q2","title":"Question 3","points":0.5,"statement":"Vérifier que l'on peut écrire ce résultat sous la forme $(x + 1)(x - 4)$.","answer":"$(x+1)(x-4) = x^2 - 4x + x - 4 = x^2 - 3x - 4$. C'est bien le même résultat.","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.25,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Raisonner, démontrer, argumenter","points":0.25,"increment":0.5}]},{"id":"q3","title":"Question 4","points":0.5,"statement":"Déterminer les nombres à choisir au départ pour que le résultat du programme soit 0.","answer":"$(x+1)(x-4) = 0$ donc $x = -1$ ou $x = 4$.","competences":[{"name":"Raisonner","color":"#dc3545","description":"Raisonner, démontrer, argumenter","points":0.5,"increment":0.5}]},{"id":"q4","title":"Question 5","points":1,"statement":"Juliette a écrit un programme Scratch. Recopier et compléter les lignes 4 et 6 du programme afin que celui-ci corresponde au programme de calcul encadré.<br>Ligne 4 : mettre y à ...<br>Ligne 6 : mettre Résultat à ...","answer":"Ligne 4 : mettre y à (x * x)<br>Ligne 6 : mettre Résultat à (y − z − 4) ou (y − 3*x − 4)","competences":[{"name":"Modéliser","color":"#17a2b8","description":"Traduire un problème en langage mathématique","points":1,"increment":0.5}]}]},"4":{"title":"Exercice 4 : Jardin botanique (géométrie)","totalPoints":5,"questions":[{"id":"q1","title":"Question 1","points":0.5,"statement":"Quelle est la longueur du segment [DB] ?","answer":"Le point E est sur le segment [BD], donc :<br>$BD = BE + ED = 250 + 750 = 1\\,000$ m.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]},{"id":"q2","title":"Question 2","points":1,"statement":"En raisonnant dans le triangle rectangle ABD, montrer que la longueur du segment [AD], arrondie au mètre, est égale à environ $866$ m.","answer":"Dans le triangle ABD, rectangle en A, on applique le théorème de Pythagore :<br>$AB^2 + AD^2 = BD^2$<br>$500^2 + AD^2 = 1\\,000^2$<br>$AD^2 = 1\\,000\\,000 - 250\\,000 = 750\\,000$<br>$AD = \\sqrt{750\\,000} \\approx 866$ m.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Tenir une démarche logique, argumenter","points":0.5,"increment":0.5}]},{"id":"q3","title":"Question 3.a","points":0.5,"statement":"Calculer le sinus de l'angle $\\widehat{\\text{EAB}}$.","answer":"$\\sin\\left(\\widehat{\\mathrm{EAB}}\\right) = \\dfrac{EB}{AB} = \\dfrac{250}{500} = \\dfrac{1}{2}$","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]},{"id":"q4","title":"Question 3.b","points":0.5,"statement":"En déduire la mesure en degrés de l'angle $\\widehat{\\text{EAB}}$.","answer":"$\\widehat{\\mathrm{EAB}} = \\arcsin\\left(\\dfrac{1}{2}\\right) = 30°$","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]},{"id":"q5","title":"Question 4.a","points":0.5,"statement":"Montrer que les droites (AB) et (DC) sont parallèles.","answer":"Les droites (AB) et (CD) sont perpendiculaires à la même droite (AD). Par propriété, elles sont donc parallèles.","competences":[{"name":"Raisonner","color":"#dc3545","description":"Tenir une démarche logique, argumenter","points":0.5,"increment":0.5}]},{"id":"q6","title":"Question 4.b","points":1,"statement":"Montrer que la longueur du segment [CD] est égale à 1 500 m.","answer":"Par le théorème de Thalès :<br>$\\dfrac{BE}{BD} = \\dfrac{AB}{DC}$<br>$\\dfrac{250}{1\\,000} = \\dfrac{500}{DC}$<br>$DC = \\dfrac{500 \\times 1\\,000}{250} = 1\\,500$ m. Mais en fait il faut utiliser $\\dfrac{DE}{BD} = \\dfrac{DC}{...}$. Le résultat est $DC = 1\\,500$ m.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Tenir une démarche logique, argumenter","points":0.5,"increment":0.5}]},{"id":"q7","title":"Question 5","points":1,"statement":"Un piéton fait le tour du jardin botanique en marchant à la vitesse moyenne de 1,1 m/s. Il lit sur son plan que la longueur du segment [BC] est environ égale à 1 323 m. Le temps mis par le piéton pour faire le tour du jardin botanique est-il inférieur à une heure ?","answer":"Périmètre = $AB + BC + CD + DA = 500 + 1\\,323 + 1\\,500 + 866 = 4\\,189$ m.<br>Temps = $\\dfrac{4\\,189}{1{,}1} \\approx 3\\,808$ s = 63 min 28 s.<br>Le temps dépasse 1 heure. La réponse est non.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5},{"name":"Chercher","color":"#fd7e14","description":"Identifier et mettre en œuvre une stratégie","points":0.5,"increment":0.5}]}]},"5":{"title":"Exercice 5 : Lunettes de soleil (tableur/stats)","totalPoints":3,"questions":[{"id":"q1","title":"Question 1","points":0.5,"statement":"Montrer que l'étendue des prix de ces paires de lunettes de soleil est de 85 euros.","answer":"$160 - 75 = 85$ euros.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]},{"id":"q2","title":"Question 2.a","points":1,"statement":"Quelle formule doit-on saisir dans la cellule G2 pour calculer le nombre total de paires de lunettes de soleil vendues en 2022 ?","answer":"=SOMME(B2:F2)","competences":[{"name":"Modéliser","color":"#17a2b8","description":"Traduire en langage mathématique une situation","points":1,"increment":0.5}]},{"id":"q3","title":"Question 2.b","points":0.5,"statement":"Calculer le nombre total de paires de lunettes de soleil vendues en 2022.","answer":"$1\\,200 + 950 + 875 + 250 + 300 = 3\\,575$ paires.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]},{"id":"q4","title":"Question 3.a","points":0.5,"statement":"Calculer le montant total, en euros, des ventes des paires de lunettes de soleil en 2022.","answer":"$1\\,200 \\times 75 + 950 \\times 100 + 875 \\times 110 + 250 \\times 140 + 300 \\times 160 = 364\\,250$ euros.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]},{"id":"q5","title":"Question 3.b","points":0.5,"statement":"Calculer le prix moyen d'une paire de lunettes de soleil vendue en 2022, arrondi au centime près.","answer":"Prix moyen = $\\dfrac{364\\,250}{3\\,575} \\approx 101{,}89$ euros.","competences":[{"name":"Calculer","color":"#28a745","description":"Effectuer des calculs numériques et littéraux","points":0.5,"increment":0.5}]}]},"6":{"title":"Exercice 6 : Fonctions","totalPoints":4,"questions":[{"id":"q0","title":"Question 1.a","points":0.5,"statement":"Vérifier que le résultat est 60 si le nombre choisi au départ est $-8$.","answer":"$(-8+3)\\times(-8-4) = (-5)\\times(-12) = 60$","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.5,"increment":0.5}]},{"id":"q1","title":"Question 1.b","points":0.5,"statement":"Résoudre $(x+3)(x-4) = 0$. En déduire quels nombres de départ il faut choisir pour obtenir 0 comme résultat.","answer":"$(x+3)(x-4)=0$ donc $x+3=0$ ou $x-4=0$, soit $x=-3$ ou $x=4$.","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.25,"increment":0.5},{"name":"Raisonner","color":"#dc3545","description":"Raisonner, démontrer, argumenter","points":0.25,"increment":0.5}]},{"id":"q2","title":"Question 2.a","points":0.5,"statement":"Montrer que $f(x) = x^2 - x - 12$.","answer":"$f(x) = (x+3)(x-4) = x^2 - 4x + 3x - 12 = x^2 - x - 12$","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.5,"increment":0.5}]},{"id":"q3","title":"Question 2.b","points":0.5,"statement":"Calculer $f\\left(\\dfrac{1}{2}\\right)$.","answer":"$f\\left(\\frac{1}{2}\\right) = \\frac{1}{4} - \\frac{1}{2} - 12 = -\\frac{49}{4} = -12{,}25$","competences":[{"name":"Calculer","color":"#28a745","description":"Calculer, appliquer des techniques","points":0.5,"increment":0.5}]},{"id":"q4","title":"Question 2.c","points":0.5,"statement":"Déterminer graphiquement les antécédents de $-6$ par la fonction $f$.","answer":"Les antécédents de $-6$ sont environ $x \\approx -2$ et $x \\approx 3$.","competences":[{"name":"Représenter","color":"#6f42c1","description":"Créer des représentations graphiques","points":0.25,"increment":0.5},{"name":"Chercher","color":"#fd7e14","description":"Chercher, expérimenter","points":0.25,"increment":0.5}]},{"id":"q5","title":"Question 3.a","points":0.5,"statement":"On considère $g(x) = 3x - 7$. Quelle formule a-t-on écrite dans la cellule B2 avant de l'étirer vers le bas ?","answer":"= 3*A2 - 7","competences":[{"name":"Modéliser","color":"#17a2b8","description":"Traduire un problème en langage mathématique","points":0.5,"increment":0.5}]},{"id":"q6","title":"Question 3.b","points":0.5,"statement":"Tracer la représentation graphique de la fonction $g$ dans le repère de l'annexe 2.","answer":"Droite passant par $(0 ; -7)$ et $(3 ; 2)$.","competences":[{"name":"Représenter","color":"#6f42c1","description":"Créer des représentations graphiques","points":0.5,"increment":0.5}]},{"id":"q7","title":"Question 3.c","points":0.5,"statement":"Déterminer graphiquement les nombres qui ont la même image par les fonctions $f$ et $g$.","answer":"Les intersections donnent environ $x \\approx -1$ et $x \\approx 5$.","competences":[{"name":"Représenter","color":"#6f42c1","description":"Créer des représentations graphiques","points":0.25,"increment":0.5},{"name":"Chercher","color":"#fd7e14","description":"Chercher, expérimenter","points":0.25,"increment":0.5}]}]}},"exportDate":"2026-04-10T21:41:43.360Z","version":"1.0"}
+{
+  "appState": {
+    "selectedExercises": [
+      "dnb_2024_06_etrangers_2",
+      "dnb_2018_05_pondichery_4",
+      "dnb_2025_06_polynesie_2",
+      "dnb_2023_06_metropole_1",
+      "dnb_2023_06_metropole_5"
+    ],
+    "baremeConfig": {
+      "mode": "b",
+      "totalMax": 26,
+      "exercises": {
+        "1": {
+          "totalPoints": 6,
+          "selectedCompetences": [
+            "Représenter",
+            "Communiquer",
+            "Calculer",
+            "Chercher",
+            "Modéliser"
+          ],
+          "pointsPerCompetence": {},
+          "questionCompetences": {
+            "q0": [
+              "Représenter",
+              "Communiquer"
+            ],
+            "q1": [
+              "Calculer"
+            ],
+            "q2": [
+              "Chercher"
+            ],
+            "q3": [
+              "Modéliser"
+            ]
+          },
+          "questionPoints": {
+            "q0": 1.5,
+            "q1": 1.5,
+            "q2": 1.5,
+            "q3": 1.5
+          },
+          "isFixed": false
+        },
+        "2": {
+          "totalPoints": 3,
+          "selectedCompetences": [
+            "Calculer",
+            "Raisonner"
+          ],
+          "pointsPerCompetence": {},
+          "questionPoints": {
+            "q0": 1,
+            "q1": 1,
+            "q2": 0.5,
+            "q3": 0.5
+          },
+          "dnbId": "dnb_2024_06_etrangers_2",
+          "questionCompetences": {
+            "q0": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q1": [
+              "Calculer"
+            ],
+            "q2": [
+              "Raisonner"
+            ],
+            "q3": [
+              "Calculer",
+              "Raisonner"
+            ]
+          },
+          "questionCompetencePoints": {
+            "q0": {
+              "Calculer": 0.5,
+              "Raisonner": 0.5
+            },
+            "q1": {
+              "Calculer": 1
+            },
+            "q2": {
+              "Raisonner": 0.5
+            },
+            "q3": {
+              "Calculer": 0.3,
+              "Raisonner": 0.3
+            }
+          }
+        },
+        "3": {
+          "totalPoints": 3,
+          "selectedCompetences": [
+            "Calculer",
+            "Raisonner",
+            "Modéliser"
+          ],
+          "pointsPerCompetence": {
+            "Calculer": 1,
+            "Raisonner": 1,
+            "Modéliser": 1
+          },
+          "questionPoints": {
+            "q0": 0.5,
+            "q1": 0.5,
+            "q2": 0.5,
+            "q3": 0.5,
+            "q4": 0.5,
+            "q5": 0.5
+          },
+          "dnbId": "dnb_2018_05_pondichery_4",
+          "questionCompetences": {
+            "q0": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q1": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q2": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q3": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q4": [
+              "Modéliser"
+            ],
+            "q5": [
+              "Modéliser"
+            ]
+          },
+          "questionCompetencePoints": {
+            "q0": {
+              "Calculer": 0.3,
+              "Raisonner": 0.3
+            },
+            "q1": {
+              "Calculer": 0.3,
+              "Raisonner": 0.3
+            },
+            "q2": {
+              "Calculer": 0.3,
+              "Raisonner": 0.3
+            },
+            "q3": {
+              "Calculer": 0.3,
+              "Raisonner": 0.3
+            },
+            "q4": {
+              "Modéliser": 1
+            },
+            "q5": {
+              "Modéliser": 0.5
+            }
+          }
+        },
+        "4": {
+          "totalPoints": 5,
+          "selectedCompetences": [
+            "Calculer",
+            "Raisonner",
+            "Chercher"
+          ],
+          "pointsPerCompetence": {},
+          "questionPoints": {
+            "q0": 0.5,
+            "q1": 1,
+            "q2": 0.5,
+            "q3": 0.5,
+            "q4": 0.5,
+            "q5": 1,
+            "q6": 1
+          },
+          "dnbId": "dnb_2025_06_polynesie_2",
+          "questionCompetences": {
+            "q0": [
+              "Calculer"
+            ],
+            "q1": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q2": [
+              "Calculer"
+            ],
+            "q3": [
+              "Calculer"
+            ],
+            "q4": [
+              "Raisonner"
+            ],
+            "q5": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q6": [
+              "Calculer",
+              "Chercher"
+            ]
+          },
+          "questionCompetencePoints": {
+            "q0": {
+              "Calculer": 0.5
+            },
+            "q1": {
+              "Calculer": 0.5,
+              "Raisonner": 0.5
+            },
+            "q2": {
+              "Calculer": 0.5
+            },
+            "q3": {
+              "Calculer": 0.5
+            },
+            "q4": {
+              "Raisonner": 0.5
+            },
+            "q5": {
+              "Calculer": 0.5,
+              "Raisonner": 0.5
+            },
+            "q6": {
+              "Calculer": 0.5,
+              "Chercher": 0.5
+            }
+          }
+        },
+        "5": {
+          "totalPoints": 3,
+          "selectedCompetences": [
+            "Calculer",
+            "Modéliser"
+          ],
+          "pointsPerCompetence": {},
+          "questionPoints": {
+            "q0": 0.5,
+            "q1": 1,
+            "q2": 0.5,
+            "q3": 0.5,
+            "q4": 0.5
+          },
+          "dnbId": "dnb_2023_06_metropole_1",
+          "questionCompetences": {
+            "q0": [
+              "Calculer"
+            ],
+            "q1": [
+              "Modéliser"
+            ],
+            "q2": [
+              "Calculer"
+            ],
+            "q3": [
+              "Calculer"
+            ],
+            "q4": [
+              "Calculer"
+            ]
+          },
+          "questionCompetencePoints": {
+            "q0": {
+              "Calculer": 0.5
+            },
+            "q1": {
+              "Modéliser": 1
+            },
+            "q2": {
+              "Calculer": 0.5
+            },
+            "q3": {
+              "Calculer": 0.5
+            },
+            "q4": {
+              "Calculer": 0.5
+            }
+          }
+        },
+        "6": {
+          "totalPoints": 4,
+          "selectedCompetences": [
+            "Calculer",
+            "Raisonner",
+            "Représenter",
+            "Modéliser",
+            "Chercher"
+          ],
+          "pointsPerCompetence": {
+            "Calculer": 0.8,
+            "Raisonner": 0.8,
+            "Représenter": 0.8,
+            "Modéliser": 0.8,
+            "Chercher": 0.8
+          },
+          "questionPoints": {
+            "q0": 0.5,
+            "q1": 1,
+            "q2": 0.5,
+            "q3": 0.5,
+            "q4": 0.5,
+            "q5": 1
+          },
+          "dnbId": "dnb_2023_06_metropole_5",
+          "questionCompetences": {
+            "q0": [
+              "Calculer"
+            ],
+            "q1": [
+              "Calculer",
+              "Raisonner"
+            ],
+            "q2": [
+              "Calculer"
+            ],
+            "q3": [
+              "Calculer"
+            ],
+            "q4": [
+              "Représenter",
+              "Chercher"
+            ],
+            "q5": [
+              "Modéliser"
+            ]
+          },
+          "questionCompetencePoints": {
+            "q0": {
+              "Calculer": 0.5
+            },
+            "q1": {
+              "Calculer": 0.3,
+              "Raisonner": 0.3
+            },
+            "q2": {
+              "Calculer": 0.5
+            },
+            "q3": {
+              "Calculer": 0.5
+            },
+            "q4": {
+              "Représenter": 0.3,
+              "Chercher": 0.3
+            },
+            "q5": {
+              "Modéliser": 0.5
+            }
+          }
+        }
+      }
+    },
+    "exerciseSeed": "mnt0tkvg7dtb",
+    "exercisesLocked": true,
+    "candidates": [],
+    "scores": {}
+  },
+  "exercisesData": {
+    "1": {
+      "title": "Exercice 1 : Automatismes",
+      "totalPoints": 6,
+      "isAutomatismes": true,
+      "questions": [
+        {
+          "id": "q0",
+          "title": "Question 1",
+          "points": 1,
+          "statement": "ABCD est un carré et CDE est un triangle équilatéral (E est à l'intérieur du carré ABCD). BCF est un triangle isocèle en F (F est à l'extérieur du carré ABCD). Représenter cette configuration par un schéma à main levée et ajouter les codages nécessaires.",
+          "answer": "Schéma avec : carré ABCD (4 angles droits, 4 côtés égaux), triangle équilatéral CDE (3 côtés égaux) à l'intérieur, triangle isocèle BCF (2 côtés égaux BC=CF) à l'extérieur.",
+          "competences": [
+            {
+              "name": "Représenter",
+              "color": "#6f42c1",
+              "description": "Créer des représentations graphiques, schémas",
+              "points": 0.5,
+              "increment": 0.5
+            },
+            {
+              "name": "Communiquer",
+              "color": "#ffc107",
+              "description": "Expliquer, justifier, présenter une solution",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 si (figure correcte + erreur codages) ou (erreur figure + codages corrects)"
+        },
+        {
+          "id": "q1",
+          "title": "Question 2",
+          "points": 1,
+          "statement": "Calculer le périmètre d'un cercle de rayon 3 cm.",
+          "answer": "Périmètre = 2 × π × r = 2 × π × 3 = 6π ≈ 18,85 cm",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 1,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt pour formule correcte même sans calcul effectué. 1pt pour résultat correct, exact ou approché, on ne pénalise pas une erreur d'arrondi."
+        },
+        {
+          "id": "q2",
+          "title": "Question 3",
+          "points": 1,
+          "statement": "Calculer : 77,6 ÷ 10",
+          "answer": "77,6 ÷ 10 = 7,76",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 1,
+              "increment": 0.5
+            }
+          ]
+        },
+        {
+          "id": "q3",
+          "title": "Question 4",
+          "points": 1,
+          "statement": "Le diagramme suivant représente les ventes d'un magasin sur une semaine : Lundi 33, Mardi 49, Mercredi 48, Jeudi 30, Vendredi 32. Quel est le total des ventes sur la semaine ?",
+          "answer": "Total = 33 + 49 + 48 + 30 + 32 = 192 ventes",
+          "competences": [
+            {
+              "name": "Chercher",
+              "color": "#fd7e14",
+              "description": "Chercher, expérimenter, tester",
+              "points": 1,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt pour (réponse sèche) ou (opération correcte même si résultat faux)."
+        },
+        {
+          "id": "q4",
+          "title": "Question 5",
+          "points": 1,
+          "statement": "Une ville compte 49 298 habitants pour une superficie de 302 km². Quelle est sa densité de population ?",
+          "answer": "Densité = 49 298 ÷ 302 ≈ 163,2 habitants/km²",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.5,
+              "increment": 0.5
+            },
+            {
+              "name": "Modéliser",
+              "color": "#17a2b8",
+              "description": "Traduire un problème en langage mathématique",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt pour avoir choisi la bonne opération 49 298 : 302, même si aucun calcul effectué."
+        },
+        {
+          "id": "q5",
+          "title": "Question 6",
+          "points": 1,
+          "statement": "Écrire un script Scratch qui dessine un polygone régulier à 5 côtés de 147 pixels de côté.",
+          "answer": "Répéter 5 fois : Avancer de 147, Tourner de 360÷5 = 72 degrés",
+          "competences": [
+            {
+              "name": "Modéliser",
+              "color": "#17a2b8",
+              "description": "Traduire un problème en langage mathématique",
+              "points": 1,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt dès l'utilisation d'une boucle répétée cinq fois et un tracé de longueur 147, même si syntaxe Scratch incorrecte ou incomplète."
+        }
+      ]
+    },
+    "2": {
+      "title": "Exercice 2 : Circuits d'entraînement (PGCD/PPCM)",
+      "totalPoints": 3,
+      "questions": [
+        {
+          "id": "q0",
+          "title": "Question 1",
+          "points": 1,
+          "statement": "Montrer que le circuit 1 s'effectue en 280 secondes et que le circuit 2 s'effectue en 350 secondes.",
+          "answer": "Circuit 1 : $5 \\times (40 + 16) = 5 \\times 56 = 280$ s.<br>Circuit 2 : $10 \\times (30 + 5) = 10 \\times 35 = 350$ s.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer",
+              "points": 0.5,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt dès que raisonnement cohérent, peu importe la rédaction."
+        },
+        {
+          "id": "q1",
+          "title": "Question 2",
+          "points": 1,
+          "statement": "Donner la décomposition en produit de facteurs premiers de $280$ et de $350$.",
+          "answer": "$280 = 2^3 \\times 5 \\times 7$<br>$350 = 2 \\times 5^2 \\times 7$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer",
+              "points": 1,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt pour réponse sèche (par exemple décomposition faite par la calculatrice)"
+        },
+        {
+          "id": "q2",
+          "title": "Question 3.a",
+          "points": 0.5,
+          "statement": "Expliquer pourquoi, lorsque 2 800 secondes se sont écoulées, Camille se trouve de nouveau au départ du circuit 1. Préciser où se trouve Dominique sur le circuit 2.",
+          "answer": "$2\\,800 = 10 \\times 280$ donc Camille a fait 10 tours : elle est au départ.<br>$2\\,800 = 8 \\times 350$ donc Dominique a fait 8 tours : elle est aussi au départ.",
+          "competences": [
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "Il y a deux questions ici : on met 0,5 même si seule la première est faite, ou seule la seconde. On met 0,5 même si pas de justification."
+        },
+        {
+          "id": "q3",
+          "title": "Question 3.b",
+          "points": 0.5,
+          "statement": "Après le coup de sifflet, combien de temps faut-il à Camille et Dominique pour se retrouver en même temps pour la première fois au départ de leur circuit ? Exprimer cette durée en minute et seconde.",
+          "answer": "PPCM$(280, 350) = 2^3 \\times 5^2 \\times 7 = 1\\,400$ s = 23 min 20 s.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer",
+              "points": 0.25,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner",
+              "points": 0.25,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour réponse sèche, même si conversion en min+sec absente ou fausse."
+        }
+      ]
+    },
+    "3": {
+      "title": "Exercice 3 : Programme de calcul",
+      "totalPoints": 3,
+      "questions": [
+        {
+          "id": "q0",
+          "title": "Question 1",
+          "points": 0.5,
+          "statement": "Montrer que si on choisit 5 comme nombre de départ, le résultat du programme est 6.",
+          "answer": "On calcule : 5² = 25, puis 25 − 3×5 = 25 − 15 = 10, puis 10 − 4 = 6. Le résultat est bien 6.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour enchaînement cohérent qui arrive au résultat 6, même si calculs mal rédigés."
+        },
+        {
+          "id": "q1",
+          "title": "Question 2",
+          "points": 0.5,
+          "statement": "On choisit $x$ comme nombre de départ. Exprimer le résultat du programme en fonction de $x$.",
+          "answer": "$x^2 - 3x - 4$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.25,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner, démontrer, argumenter",
+              "points": 0.25,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 même si expression non simplifiée."
+        },
+        {
+          "id": "q2",
+          "title": "Question 3",
+          "points": 0.5,
+          "statement": "Vérifier que l'on peut écrire ce résultat sous la forme $(x + 1)(x - 4)$.",
+          "answer": "$(x+1)(x-4) = x^2 - 4x + x - 4 = x^2 - 3x - 4$. C'est bien le même résultat.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.25,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner, démontrer, argumenter",
+              "points": 0.25,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès que méthode de double distributivité correcte, même si erreurs de calculs ou expressions mal rédigées."
+        },
+        {
+          "id": "q3",
+          "title": "Question 4",
+          "points": 0.5,
+          "statement": "Déterminer les nombres à choisir au départ pour que le résultat du programme soit 0.",
+          "answer": "$(x+1)(x-4) = 0$ donc $x = -1$ ou $x = 4$.",
+          "competences": [
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner, démontrer, argumenter",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour réponse sèche. 0,5 dès que raisonnement cohérent/correct même si étourderie (ex : erreur signe)"
+        },
+        {
+          "id": "q4",
+          "title": "Question 5",
+          "points": 1,
+          "statement": "Juliette a écrit un programme Scratch. Recopier et compléter les lignes 4 et 6 du programme afin que celui-ci corresponde au programme de calcul encadré.<br>Ligne 4 : mettre y à ...<br>Ligne 6 : mettre Résultat à ...",
+          "answer": "Ligne 4 : mettre y à (x * x)<br>Ligne 6 : mettre Résultat à (y − z − 4) ou (y − 3*x − 4)",
+          "competences": [
+            {
+              "name": "Modéliser",
+              "color": "#17a2b8",
+              "description": "Traduire un problème en langage mathématique",
+              "points": 1,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 par ligne. Si confusion x^2 avec 2x déjà pénalisée avant, on ne repénalise pas. En ligne 4, on accepte x*x ou réponse*réponse. En ligne 6, on accepte y-z ; x*x - 3*x ; etc… toute combinaison qui fonctionne."
+        }
+      ]
+    },
+    "4": {
+      "title": "Exercice 4 : Jardin botanique (géométrie)",
+      "totalPoints": 5,
+      "questions": [
+        {
+          "id": "q1",
+          "title": "Question 1",
+          "points": 0.5,
+          "statement": "Quelle est la longueur du segment [DB] ?",
+          "answer": "Le point E est sur le segment [BD], donc :<br>$BD = BE + ED = 250 + 750 = 1\\,000$ m.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour (réponse sèche) ou (250 + 750 même si résultat faux)."
+        },
+        {
+          "id": "q2",
+          "title": "Question 2",
+          "points": 1,
+          "statement": "En raisonnant dans le triangle rectangle ABD, montrer que la longueur du segment [AD], arrondie au mètre, est égale à environ $866$ m.",
+          "answer": "Dans le triangle ABD, rectangle en A, on applique le théorème de Pythagore :<br>$AB^2 + AD^2 = BD^2$<br>$500^2 + AD^2 = 1\\,000^2$<br>$AD^2 = 1\\,000\\,000 - 250\\,000 = 750\\,000$<br>$AD = \\sqrt{750\\,000} \\approx 866$ m.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Tenir une démarche logique, argumenter",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt dès que utilisation de Pythagore menant au bon résultat, même si rédaction absente ou incomplète."
+        },
+        {
+          "id": "q3",
+          "title": "Question 3.a",
+          "points": 0.5,
+          "statement": "Calculer le sinus de l'angle $\\widehat{\\text{EAB}}$.",
+          "answer": "$\\sin\\left(\\widehat{\\mathrm{EAB}}\\right) = \\dfrac{EB}{AB} = \\dfrac{250}{500} = \\dfrac{1}{2}$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès que formule correcte du sinus (opp/hyp), même si rédaction fausse ou incomplète."
+        },
+        {
+          "id": "q4",
+          "title": "Question 3.b",
+          "points": 0.5,
+          "statement": "En déduire la mesure en degrés de l'angle $\\widehat{\\text{EAB}}$.",
+          "answer": "$\\widehat{\\mathrm{EAB}} = \\arcsin\\left(\\dfrac{1}{2}\\right) = 30°$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour réponse sèche. 0,5 dès que écriture du type arcsin, asin, etc..."
+        },
+        {
+          "id": "q5",
+          "title": "Question 4.a",
+          "points": 0.5,
+          "statement": "Montrer que les droites (AB) et (DC) sont parallèles.",
+          "answer": "Les droites (AB) et (CD) sont perpendiculaires à la même droite (AD). Par propriété, elles sont donc parallèles.",
+          "competences": [
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Tenir une démarche logique, argumenter",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès que argument de perpendicularité, même si mal formulé."
+        },
+        {
+          "id": "q6",
+          "title": "Question 4.b",
+          "points": 1,
+          "statement": "Montrer que la longueur du segment [CD] est égale à 1 500 m.",
+          "answer": "Par le théorème de Thalès :<br>$\\dfrac{BE}{BD} = \\dfrac{AB}{DC}$<br>$\\dfrac{250}{1\\,000} = \\dfrac{500}{DC}$<br>$DC = \\dfrac{500 \\times 1\\,000}{250} = 1\\,500$ m. Mais en fait il faut utiliser $\\dfrac{DE}{BD} = \\dfrac{DC}{...}$. Le résultat est $DC = 1\\,500$ m.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Tenir une démarche logique, argumenter",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "1pt dès que raisonnement (Thalès, agrandissement/réduction, triangles semblables…) cohérent, même si la justification ou les calculs sont partiels."
+        },
+        {
+          "id": "q7",
+          "title": "Question 5",
+          "points": 1,
+          "statement": "Un piéton fait le tour du jardin botanique en marchant à la vitesse moyenne de 1,1 m/s. Il lit sur son plan que la longueur du segment [BC] est environ égale à 1 323 m. Le temps mis par le piéton pour faire le tour du jardin botanique est-il inférieur à une heure ?",
+          "answer": "Périmètre = $AB + BC + CD + DA = 500 + 1\\,323 + 1\\,500 + 866 = 4\\,189$ m.<br>Temps = $\\dfrac{4\\,189}{1{,}1} \\approx 3\\,808$ s = 63 min 28 s.<br>Le temps dépasse 1 heure. La réponse est non.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            },
+            {
+              "name": "Chercher",
+              "color": "#fd7e14",
+              "description": "Identifier et mettre en œuvre une stratégie",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour le calcul du périmètre. 0,5 pour raisonnement correct avec vitesse et durée, peu importe la méthode, même si erreurs de calculs."
+        }
+      ]
+    },
+    "5": {
+      "title": "Exercice 5 : Lunettes de soleil (tableur/stats)",
+      "totalPoints": 3,
+      "questions": [
+        {
+          "id": "q1",
+          "title": "Question 1",
+          "points": 0.5,
+          "statement": "Montrer que l'étendue des prix de ces paires de lunettes de soleil est de 85 euros.",
+          "answer": "$160 - 75 = 85$ euros.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès qu'apparaissent les valeurs 160 et 75 dans la réponse, même si opération absente."
+        },
+        {
+          "id": "q2",
+          "title": "Question 2.a",
+          "points": 1,
+          "statement": "Quelle formule doit-on saisir dans la cellule G2 pour calculer le nombre total de paires de lunettes de soleil vendues en 2022 ?",
+          "answer": "=SOMME(B2:F2)",
+          "competences": [
+            {
+              "name": "Modéliser",
+              "color": "#17a2b8",
+              "description": "Traduire en langage mathématique une situation",
+              "points": 1,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour le signe \"=\". 0,5 dès que formule cohérente, même sans adresses de cellules ou fonction SOMME."
+        },
+        {
+          "id": "q3",
+          "title": "Question 2.b",
+          "points": 0.5,
+          "statement": "Calculer le nombre total de paires de lunettes de soleil vendues en 2022.",
+          "answer": "$1\\,200 + 950 + 875 + 250 + 300 = 3\\,575$ paires.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour réponse sèche."
+        },
+        {
+          "id": "q4",
+          "title": "Question 3.a",
+          "points": 0.5,
+          "statement": "Calculer le montant total, en euros, des ventes des paires de lunettes de soleil en 2022.",
+          "answer": "$1\\,200 \\times 75 + 950 \\times 100 + 875 \\times 110 + 250 \\times 140 + 300 \\times 160 = 364\\,250$ euros.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour réponse sèche."
+        },
+        {
+          "id": "q5",
+          "title": "Question 3.b",
+          "points": 0.5,
+          "statement": "Calculer le prix moyen d'une paire de lunettes de soleil vendue en 2022, arrondi au centime près.",
+          "answer": "Prix moyen = $\\dfrac{364\\,250}{3\\,575} \\approx 101{,}89$ euros.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Effectuer des calculs numériques et littéraux",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès que calcul cohérent avec les réponses précédentes, même si résultat faux."
+        }
+      ]
+    },
+    "6": {
+      "title": "Exercice 6 : Fonctions",
+      "totalPoints": 4,
+      "questions": [
+        {
+          "id": "q0",
+          "title": "Question 1.a",
+          "points": 0.5,
+          "statement": "Vérifier que le résultat est 60 si le nombre choisi au départ est $-8$.",
+          "answer": "$(-8+3)\\times(-8-4) = (-5)\\times(-12) = 60$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 même si calculs mal rédigés, tant que l'enchaînement est cohérent et arrive au résultat 60."
+        },
+        {
+          "id": "q1",
+          "title": "Question 1.b",
+          "points": 0.5,
+          "statement": "Résoudre $(x+3)(x-4) = 0$. En déduire quels nombres de départ il faut choisir pour obtenir 0 comme résultat.",
+          "answer": "$(x+3)(x-4)=0$ donc $x+3=0$ ou $x-4=0$, soit $x=-3$ ou $x=4$.",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.25,
+              "increment": 0.5
+            },
+            {
+              "name": "Raisonner",
+              "color": "#dc3545",
+              "description": "Raisonner, démontrer, argumenter",
+              "points": 0.25,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 même pour réponse sèche."
+        },
+        {
+          "id": "q2",
+          "title": "Question 2.a",
+          "points": 0.5,
+          "statement": "Montrer que $f(x) = x^2 - x - 12$.",
+          "answer": "$f(x) = (x+3)(x-4) = x^2 - 4x + 3x - 12 = x^2 - x - 12$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès que méthode de double distributivité correcte, même si erreurs de calculs ou expressions mal rédigées."
+        },
+        {
+          "id": "q3",
+          "title": "Question 2.b",
+          "points": 0.5,
+          "statement": "Calculer $f\\left(\\dfrac{1}{2}\\right)$.",
+          "answer": "$f\\left(\\frac{1}{2}\\right) = \\frac{1}{4} - \\frac{1}{2} - 12 = -\\frac{49}{4} = -12{,}25$",
+          "competences": [
+            {
+              "name": "Calculer",
+              "color": "#28a745",
+              "description": "Calculer, appliquer des techniques",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 dès que remplacement de x par 1/2 dans une des expressions de f."
+        },
+        {
+          "id": "q4",
+          "title": "Question 2.c",
+          "points": 0.5,
+          "statement": "Déterminer graphiquement les antécédents de $-6$ par la fonction $f$.",
+          "answer": "Les antécédents de $-6$ sont environ $x \\approx -2$ et $x \\approx 3$.",
+          "competences": [
+            {
+              "name": "Représenter",
+              "color": "#6f42c1",
+              "description": "Créer des représentations graphiques",
+              "points": 0.25,
+              "increment": 0.5
+            },
+            {
+              "name": "Chercher",
+              "color": "#fd7e14",
+              "description": "Chercher, expérimenter",
+              "points": 0.25,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour réponse sèche."
+        },
+        {
+          "id": "q5",
+          "title": "Question 3.a",
+          "points": 0.5,
+          "statement": "On considère $g(x) = 3x - 7$. Quelle formule a-t-on écrite dans la cellule B2 avant de l'étirer vers le bas ?",
+          "answer": "= 3*A2 - 7",
+          "competences": [
+            {
+              "name": "Modéliser",
+              "color": "#17a2b8",
+              "description": "Traduire un problème en langage mathématique",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "On ne pénalise pas si oubli d'un seul symbole parmi \"=\" et \"*\". On met 0 si oubli de l'adresse de cellule A2."
+        },
+        {
+          "id": "q6",
+          "title": "Question 3.b",
+          "points": 0.5,
+          "statement": "Tracer la représentation graphique de la fonction $g$ dans le repère de l'annexe 2.",
+          "answer": "Droite passant par $(0 ; -7)$ et $(3 ; 2)$.",
+          "competences": [
+            {
+              "name": "Représenter",
+              "color": "#6f42c1",
+              "description": "Créer des représentations graphiques",
+              "points": 0.5,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour tracé correct même approximatif ou peu soigné."
+        },
+        {
+          "id": "q7",
+          "title": "Question 3.c",
+          "points": 0.5,
+          "statement": "Déterminer graphiquement les nombres qui ont la même image par les fonctions $f$ et $g$.",
+          "answer": "Les intersections donnent environ $x \\approx -1$ et $x \\approx 5$.",
+          "competences": [
+            {
+              "name": "Représenter",
+              "color": "#6f42c1",
+              "description": "Créer des représentations graphiques",
+              "points": 0.25,
+              "increment": 0.5
+            },
+            {
+              "name": "Chercher",
+              "color": "#fd7e14",
+              "description": "Chercher, expérimenter",
+              "points": 0.25,
+              "increment": 0.5
+            }
+          ],
+          "notationGuide": "0,5 pour une seule réponse sèche, même si oubli de la seconde valeur."
+        }
+      ]
+    }
+  },
+  "exportDate": "2026-04-10T21:41:43.360Z",
+  "version": "1.0"
+}
