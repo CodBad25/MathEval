@@ -461,7 +461,7 @@
               "increment": 0.5
             }
           ],
-          "notationGuide": "0,5 pt si l'élève a seulement écrit la bonne opération (symboles acceptés : \":\", \"/\", \"÷\"), sans commencer de calcul. 1 pt s'il a commencé à poser/faire la division, même sans aller au bout ou avec un résultat faux."
+          "notationGuide": "0,5 pt : opération correcte écrite seule (symboles acceptés : \":\", \"/\", \"÷\"). 1 pt : démarche de division engagée (posée ou en ligne), même inachevée."
         },
         {
           "id": "q5",
