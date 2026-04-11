@@ -5874,7 +5874,7 @@ function renderExerciseContent(exerciseNumber) {
                 <div class="exercise-score-badge" id="exerciseScore${exerciseNumber}">0 / ${exercise.totalPoints} pts</div>
             </div>
             <div class="exercise-actions">
-                <div class="exercise-quick-buttons">
+                <div class="exercise-quick-buttons" data-tour="exercise-quickbtns">
                     <button class="quick-btn tb" onclick="setExerciseScoreWithNavigation(${exerciseNumber}, 'tb')">TB</button>
                     <button class="quick-btn tf" onclick="setExerciseScoreWithNavigation(${exerciseNumber}, 'tf')">TF</button>
                     <button class="quick-btn nr" onclick="setExerciseScoreWithNavigation(${exerciseNumber}, 'nr')">NR</button>
@@ -5939,7 +5939,7 @@ function renderExerciseContent(exerciseNumber) {
                 <div class="question-text">${question.statement}</div>
 
                 ${question.notationGuide ? `
-                    <div class="notation-guide">
+                    <div class="notation-guide" data-tour="notation-guide">
                         <div class="notation-guide-header">📋 Guide de notation</div>
                         <div class="notation-guide-body">${question.notationGuide}</div>
                     </div>
@@ -5973,7 +5973,7 @@ function renderExerciseContent(exerciseNumber) {
                             const competenceProgressState = getCompetenceProgressState(candidate.number, exerciseNumber, question.id, competence.name);
                             const buttonId = `comp_${exerciseNumber}_${question.id}_${competence.name.replace(/\s/g, '_')}`;
                             return `
-                                <button id="${buttonId}" class="competence-btn ${isActive ? 'active' : ''}"
+                                <button id="${buttonId}" class="competence-btn ${isActive ? 'active' : ''}" data-tour="competence-btn"
                                         style="border-color: ${competence.color}; color: ${isActive ? competence.color : competence.color}; background: ${isActive ? competence.color : 'white'}; opacity: 1;"
                                         onmouseenter="showDescriptionTooltip(event, '${description.replace(/'/g, "\\'")}', '${tooltipId}')"
                                         onmouseleave="hideDescriptionTooltip('${tooltipId}'); handleCompetenceButtonPress(${exerciseNumber}, '${question.id}', '${competence.name}', ${question.points}, event, 'cancel');"
@@ -5997,7 +5997,7 @@ function renderExerciseContent(exerciseNumber) {
                 
                 <div class="quick-actions">
                     <div class="quick-buttons-container">
-                        <div class="quick-buttons-main">
+                        <div class="quick-buttons-main" data-tour="question-quickbtns">
                             <button class="quick-btn-main tb ${quickButtonState === 'tb' ? 'active' : ''}" 
                                     onclick="setQuestionScoreWithNavigation(${exerciseNumber}, '${question.id}', 'tb')">
                                 <span class="btn-icon">✓</span>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNB Blanc n°2 — Collège Gaston Chaissac</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 640px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header {
+            color: white;
+            margin-bottom: 24px;
+        }
+
+        .header-emoji {
+            font-size: 3.2em;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 2.4em;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            font-weight: 500;
+            opacity: 0.95;
+            margin-bottom: 4px;
+        }
+
+        .date {
+            font-size: 0.95em;
+            opacity: 0.85;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .exercises-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .exercise-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f1f3f9;
+            border: 2px solid #e8eaf3;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.2s ease;
+            cursor: default;
+        }
+
+        .exercise-chip:hover {
+            background: #e8ecf7;
+            border-color: #c4cae0;
+            transform: translateY(-1px);
+        }
+
+        .exercise-chip .emoji {
+            font-size: 1.1em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 26px;
+        }
+
+        .info-item {
+            padding: 16px 8px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #eef1fb 100%);
+            border-radius: 12px;
+            border: 1px solid #e5e9f6;
+        }
+
+        .info-value {
+            font-size: 2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .info-label {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #718096;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .start-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.15em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.35);
+            text-decoration: none;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(118, 75, 162, 0.45);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+        }
+
+        .tour-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #d6dbf0;
+            border-radius: 14px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .tour-btn:hover {
+            background: #f1f3f9;
+            border-color: #667eea;
+            color: #5a67d8;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85em;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header       { animation: fadeInUp 0.6s ease-out; }
+        .main-card    { animation: fadeInUp 0.6s ease-out 0.15s both; }
+        .footer       { animation: fadeInUp 0.6s ease-out 0.3s both; }
+
+        /* Responsive */
+        @media (max-width: 560px) {
+            .header h1 { font-size: 1.9em; }
+            .header-emoji { font-size: 2.6em; }
+            .main-card { padding: 22px 18px; }
+            .info-value { font-size: 1.6em; }
+            .start-btn { font-size: 1.05em; padding: 14px 18px; }
+            .exercise-chip { font-size: 0.82em; padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-emoji">🎓</div>
+            <h1>DNB Blanc n°2</h1>
+            <div class="subtitle">Collège Gaston Chaissac</div>
+            <div class="date">📅 9 avril 2026 — Mathématiques</div>
+        </div>
+
+        <div class="main-card">
+            <div class="exercises-preview">
+                <div class="exercise-chip"><span class="emoji">🎯</span> Automatismes</div>
+                <div class="exercise-chip"><span class="emoji">🏃</span> Circuits</div>
+                <div class="exercise-chip"><span class="emoji">💻</span> Programme</div>
+                <div class="exercise-chip"><span class="emoji">🌿</span> Jardin</div>
+                <div class="exercise-chip"><span class="emoji">🕶️</span> Lunettes</div>
+                <div class="exercise-chip"><span class="emoji">📈</span> Fonctions</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-value">6</div>
+                    <div class="info-label">Exercices</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value">24</div>
+                    <div class="info-label">Points</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value">35</div>
+                    <div class="info-label">Questions</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a class="start-btn" href="app.html?config=dnb-blanc-2.json">
+                    <span>✏️</span>
+                    Commencer la correction
+                </a>
+                <a class="tour-btn" href="app.html?config=dnb-blanc-2.json&tour=1">
+                    <span>🎓</span>
+                    Découvrir l'interface (visite guidée)
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            Note effective sur 20 — barème 24 points + 2 pts Rédaction/Justifications
+        </div>
+    </div>
+</body>
+</html>

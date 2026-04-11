@@ -9,10 +9,6 @@
   },
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/app.html?config=dnb-blanc-2.json"
-    },
-    {
       "source": "/api/mathalea/:uuid",
       "destination": "/api/mathalea.py"
     },

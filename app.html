@@ -630,7 +630,7 @@
 
         <!-- === PAGE PRINCIPALE === -->
         <div class="main-page" id="mainPage" style="display: none;">
-            <div class="main-header">
+            <div class="main-header" data-tour="candidate-bar">
                 <div class="candidate-info">
                     <button class="back-btn" onclick="backToCandidates()">← Liste</button>
                     <div class="candidate-title" id="currentCandidateTitle">Correction du candidat n°150</div>
@@ -639,14 +639,14 @@
                 <div class="score-info">
                     <div class="progress-info" id="progressInfo">Progression : 0%</div>
                     <div class="total-score" id="totalScoreDisplay">Score: 0 / 20 points</div>
-                    <button class="focus-mode-btn" id="focusModeBtn" onclick="toggleFocusMode()" title="Mode focus (raccourci : F) — cache le header et passe en plein écran">
+                    <button class="focus-mode-btn" id="focusModeBtn" data-tour="focus-btn" onclick="toggleFocusMode()" title="Mode focus (raccourci : F) — cache le header et passe en plein écran">
                         <span class="focus-icon">⛶</span>
                         <span class="focus-label">Focus</span>
                     </button>
                 </div>
             </div>
 
-            <div class="main-tabs" id="mainTabs">
+            <div class="main-tabs" id="mainTabs" data-tour="exercise-tabs">
                 <!-- Onglets générés dynamiquement depuis exercisesData -->
             </div>
 
@@ -659,7 +659,7 @@
 
             <div class="navigation-buttons">
                 <button class="nav-btn prev" onclick="navigatePrevious()" id="prevBtn">← Précédent</button>
-                <button class="nav-btn validate" onclick="validateCorrection()" id="validateBtn" style="background: #28a745; color: white;">✓ Valider la correction</button>
+                <button class="nav-btn validate" onclick="validateCorrection()" id="validateBtn" data-tour="validate-btn" style="background: #28a745; color: white;">✓ Valider la correction</button>
                 <button class="nav-btn next" onclick="navigateNext()" id="nextBtn">Suivant →</button>
             </div>
         </div>
@@ -1418,5 +1418,7 @@
     <!-- Module de génération PDF -->
     <script src="js/modules/pdfGenerator.js?v=20251110003"></script>
     <script src="js/app.js?v=20251105017"></script>
+    <!-- Tour guidé DNB Blanc 2 (vanilla, chargé en dernier) -->
+    <script src="js/tour.js?v=20260411001"></script>
 </body>
 </html>
