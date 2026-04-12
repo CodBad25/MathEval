@@ -13,6 +13,10 @@
     <!-- Bibliothèques PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- pdf.js pour lecture/rendu de PDF importés -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- mammoth.js pour conversion DOCX → HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="js/data/dictionnaireDNB.js?v=20251105004"></script>
     <script src="js/data/dictionnaireAutomatismes.js?v=20251105004"></script>
     <script src="js/modules/mathaleaUtils.js?v=20251105004"></script>
@@ -406,6 +410,194 @@
                     Valider la sélection →
                 </button>
             </div>
+        </div>
+
+        <!-- === PAGE IMPORT PDF / DOCX === -->
+        <div class="dnb-selection-page" id="pdfImportPage" style="display: none;">
+
+            <!-- Étape 1 : Upload -->
+            <div id="pdfUploadStep">
+                <div class="page-header" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h2 style="color: #2c3e50; margin-bottom: 10px;">📄 Import PDF / DOCX</h2>
+                    <p style="color: #666;">Importez votre sujet pour extraire les questions et configurer le barème</p>
+                    <button onclick="retourAccueil()" style="margin-top: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        ← Retour à l'accueil
+                    </button>
+                </div>
+
+                <!-- Zone de drop -->
+                <div id="pdfDropZone" style="
+                    background: white;
+                    border: 3px dashed #cbd5e1;
+                    border-radius: 16px;
+                    padding: 60px 40px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    margin-bottom: 20px;
+                " ondragover="event.preventDefault(); this.style.borderColor='#4F46E5'; this.style.background='#f0f0ff';"
+                   ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='white';"
+                   ondrop="event.preventDefault(); this.style.borderColor='#cbd5e1'; this.style.background='white'; handlePdfFileDrop(event);"
+                   onclick="document.getElementById('pdfFileInput').click();">
+                    <div style="font-size: 64px; margin-bottom: 20px;">📁</div>
+                    <div style="font-size: 1.3em; font-weight: 600; color: #2c3e50; margin-bottom: 10px;">
+                        Glissez votre fichier ici
+                    </div>
+                    <div style="color: #666; margin-bottom: 20px;">ou cliquez pour parcourir</div>
+                    <div style="display: inline-flex; gap: 10px;">
+                        <span style="padding: 6px 14px; background: #fee2e2; color: #dc2626; border-radius: 20px; font-size: 0.85em; font-weight: 600;">PDF</span>
+                        <span style="padding: 6px 14px; background: #dbeafe; color: #2563eb; border-radius: 20px; font-size: 0.85em; font-weight: 600;">DOCX</span>
+                    </div>
+                    <input type="file" id="pdfFileInput" accept=".pdf,.docx" style="display: none;" onchange="handlePdfFileSelect(event);">
+                </div>
+            </div>
+
+            <!-- Étape 2 : Preview + Découpage zones -->
+            <div id="pdfZonesStep" style="display: none;">
+                <div class="page-header" style="background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="color: #2c3e50; margin-bottom: 5px; font-size: 1.3em;">Découpage des questions</h2>
+                        <p style="color: #666; font-size: 0.9em;">Dessinez des rectangles sur le PDF pour délimiter chaque question</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="autoDetectQuestions()" style="padding: 8px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Détection auto
+                        </button>
+                        <button onclick="pdfImportGoToStep(3)" id="btnGoToBareme" style="padding: 8px 16px; background: #4F46E5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;" disabled>
+                            Configurer le barème →
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 20px; height: calc(100vh - 200px);">
+                    <!-- Canvas PDF (gauche) -->
+                    <div style="flex: 2; display: flex; flex-direction: column; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div id="pdfCanvasContainer" style="flex: 1; position: relative; overflow: auto; background: #e5e7eb;">
+                            <canvas id="pdfCanvas" style="display: block; margin: 0 auto;"></canvas>
+                            <canvas id="zoneOverlay" style="position: absolute; top: 0; left: 0; cursor: crosshair;"></canvas>
+                        </div>
+                        <!-- Pagination -->
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; padding: 10px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                            <button onclick="navigatePdfPage(-1)" style="padding: 6px 14px; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">← Précédent</button>
+                            <span id="pdfPageInfo" style="font-weight: 600; color: #374151;">Page 1 / 1</span>
+                            <button onclick="navigatePdfPage(1)" style="padding: 6px 14px; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">Suivant →</button>
+                        </div>
+                    </div>
+
+                    <!-- Panneau questions (droite) -->
+                    <div style="flex: 1; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+                        <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="color: #2c3e50; margin: 0; font-size: 1.1em;">Questions détectées</h3>
+                            <button onclick="addManualQuestion()" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                + Ajouter
+                            </button>
+                        </div>
+                        <div id="questionsPanel" style="flex: 1; overflow-y: auto; padding: 15px;">
+                            <div style="text-align: center; color: #9ca3af; padding: 40px 20px;">
+                                <div style="font-size: 48px; margin-bottom: 15px;">✏️</div>
+                                <p>Dessinez des rectangles sur le PDF pour délimiter les questions</p>
+                                <p style="font-size: 0.85em; margin-top: 8px;">ou utilisez la détection automatique</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Étape 3 : Barème + Compétences -->
+            <div id="pdfBaremeStep" style="display: none;">
+                <div class="page-header" style="background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="color: #2c3e50; margin-bottom: 5px; font-size: 1.3em;">Configuration du barème</h2>
+                        <p style="color: #666; font-size: 0.9em;">Attribuez les points et les compétences pour chaque question</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="pdfImportGoToStep(2)" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            ← Retour aux zones
+                        </button>
+                        <button onclick="pdfImportGoToStep(4)" style="padding: 8px 16px; background: #4F46E5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Corrections →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Total points -->
+                <div id="pdfTotalPointsBar" style="background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <strong>Total du barème :</strong>
+                    <span id="pdfCurrentTotal" style="font-size: 1.3em; font-weight: bold; color: #4F46E5; margin-left: 10px;">0</span>
+                    <span style="color: #666;"> points</span>
+                </div>
+
+                <!-- Liste questions avec config -->
+                <div id="pdfBaremeContent" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Étape 4 : Choix du chemin de correction -->
+            <div id="pdfCorrectionStep" style="display: none;">
+                <div class="page-header" style="background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="color: #2c3e50; margin-bottom: 5px; font-size: 1.3em;">Source des corrections</h2>
+                        <p style="color: #666; font-size: 0.9em;">Choisissez comment fournir les corrections attendues pour chaque question</p>
+                    </div>
+                    <button onclick="pdfImportGoToStep(3)" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        ← Retour au barème
+                    </button>
+                </div>
+
+                <!-- 3 cartes de choix -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+                    <!-- Chemin 1 : PDF corrigé -->
+                    <div id="corrPathPdf" onclick="selectCorrectionPath('pdf')" style="
+                        background: white; padding: 30px; border-radius: 12px; text-align: center; cursor: pointer;
+                        border: 3px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    " onmouseover="this.style.borderColor='#ef4444'; this.style.transform='translateY(-2px)';"
+                       onmouseout="if(!this.classList.contains('selected')){this.style.borderColor='#e2e8f0';} this.style.transform='';">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📕</div>
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">PDF corrigé</h3>
+                        <p style="color: #666; font-size: 0.9em;">Uploadez le PDF de correction et associez les zones aux questions</p>
+                    </div>
+
+                    <!-- Chemin 2 : Photos manuscrites -->
+                    <div id="corrPathPhoto" onclick="selectCorrectionPath('photo')" style="
+                        background: white; padding: 30px; border-radius: 12px; text-align: center; cursor: pointer;
+                        border: 3px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    " onmouseover="this.style.borderColor='#3b82f6'; this.style.transform='translateY(-2px)';"
+                       onmouseout="if(!this.classList.contains('selected')){this.style.borderColor='#e2e8f0';} this.style.transform='';">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📸</div>
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">Photos manuscrites</h3>
+                        <p style="color: #666; font-size: 0.9em;">Uploadez des photos de corrections manuscrites</p>
+                    </div>
+
+                    <!-- Chemin 3 : JSON via IA -->
+                    <div id="corrPathJson" onclick="selectCorrectionPath('json')" style="
+                        background: white; padding: 30px; border-radius: 12px; text-align: center; cursor: pointer;
+                        border: 3px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    " onmouseover="this.style.borderColor='#10b981'; this.style.transform='translateY(-2px)';"
+                       onmouseout="if(!this.classList.contains('selected')){this.style.borderColor='#e2e8f0';} this.style.transform='';">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🤖</div>
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">JSON via IA</h3>
+                        <p style="color: #666; font-size: 0.9em;">Collez le JSON de corrections généré par un LLM</p>
+                    </div>
+                </div>
+
+                <!-- Zone de contenu du chemin sélectionné -->
+                <div id="correctionPathContent" style="display: none;">
+                    <!-- Généré dynamiquement selon le chemin choisi -->
+                </div>
+
+                <!-- Bouton final -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="finalizePdfImport()" id="btnFinalizePdfImport" style="
+                        padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white; border: none; border-radius: 12px; font-size: 1.1em; font-weight: 600;
+                        cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;
+                    " disabled>
+                        Lancer la correction →
+                    </button>
+                </div>
+            </div>
+
         </div>
 
         <!-- === PAGE DE CONCEPTION DU BARÈME === -->
@@ -1387,6 +1579,11 @@
     <script src="js/modules/importJSON.js?v=20251105017"></script>
     <!-- Module de génération PDF -->
     <script src="js/modules/pdfGenerator.js?v=20251110003"></script>
+    <script src="js/modules/uploadUI.js?v=20260412001"></script>
+    <script src="js/modules/pdfExtract.js?v=20260412001"></script>
+    <script src="js/modules/questionParser.js?v=20260412001"></script>
+    <script src="js/modules/baremeConfig.js?v=20260412001"></script>
+    <script src="js/modules/correctionManager.js?v=20260412001"></script>
     <script src="js/app.js?v=20251105017"></script>
 </body>
 </html>

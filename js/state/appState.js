@@ -35,7 +35,20 @@ var appState = {
     exerciseSeed: null,
     // Verrouillage global des exercices
     exercisesLocked: false,
-    globalSeed: null
+    globalSeed: null,
+    // Import PDF/DOCX
+    pdfImport: {
+        file: null,             // Fichier uploadé (File object)
+        fileType: null,         // 'pdf' ou 'docx'
+        pdfDoc: null,           // Instance pdf.js
+        currentPage: 1,         // Page courante
+        totalPages: 0,          // Nombre total de pages
+        zones: [],              // [{page, x, y, w, h, questionNum, label}]
+        questions: [],          // [{id, label, points, competences, statement, answer, zoneIndex}]
+        correctionPath: null,   // 'pdf', 'photo', 'json'
+        corrections: {},        // {questionId: {text, imageUrl, ...}}
+        customCompetences: []   // Compétences ajoutées par l'utilisateur
+    }
 };
 
 /**
@@ -63,6 +76,12 @@ function resetAppState() {
     appState.exerciseSeed = null; // Réinitialiser le seed pour de nouvelles valeurs
     appState.exercisesLocked = false;
     appState.globalSeed = null;
+    appState.pdfImport = {
+        file: null, fileType: null, pdfDoc: null,
+        currentPage: 1, totalPages: 0, zones: [],
+        questions: [], correctionPath: null, corrections: {},
+        customCompetences: []
+    };
     console.log('🔄 État réinitialisé');
 }
 

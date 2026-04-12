@@ -16,6 +16,7 @@ function showPage(pageId) {
         'configurationPage',
         'automatismesSelectionPage',
         'dnbSelectionPage',
+        'pdfImportPage',
         'baremeDesignPage',
         'setupPage',
         'candidatesPage',
@@ -7730,7 +7731,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // DNB 2025 : Initialiser le workflow guidé
     initWorkflow();
     initAutomatismesData();
-    
+
+    // Détection du mode Import PDF/DOCX via ?source=upload
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('source') === 'upload') {
+        console.log('📄 Mode Import PDF/DOCX détecté');
+        showPage('pdfImportPage');
+        if (typeof initPdfImportPage === 'function') {
+            initPdfImportPage();
+        }
+    }
+
     // Charger les numéros de candidats depuis localStorage (DEV MODE)
     const savedStartNumber = localStorage.getItem('dnb_dev_startNumber') || '150';
     const savedEndNumber = localStorage.getItem('dnb_dev_endNumber') || '170';

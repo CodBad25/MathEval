@@ -562,22 +562,22 @@
             </div>
 
             <!-- Import PDF/DOCX - À venir -->
-            <div class="source-card upload disabled" onclick="selectSource('upload')">
-                <span class="badge coming-soon">Prochainement</span>
+            <div class="source-card upload" onclick="selectSource('upload')">
+                <span class="badge available">Disponible</span>
                 <div class="source-icon">📄</div>
                 <h3 class="source-title">Import PDF / DOCX</h3>
                 <p class="source-description">
                     Importez vos propres sujets au format PDF ou Word
                 </p>
                 <ul class="source-features">
-                    <li>Upload de fichiers PDF</li>
-                    <li>Upload de fichiers DOCX</li>
-                    <li>Extraction automatique des questions</li>
-                    <li>Configuration du barème manuelle</li>
+                    <li>Upload de fichiers PDF ou DOCX</li>
+                    <li>Découpage semi-auto des questions</li>
+                    <li>Barème et compétences personnalisables</li>
+                    <li>Correction via PDF, photos ou JSON IA</li>
                 </ul>
                 <button class="source-btn">
-                    <i class="fas fa-clock"></i>
-                    Prochainement
+                    <i class="fas fa-arrow-right"></i>
+                    Importer un sujet
                 </button>
             </div>
         </div>
@@ -654,11 +654,6 @@
         // Pas besoin de JavaScript pour manipuler le scroll
 
         function selectSource(source) {
-            if (source === 'upload') {
-                alert('🚧 Cette fonctionnalité sera disponible prochainement !');
-                return;
-            }
-
             // Animation de transition
             event.currentTarget.style.transform = 'scale(0.95)';
 
@@ -667,10 +662,10 @@
 
                 // Redirection selon la source
                 if (source === 'mathalea') {
-                    // MathALÉA : application complète avec extension intégrée
                     window.location.href = 'alea/index.html';
+                } else if (source === 'upload') {
+                    window.location.href = 'app.html?source=upload';
                 } else {
-                    // DNB : page avec automatismes + exercices DNB
                     window.location.href = 'app.html';
                 }
             }, 200);
