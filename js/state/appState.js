@@ -43,9 +43,9 @@ var appState = {
         pdfDoc: null,           // Instance pdf.js
         currentPage: 1,         // Page courante
         totalPages: 0,          // Nombre total de pages
-        zones: [],              // [{page, x, y, w, h, questionNum, label}]
-        questions: [],          // [{id, label, points, competences, statement, answer, zoneIndex}]
-        correctionPath: null,   // 'pdf', 'photo', 'json'
+        zones: [],              // [{page, x, y, w, h, exerciseId, questionId, label}]
+        exercises: [],          // [{id, num, title, questions: [{id, num, text, points, competences, answer}]}]
+        correctionPath: null,   // 'pdf', 'photo', 'json', 'none'
         corrections: {},        // {questionId: {text, imageUrl, ...}}
         customCompetences: []   // Compétences ajoutées par l'utilisateur
     }
@@ -79,7 +79,7 @@ function resetAppState() {
     appState.pdfImport = {
         file: null, fileType: null, pdfDoc: null,
         currentPage: 1, totalPages: 0, zones: [],
-        questions: [], correctionPath: null, corrections: {},
+        exercises: [], correctionPath: null, corrections: {},
         customCompetences: []
     };
     console.log('🔄 État réinitialisé');

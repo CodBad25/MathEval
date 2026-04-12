@@ -4405,9 +4405,14 @@ function startCorrection() {
     }
 
     // 🔧 Générer exercisesData depuis le barème et les exercices parsés
-    console.log('🎯 Génération de exercisesData avant la correction...');
-    exercisesData = generateExercisesDataFromSelection();
-    console.log('✅ exercisesData généré:', exercisesData);
+    // Si on vient de l'import PDF, exercisesData est déjà configuré par finalizePdfImport()
+    if (appState.pdfImport && appState.pdfImport.exercises && appState.pdfImport.exercises.length > 0) {
+        console.log('📄 Mode Import PDF : exercisesData déjà configuré, on ne régénère pas');
+    } else {
+        console.log('🎯 Génération de exercisesData avant la correction...');
+        exercisesData = generateExercisesDataFromSelection();
+    }
+    console.log('✅ exercisesData:', exercisesData);
 
     // 🎯 Sélectionner automatiquement le mode "Par candidat" par défaut
     appState.correctionMode = 'candidate';
