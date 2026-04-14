@@ -4398,15 +4398,20 @@
                 const candidate = stats.candidateNotes.find(c => c.id === candidateId);
                 if (!candidate) { body.innerHTML = '<p>Élève introuvable.</p>'; return; }
 
+                const cfg = getPdfConfig();
                 const note = candidate.note;
                 const totalBrut = candidate.totalBrut;
                 const totalMax  = TOTAL_EXERCISES + PRESENTATION_MAX;
+                const presScore = candidate.presScore || 0;
+                const exScore = totalBrut - presScore;
                 const lv = mvLevel(note);
                 const name = mvStudentName(candidateId);
                 const classe = getStudentClass(candidateId);
                 const apprec = (window.__RAW_DATA && window.__RAW_DATA.appState.candidateComments)
                     ? (window.__RAW_DATA.appState.candidateComments[candidateId] || '') : '';
                 const comp = computeStudentCompetences(candidateId);
+                const rawScores = (window.__RAW_DATA && window.__RAW_DATA.appState.scores && window.__RAW_DATA.appState.scores[candidateId]) || {};
+                const quickStates = (window.__RAW_DATA && window.__RAW_DATA.appState.quickButtonStates) || {};
 
                 // Exercices pour cet élève
                 const exRows = Object.entries(EXERCISES).map(([exNum, ex]) => {
@@ -4416,113 +4421,376 @@
                     return { num: exNum, name: ex.name, emoji: ex.emoji, max: ex.max, score: s, pct, lvl: elv };
                 });
 
-                const histId = 'mv-indiv-hist-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+                // ---------- Statut question ----------
+                function qStatus(exNum, qKey) {
+                    const qbs = (quickStates[candidateId] || {})[exNum];
+                    if (qbs && qbs[qKey] !== undefined) {
+                        const st = qbs[qKey];
+                        if (st === 'nr') return 'nr';
+                        if (st === 'tb') return 'tb';
+                        if (st === 'tf') return 'tf';
+                        if (st === null) {
+                            const q = (rawScores[exNum] || {})[qKey];
+                            return (q && q.score > 0) ? 'pp' : 'tf';
+                        }
+                    }
+                    const q = (rawScores[exNum] || {})[qKey];
+                    if (!q) return 'nr';
+                    const s = q.score || 0;
+                    if (s <= 0) return 'tf';
+                    return 'pp';
+                }
+                const STATUS_COLORS_HEX = { tb: '#22c55e', pp: '#f59e0b', tf: '#ef4444', nr: '#d1d5db' };
 
-                // Distribution classe + marqueur position élève
-                const distBins = new Array(10).fill(0);
-                const distLabels = ['0-2','2-4','4-6','6-8','8-10','10-12','12-14','14-16','16-18','18-20'];
-                stats.candidateNotes.forEach(c => {
-                    const bin = Math.min(9, Math.floor(c.note / 2));
-                    distBins[bin]++;
+                // Compteurs questions traitées
+                let totalQ = 0, treatedQ = 0;
+                const exNumsArr = Object.keys(EXERCISES);
+                exNumsArr.forEach(exNum => {
+                    const qs = (stats.exerciseQuestions && stats.exerciseQuestions[exNum])
+                        || Object.keys(rawScores[exNum] || {});
+                    qs.forEach(qKey => {
+                        totalQ++;
+                        if (qStatus(exNum, qKey) !== 'nr') treatedQ++;
+                    });
                 });
+                const treatedPct = totalQ > 0 ? (treatedQ / totalQ) * 100 : 0;
+                const treatedLvl = mvLevelFromPct(treatedPct);
+
+                // Max questions (uniformisé à 8 mini, comme le PDF)
+                let maxQs = 0;
+                exNumsArr.forEach(exNum => {
+                    const qs = (stats.exerciseQuestions && stats.exerciseQuestions[exNum])
+                        || Object.keys(rawScores[exNum] || {});
+                    if (qs.length > maxQs) maxQs = qs.length;
+                });
+                maxQs = Math.max(maxQs, 8);
+
+                // ---------- Position : stats classe + collège ----------
+                const cs = computeClassStats(classe);
+                const collegeStats = computeClassStats(null);
+
+                const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+                const histClassId = 'mv-indiv-hist-class-' + uid;
+                const histCollegeId = 'mv-indiv-hist-college-' + uid;
+
+                const distLabels = ['0-2','2-4','4-6','6-8','8-10','10-12','12-14','14-16','16-18','18-20'];
                 const studentBin = Math.min(9, Math.floor(note / 2));
 
-                body.innerHTML = `
-                  <div class="mv-indiv-title">${name}${classe ? ` <span style="font-size: 0.7em; color: var(--gray-500); font-weight: 500;">— Classe ${classe}</span>` : ''}</div>
-                  <div class="mv-indiv-subtitle">BILAN D'ÉVALUATION — DNB Blanc n°2 • ${today}</div>
+                function buildDist(filterIds) {
+                    const bins = new Array(10).fill(0);
+                    stats.candidateNotes.forEach(c => {
+                        if (!filterIds || filterIds.includes(c.id)) {
+                            const bin = Math.min(9, Math.floor(c.note / 2));
+                            bins[bin]++;
+                        }
+                    });
+                    return bins;
+                }
 
+                // ---------- Recommandations pédagogiques ----------
+                const recoCats = { priority: [], consolidate: [], mastered: [] };
+                exRows.forEach(e => {
+                    const entry = { num: e.num, name: e.name, emoji: e.emoji, pct: e.pct };
+                    if (e.pct < 40) recoCats.priority.push(entry);
+                    else if (e.pct < 70) recoCats.consolidate.push(entry);
+                    else recoCats.mastered.push(entry);
+                });
+
+                // ---------- QR Code ----------
+                let qrDataUrl = null;
+                if (cfg.qrcode) {
+                    try {
+                        const qrInput = document.getElementById('qrUrl');
+                        let qrUrl = qrInput ? qrInput.value.trim() : '';
+                        if (!qrUrl) qrUrl = (localStorage.getItem(QR_URL_KEY) || '').trim();
+                        if (!qrUrl) qrUrl = 'https://dnb2-chaissac.vercel.app/correction-dnb2.pdf';
+                        if (typeof qrcode !== 'undefined') {
+                            const q = qrcode(0, 'M');
+                            q.addData(qrUrl);
+                            q.make();
+                            qrDataUrl = q.createDataURL(4, 0);
+                        }
+                    } catch (_) {}
+                }
+
+                // ---------- HTML ----------
+                let html = '';
+
+                // Header
+                if (cfg.header !== false) {
+                    html += `
+                      <div class="mv-indiv-title">${name}${classe ? ` <span style="font-size: 0.7em; color: var(--gray-500); font-weight: 500;">— Classe ${classe}</span>` : ''}</div>
+                      <div class="mv-indiv-subtitle">BILAN D'ÉVALUATION — DNB Blanc n°2 • ${today}</div>
+                    `;
+                }
+
+                // Note + Appréciation
+                html += `
                   <div class="mv-indiv-row-top">
                     <div class="mv-indiv-notecard" style="background: linear-gradient(135deg, ${lv.color} 0%, ${lv.color}cc 100%);">
                       <div class="big">${mvFmt(note)}/20</div>
                       <div class="brut">brut : ${mvFmt(totalBrut)}/${totalMax}</div>
                       <div class="lvl">${lv.code} — ${lv.label}</div>
                     </div>
+                    ${cfg.apprec !== false ? `
                     <div class="mv-apprec" style="border-left-color: ${lv.color};">
                       <div class="t">Appréciation</div>
                       <div>${apprec && apprec.trim() ? apprec.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '<em style="color: var(--gray-400)">Pas de commentaire.</em>'}</div>
-                    </div>
-                  </div>
-
-                  <div class="mv-twocol">
-                    <div class="mv-card">
-                      <h3>📈 EXERCICES</h3>
-                      <div class="mv-exlist">
-                        ${exRows.map(e => `
-                          <div class="mv-exrow">
-                            <span class="emo">${e.emoji}</span>
-                            <span class="lbl">${e.num}. ${e.name}</span>
-                            <div class="bar"><div class="barfill" style="width: ${e.pct}%; background: ${e.lvl.color};"></div></div>
-                            <span class="score" style="color: ${e.lvl.color};">${mvFmt(e.score)}/${e.max} · ${e.lvl.code}</span>
-                          </div>
-                        `).join('')}
-                      </div>
-                    </div>
-                    <div class="mv-card">
-                      <h3>🎯 COMPÉTENCES</h3>
-                      ${MV_COMPS.map(c => {
-                          const pct = comp ? (comp.pcts[c.name] || 0) : 0;
-                          const clvl = mvLevelFromPct(pct);
-                          return `
-                            <div class="mv-compbar">
-                              <div class="mv-compbar-row">
-                                <span class="mv-compbar-name" style="color: ${c.color}">${c.emoji} ${c.name}</span>
-                                <span class="mv-compbar-pct" style="color: ${clvl.color}">${clvl.code} ${pct}%</span>
-                              </div>
-                              <div class="mv-compbar-track">
-                                <div class="mv-compbar-fill" style="width: ${pct}%; background: ${c.color};"></div>
-                              </div>
-                            </div>`;
-                      }).join('')}
-                    </div>
-                  </div>
-
-                  <div class="mv-card">
-                    <h3>📊 POSITION DANS LA CLASSE</h3>
-                    <div style="font-size: 0.85em; color: var(--gray-600); margin-bottom: 8px;">
-                      L'élève est situé dans la tranche <strong style="color: ${lv.color}">${distLabels[studentBin]}</strong>
-                      • Moyenne classe : <strong>${mvFmt(stats.moyenne)}/20</strong>
-                    </div>
-                    <div style="height: 180px;"><canvas id="${histId}"></canvas></div>
+                    </div>` : ''}
                   </div>
                 `;
 
-                // Chart histogramme avec barre surlignée pour l'élève
+                // Barème détaillé
+                if (cfg.bareme !== false) {
+                    const items = [
+                        { lbl: 'Exercices', val: `${mvFmt(exScore)}/${TOTAL_EXERCISES}`, color: '#2980b9' },
+                        { lbl: 'Rédaction', val: `${mvFmt(presScore)}/${PRESENTATION_MAX}`, color: '#6b7280' },
+                        { lbl: 'Total brut', val: `${mvFmt(totalBrut)}/${totalMax}`, color: '#2c3e50' },
+                        { lbl: 'Note /20', val: `${mvFmt(note)}/20`, color: lv.color }
+                    ];
+                    html += `
+                      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 6px; margin-bottom: 18px;">
+                        ${items.map((it, i) => `
+                          <div style="text-align: center; padding: 4px 8px; ${i > 0 ? 'border-left: 1px solid #e2e8f0;' : ''}">
+                            <div style="font-size: 0.72em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">${it.lbl}</div>
+                            <div style="font-size: 1.3em; font-weight: 800; color: ${it.color}; margin-top: 3px;">${it.val}</div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    `;
+                }
+
+                // Exercices + Compétences (2 cols)
+                if (cfg.exgrid !== false || cfg.comp !== false) {
+                    html += `<div class="mv-twocol">`;
+                    if (cfg.exgrid !== false) {
+                        html += `
+                          <div class="mv-card">
+                            <h3>📈 EXERCICES</h3>
+                            <div class="mv-exlist">
+                              ${exRows.map(e => `
+                                <div class="mv-exrow">
+                                  <span class="emo">${e.emoji}</span>
+                                  <span class="lbl">${e.num}. ${e.name}</span>
+                                  <div class="bar"><div class="barfill" style="width: ${e.pct}%; background: ${e.lvl.color};"></div></div>
+                                  <span class="score" style="color: ${e.lvl.color};">${mvFmt(e.score)}/${e.max} · ${e.lvl.code}</span>
+                                </div>
+                              `).join('')}
+                            </div>
+                          </div>
+                        `;
+                    }
+                    if (cfg.comp !== false) {
+                        html += `
+                          <div class="mv-card">
+                            <h3>🎯 COMPÉTENCES</h3>
+                            ${MV_COMPS.map(c => {
+                                const pct = comp ? (comp.pcts[c.name] || 0) : 0;
+                                const clvl = mvLevelFromPct(pct);
+                                return `
+                                  <div class="mv-compbar">
+                                    <div class="mv-compbar-row">
+                                      <span class="mv-compbar-name" style="color: ${c.color}">${c.emoji} ${c.name}</span>
+                                      <span class="mv-compbar-pct" style="color: ${clvl.color}">${clvl.code} ${pct}%</span>
+                                    </div>
+                                    <div class="mv-compbar-track">
+                                      <div class="mv-compbar-fill" style="width: ${pct}%; background: ${c.color};"></div>
+                                    </div>
+                                  </div>`;
+                            }).join('')}
+                          </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+
+                // Bilan par question (grille colorée)
+                if (cfg.nrgrid !== false) {
+                    html += `
+                      <div class="mv-card" style="margin-bottom: 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                          <h3 style="margin: 0;">🧩 BILAN PAR QUESTION</h3>
+                          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 10px; font-size: 0.75em; color: #4b5563;">
+                              <span><span style="display: inline-block; width: 10px; height: 10px; background: ${STATUS_COLORS_HEX.tb}; border-radius: 2px; vertical-align: middle;"></span> Juste</span>
+                              <span><span style="display: inline-block; width: 10px; height: 10px; background: ${STATUS_COLORS_HEX.pp}; border-radius: 2px; vertical-align: middle;"></span> Partiel</span>
+                              <span><span style="display: inline-block; width: 10px; height: 10px; background: ${STATUS_COLORS_HEX.tf}; border-radius: 2px; vertical-align: middle;"></span> Faux</span>
+                              <span><span style="display: inline-block; width: 10px; height: 10px; background: ${STATUS_COLORS_HEX.nr}; border-radius: 2px; vertical-align: middle;"></span> Non traité</span>
+                            </div>
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; background: ${treatedLvl.color}; color: #fff; font-size: 0.78em; font-weight: 700;">
+                              Traitées : ${treatedQ}/${totalQ} • ${treatedLvl.code}
+                            </span>
+                          </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                          ${exNumsArr.map((exNum, idx) => {
+                              const ex = EXERCISES[exNum];
+                              const qs = (stats.exerciseQuestions && stats.exerciseQuestions[exNum])
+                                  || Object.keys(rawScores[exNum] || {});
+                              const cells = [];
+                              for (let qi = 0; qi < maxQs; qi++) {
+                                  if (qi < qs.length) {
+                                      const qKey = qs[qi];
+                                      const st = qStatus(exNum, qKey);
+                                      const qLabel = (QUESTION_LABELS[exNum] && QUESTION_LABELS[exNum][qKey])
+                                          || (parseInt(qKey.replace('q', '')) + 1);
+                                      cells.push(`<div style="flex: 1; min-width: 0; height: 28px; background: ${STATUS_COLORS_HEX[st]}; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: ${st === 'nr' ? '#4b5563' : '#fff'}; font-weight: 700; font-size: 0.78em;">${qLabel}</div>`);
+                                  } else {
+                                      cells.push(`<div style="flex: 1; min-width: 0; height: 28px;"></div>`);
+                                  }
+                              }
+                              return `
+                                <div style="display: flex; align-items: center; gap: 6px; background: ${idx % 2 === 0 ? '#f9fafb' : 'transparent'}; padding: 4px 6px; border-radius: 6px;">
+                                  <div style="flex: 0 0 170px; font-size: 0.85em; font-weight: 600; color: #374151;">${ex.emoji} ${exNum}. ${ex.name}</div>
+                                  <div style="flex: 1; display: flex; gap: 3px;">${cells.join('')}</div>
+                                </div>
+                              `;
+                          }).join('')}
+                        </div>
+                      </div>
+                    `;
+                }
+
+                // Position classe + collège (2 cols)
+                const showClass = cfg.positclass !== false && cs;
+                const showCollege = cfg.positcollege && collegeStats;
+                if (showClass || showCollege) {
+                    const blocks = [];
+                    if (showClass) blocks.push({
+                        id: histClassId,
+                        title: `📊 POSITION DANS LA CLASSE${cs.classe && cs.classe !== 'Tous' ? ' ' + cs.classe : ''}`,
+                        st: cs
+                    });
+                    if (showCollege) blocks.push({
+                        id: histCollegeId,
+                        title: '🏫 POSITION DANS LE COLLÈGE',
+                        st: collegeStats
+                    });
+                    const gridCols = blocks.length === 2 ? '1fr 1fr' : '1fr';
+                    html += `<div style="display: grid; grid-template-columns: ${gridCols}; gap: 14px; margin-bottom: 18px;">`;
+                    html += blocks.map(b => {
+                        const rank = b.st.ranks ? b.st.ranks[candidateId] : null;
+                        const rankSuffix = rank ? (rank === 1 ? 'er' : 'e') : '';
+                        return `
+                          <div class="mv-card">
+                            <h3>${b.title}${rank ? ` <span style="font-size: 0.8em; color: var(--gray-500); font-weight: 500;">— Rang ${rank}${rankSuffix} / ${b.st.n}</span>` : ''}</h3>
+                            <div style="font-size: 0.82em; color: var(--gray-600); margin-bottom: 8px;">
+                              Tranche élève : <strong style="color: ${lv.color}">${distLabels[studentBin]}</strong>
+                              • Moy : <strong>${mvFmt(b.st.moyenne)}</strong>
+                              • Min : <strong>${mvFmt(b.st.min)}</strong>
+                              • Max : <strong>${mvFmt(b.st.max)}</strong>
+                            </div>
+                            <div style="height: 170px;"><canvas id="${b.id}"></canvas></div>
+                          </div>
+                        `;
+                    }).join('');
+                    html += `</div>`;
+                }
+
+                // Recommandations + QR
+                if (cfg.recos !== false || qrDataUrl) {
+                    const hasRecos = cfg.recos !== false;
+                    const hasQr = !!qrDataUrl;
+                    const gridTemplate = hasRecos && hasQr ? '1fr 1fr 1fr auto'
+                                       : hasRecos ? '1fr 1fr 1fr'
+                                       : 'auto';
+                    html += `<div style="display: grid; grid-template-columns: ${gridTemplate}; gap: 12px; margin-bottom: 18px; align-items: stretch;">`;
+                    if (hasRecos) {
+                        const cols = [
+                            { title: '🔴 À refaire en priorité', items: recoCats.priority, color: '#ef4444', bg: '#fef2f2' },
+                            { title: '🟠 À consolider', items: recoCats.consolidate, color: '#f59e0b', bg: '#fffbeb' },
+                            { title: '🟢 Bien maîtrisé', items: recoCats.mastered, color: '#22c55e', bg: '#f0fdf4' }
+                        ];
+                        html += cols.map(col => `
+                          <div style="background: ${col.bg}; border: 2px solid ${col.color}; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;">
+                            <div style="background: ${col.color}; color: #fff; padding: 8px 12px; font-weight: 700; font-size: 0.82em; text-align: center;">${col.title}</div>
+                            <div style="padding: 10px 12px; font-size: 0.82em; color: #374151; flex: 1;">
+                              ${col.items.length === 0
+                                  ? '<div style="color: #9ca3af; font-style: italic; text-align: center;">Aucun</div>'
+                                  : col.items.map(it => `<div style="padding: 3px 0;"><strong>Ex.${it.num}</strong> ${it.emoji} ${it.name} <span style="color: ${col.color}; font-weight: 700;">(${it.pct}%)</span></div>`).join('')
+                              }
+                            </div>
+                          </div>
+                        `).join('');
+                    }
+                    if (hasQr) {
+                        html += `
+                          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;">
+                            <img src="${qrDataUrl}" alt="QR correction" style="width: 110px; height: 110px; display: block;" />
+                            <div style="font-size: 0.72em; color: #4b5563; text-align: center; margin-top: 6px; font-weight: 600;">Scanne pour<br>la correction</div>
+                          </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+
+                // Signatures
+                html += `
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0 14px; font-size: 0.85em; color: #6b7280;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="white-space: nowrap;">Signature élève :</span>
+                      <span style="flex: 1; border-bottom: 1px solid #d1d5db; height: 20px;"></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="white-space: nowrap;">Signature parents :</span>
+                      <span style="flex: 1; border-bottom: 1px solid #d1d5db; height: 20px;"></span>
+                    </div>
+                  </div>
+                `;
+
+                // Footer
+                if (cfg.footer !== false) {
+                    html += `
+                      <div style="text-align: center; margin-top: 14px; padding-top: 10px; border-top: 1px dashed #e5e7eb; font-size: 0.75em; color: #9ca3af; font-style: italic;">
+                        Bilan réalisé par M.Belhaj ❤️ — ${today} — DNB Blanc n°2 — Collège Gaston Chaissac
+                      </div>
+                    `;
+                }
+
+                body.innerHTML = html;
+
+                // ---------- Charts histogrammes ----------
                 requestAnimationFrame(() => {
-                    const ctx = document.getElementById(histId);
-                    if (!ctx) return;
-                    const binColors = distLabels.map((_, i) => {
-                        if (i === studentBin) return lv.color; // met en avant la tranche de l'élève
-                        const midNote = i * 2 + 1;
-                        return mvLevel(midNote).color + '66'; // semi-transparent
-                    });
-                    const binBorders = distLabels.map((_, i) => i === studentBin ? '#1f2937' : 'transparent');
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: distLabels,
-                            datasets: [{
-                                data: distBins,
-                                backgroundColor: binColors,
-                                borderColor: binBorders,
-                                borderWidth: 2,
-                                borderRadius: 5
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { callbacks: {
-                                    label: (ctx) => `${ctx.raw} élève${ctx.raw > 1 ? 's' : ''}${ctx.dataIndex === studentBin ? ' (dont ce candidat)' : ''}`
-                                } }
+                    const renderHist = (canvasId, filterIds) => {
+                        const ctx = document.getElementById(canvasId);
+                        if (!ctx) return;
+                        const bins = buildDist(filterIds);
+                        const binColors = distLabels.map((_, i) => {
+                            if (i === studentBin) return lv.color;
+                            const midNote = i * 2 + 1;
+                            return mvLevel(midNote).color + '66';
+                        });
+                        const binBorders = distLabels.map((_, i) => i === studentBin ? '#1f2937' : 'transparent');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: distLabels,
+                                datasets: [{
+                                    data: bins,
+                                    backgroundColor: binColors,
+                                    borderColor: binBorders,
+                                    borderWidth: 2,
+                                    borderRadius: 5
+                                }]
                             },
-                            scales: {
-                                y: { beginAtZero: true, ticks: { precision: 0 } },
-                                x: { grid: { display: false } }
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: { callbacks: {
+                                        label: (c) => `${c.raw} élève${c.raw > 1 ? 's' : ''}${c.dataIndex === studentBin ? ' (dont ce candidat)' : ''}`
+                                    } }
+                                },
+                                scales: {
+                                    y: { beginAtZero: true, ticks: { precision: 0 } },
+                                    x: { grid: { display: false } }
+                                }
                             }
-                        }
-                    });
+                        });
+                    };
+                    if (showClass) renderHist(histClassId, cs.ids);
+                    if (showCollege) renderHist(histCollegeId, collegeStats.ids);
                 });
             }
 
