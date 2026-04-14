@@ -10,6 +10,8 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         /* === BILANS DNB2 - DESIGN PREMIUM === */
         :root {
@@ -978,6 +980,201 @@
         }
         .pdf-progress.visible { display: block; }
 
+        .pdf-btn-preview-class {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+        }
+        .pdf-btn-preview-indiv {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+        }
+
+        /* =============== Modales d'aperçu (bilan classe / individuel) =============== */
+        .preview-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            animation: previewFadeIn 0.18s ease-out;
+        }
+        @keyframes previewFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .preview-panel {
+            background: #fff;
+            width: 95vw; max-width: 1100px;
+            height: 92vh;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+            animation: previewSlideUp 0.22s ease-out;
+        }
+        @keyframes previewSlideUp {
+            from { transform: translateY(14px) scale(0.98); opacity: 0; }
+            to   { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .preview-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #fff;
+            padding: 16px 22px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        .preview-header h2 { font-size: 1.2em; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; }
+        .preview-header .sub { font-size: 0.82em; opacity: 0.85; margin-top: 3px; }
+        .preview-header .actions { display: flex; gap: 8px; }
+        .preview-btn {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff; border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85em;
+            transition: background 0.15s;
+        }
+        .preview-btn:hover { background: rgba(255, 255, 255, 0.3); }
+        .preview-btn-close { padding: 6px 12px; font-size: 1.1em; }
+        .preview-body {
+            flex: 1; overflow-y: auto;
+            padding: 22px 26px;
+            background: #f9fafb;
+        }
+
+        .mv-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .mv-stat-card { background: #fff; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--gray-200); }
+        .mv-stat-val { font-size: 1.7em; font-weight: 700; line-height: 1.1; }
+        .mv-stat-lbl { font-size: 0.75em; color: var(--gray-500); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+
+        .mv-levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+        .mv-level { padding: 12px; border-radius: 10px; border: 2px solid; text-align: center; background: #fff; }
+        .mv-level-count { font-size: 1.6em; font-weight: 700; line-height: 1.1; }
+        .mv-level-code { font-size: 0.75em; font-weight: 700; margin-top: 2px; letter-spacing: 0.04em; }
+
+        .mv-twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        @media (max-width: 720px) { .mv-twocol { grid-template-columns: 1fr; } }
+        .mv-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--gray-200); }
+        .mv-card h3 { font-size: 0.95em; margin-bottom: 10px; color: var(--gray-700); font-weight: 700; }
+
+        .mv-compbar { margin-bottom: 10px; }
+        .mv-compbar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 0.82em; }
+        .mv-compbar-name { font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .mv-compbar-pct { font-weight: 700; }
+        .mv-compbar-track { height: 10px; background: var(--gray-200); border-radius: 5px; overflow: hidden; }
+        .mv-compbar-fill { height: 100%; border-radius: 5px; transition: width 0.3s; }
+
+        .mv-exrank { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .mv-exrank thead tr { background: var(--gray-800); color: #fff; }
+        .mv-exrank th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 0.82em; }
+        .mv-exrank th:first-child { border-radius: 8px 0 0 0; }
+        .mv-exrank th:last-child { border-radius: 0 8px 0 0; }
+        .mv-exrank td { padding: 8px 10px; border-top: 1px solid var(--gray-100); }
+        .mv-exrank tr:nth-child(even) td { background: #fafbfc; }
+        .mv-progress-wrap { display: flex; align-items: center; gap: 8px; }
+        .mv-progress-track { flex: 1; background: var(--gray-200); border-radius: 4px; height: 12px; overflow: hidden; }
+        .mv-progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+        .mv-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72em; font-weight: 700; color: #fff; }
+
+        .mv-analyse { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+        @media (max-width: 720px) { .mv-analyse { grid-template-columns: 1fr; } }
+        .mv-analyse-box { border-radius: 12px; padding: 14px; border: 2px solid; }
+        .mv-analyse-box h4 { font-size: 0.88em; margin-bottom: 6px; }
+        .mv-analyse-item { padding: 4px 0; font-size: 0.82em; color: var(--gray-700); }
+
+        .mv-stab { width: 100%; border-collapse: collapse; font-size: 0.78em; }
+        .mv-stab thead tr { background: var(--gray-800); color: #fff; }
+        .mv-stab th { padding: 7px 6px; text-align: center; font-size: 0.8em; font-weight: 600; }
+        .mv-stab td { padding: 6px; border-top: 1px solid var(--gray-100); text-align: center; }
+        .mv-stab tr:nth-child(even) td { background: #fafbfc; }
+        .mv-stab td.name { text-align: left; font-weight: 600; }
+        .mv-mini-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; font-weight: 700; }
+
+        /* Individual preview */
+        .mv-indiv-topbar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 22px; background: #f3f4f6; border-bottom: 1px solid var(--gray-200);
+            flex-shrink: 0;
+        }
+        .mv-navbtn {
+            width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--gray-300);
+            background: #fff; cursor: pointer; font-size: 1.1em; font-weight: 700;
+            color: var(--primary-dark);
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: background 0.12s, transform 0.12s, color 0.12s;
+        }
+        .mv-navbtn:hover { background: var(--primary); color: #fff; transform: translateY(-1px); }
+        .mv-navbtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .mv-indiv-counter { font-weight: 700; color: var(--gray-700); min-width: 60px; text-align: center; }
+        .mv-indiv-search {
+            flex: 1; min-width: 180px;
+            padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 8px;
+            font-size: 0.9em; font-family: inherit;
+        }
+        .mv-indiv-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .mv-indiv-pdfbtn {
+            padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.85em;
+            border: none; cursor: pointer;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+            color: #fff;
+            transition: transform 0.1s;
+        }
+        .mv-indiv-pdfbtn:hover { transform: translateY(-1px); }
+        .mv-indiv-pdfbtn.secondary {
+            background: #fff; color: var(--primary); border: 2px solid var(--primary);
+        }
+
+        .mv-indiv-namelist {
+            display: flex; gap: 6px; overflow-x: auto;
+            padding: 8px 22px 10px; background: #eef2ff; border-bottom: 1px solid var(--gray-200);
+            flex-shrink: 0;
+            scrollbar-width: thin;
+        }
+        .mv-indiv-namelist::-webkit-scrollbar { height: 6px; }
+        .mv-indiv-namelist::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+        .mv-namechip {
+            flex-shrink: 0;
+            padding: 6px 12px; border-radius: 20px;
+            background: #fff; border: 1px solid var(--gray-200);
+            cursor: pointer; font-size: 0.82em; font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.12s;
+            color: var(--gray-700);
+        }
+        .mv-namechip:hover { border-color: var(--primary); color: var(--primary); }
+        .mv-namechip.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #fff; border-color: transparent;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+        }
+        .mv-namechip.hidden { display: none; }
+
+        .mv-indiv-title { font-size: 1.3em; font-weight: 700; color: var(--gray-800); margin-bottom: 4px; }
+        .mv-indiv-subtitle { font-size: 0.88em; color: var(--gray-500); margin-bottom: 14px; }
+        .mv-indiv-row-top { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; margin-bottom: 18px; }
+        @media (max-width: 720px) { .mv-indiv-row-top { grid-template-columns: 1fr; } }
+        .mv-indiv-notecard {
+            color: #fff; border-radius: 14px; padding: 22px; text-align: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        }
+        .mv-indiv-notecard .big { font-size: 2.4em; font-weight: 800; line-height: 1.1; }
+        .mv-indiv-notecard .brut { font-size: 0.88em; opacity: 0.9; margin-top: 4px; }
+        .mv-indiv-notecard .lvl { font-size: 0.95em; font-weight: 700; margin-top: 6px; }
+        .mv-apprec {
+            background: #fff; border-radius: 12px; padding: 14px 18px;
+            border: 1px solid var(--gray-200); border-left: 4px solid;
+            font-size: 0.92em; line-height: 1.55; color: var(--gray-700);
+            white-space: pre-wrap;
+        }
+        .mv-apprec .t { font-weight: 700; color: var(--gray-800); font-size: 0.85em; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .mv-exlist { display: flex; flex-direction: column; gap: 6px; }
+        .mv-exrow {
+            display: flex; align-items: center; gap: 10px;
+            background: #f9fafb; border-radius: 8px; padding: 8px 12px;
+        }
+        .mv-exrow .emo { font-size: 1.1em; }
+        .mv-exrow .lbl { flex: 0 0 40%; font-weight: 600; color: var(--gray-700); font-size: 0.88em; }
+        .mv-exrow .bar { flex: 1; background: var(--gray-200); height: 8px; border-radius: 4px; overflow: hidden; }
+        .mv-exrow .barfill { height: 100%; border-radius: 4px; }
+        .mv-exrow .score { font-weight: 700; font-size: 0.88em; min-width: 80px; text-align: right; }
+
         /* Bilan (rendu pour capture PDF, caché à l'écran) */
         #pdfRenderZone {
             position: absolute;
@@ -1197,9 +1394,32 @@
                     <label class="config-item"><input type="checkbox" data-cfg="positclass" checked><span><span class="lbl">Positionnement dans la classe</span><span class="desc">Note vs moyenne classe, rang, min/max (nécessite CSV élèves)</span></span></label>
                     <label class="config-item" id="cfgPositCollege"><input type="checkbox" data-cfg="positcollege"><span><span class="lbl">Positionnement dans le collège</span><span class="desc">Comparaison avec tous les 3e (si disponible)</span></span></label>
                     <label class="config-item"><input type="checkbox" data-cfg="footer" checked><span><span class="lbl">Pied de page (date de génération)</span><span class="desc">Mention "Bilan généré le..."</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="anonMath"><span><span class="lbl">Noms de mathématiciens (anonymat)</span><span class="desc">Remplace "Candidat n°X" par un mathématicien célèbre (ignoré si CSV importé)</span></span></label>
+                    <label class="config-item">
+                        <input type="checkbox" data-cfg="recos" checked>
+                        <span>
+                            <span class="lbl">Recommandations pédagogiques</span>
+                            <span class="desc">Exercices à refaire / consolider / maîtrisés</span>
+                        </span>
+                    </label>
+                    <label class="config-item">
+                        <input type="checkbox" data-cfg="qrcode">
+                        <span>
+                            <span class="lbl">QR code correction</span>
+                            <span class="desc">QR carré pointant vers la correction du sujet (URL configurable ci-dessous)</span>
+                        </span>
+                    </label>
                 </div>
 
+                <label style="display:block;margin:10px 0">
+                    <span class="lbl" style="display:block;margin-bottom:4px">URL du QR code correction</span>
+                    <input type="text" id="qrUrl" placeholder="https://dnb2-chaissac.vercel.app/correction-dnb2.pdf"
+                                 style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px">
+                </label>
+
                 <div class="pdf-actions">
+                    <button class="pdf-btn pdf-btn-preview-class" onclick="showClassPreviewModal()">👁️ Aperçu bilan classe</button>
+                    <button class="pdf-btn pdf-btn-preview-indiv" onclick="showIndividualPreviewModal()">👁️ Aperçu bilan individuel</button>
                     <button class="pdf-btn pdf-btn-class" id="btnClassPDF" onclick="generateClassPDF()">🏫 PDF bilan classe</button>
                     <button class="pdf-btn pdf-btn-individual" id="btnIndivPDF" onclick="generateIndividualPDFs()">📄 PDFs individuels (ZIP)</button>
                 </div>
@@ -1389,6 +1609,8 @@
             document.getElementById('footer').style.display = 'none';
             importError.style.display = 'none';
             fileInput.value = '';
+            // Purge du cache local pour éviter restauration automatique
+            try { localStorage.removeItem(DATA_KEY); } catch (e) {}
             // Destroy existing charts
             chartInstances.forEach(c => c.destroy());
             chartInstances = [];
@@ -1396,9 +1618,23 @@
 
         let chartInstances = [];
 
+        const DATA_KEY = 'dnb2BilanRawData';
+
+        // Au chargement : auto-restore du JSON précédemment importé
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                const cached = localStorage.getItem(DATA_KEY);
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    if (data.appState && data.appState.scores) processData(data);
+                }
+            } catch (e) { console.warn('Restore JSON échoué', e); }
+        });
+
         // ========== DATA PROCESSING ==========
         function processData(data) {
             window.__RAW_DATA = data; // Store for PDF generation access
+            try { localStorage.setItem(DATA_KEY, JSON.stringify(data)); } catch (e) { console.warn('Sauvegarde JSON échouée', e); }
             const { scores, presentationScores, validatedCandidates, quickButtonStates, baremeConfig } = data.appState;
 
             // Identify validated candidates
@@ -2303,6 +2539,7 @@
 
         const PDF_CONFIG_KEY = 'dnb2BilanPdfConfig';
         const STUDENTS_KEY = 'dnb2StudentsList';
+        const QR_URL_KEY = 'dnb2BilanQrUrl';
         // Seuils niveaux (note /20)
         const LEVEL_THRESHOLDS = { TBM: 16, MS: 12, MF: 8 }; // MI = reste
         const LEVEL_COLORS = { TBM: '#10b981', MS: '#3b82f6', MF: '#f59e0b', MI: '#ef4444' };
@@ -2313,9 +2550,16 @@
             const saved = JSON.parse(localStorage.getItem(PDF_CONFIG_KEY) || '{}');
             document.querySelectorAll('#pdfConfigGrid input[type="checkbox"]').forEach(cb => {
                 const key = cb.dataset.cfg;
-                if (saved[key] !== undefined) cb.checked = saved[key];
+                // anonMath : jamais auto-activé, choix explicite du prof à chaque session
+                if (key === 'anonMath') { cb.checked = false; }
+                else if (saved[key] !== undefined) cb.checked = saved[key];
                 cb.addEventListener('change', savePdfConfig);
             });
+            // Purge toute valeur persistée d'anonMath
+            if (saved.anonMath !== undefined) {
+                delete saved.anonMath;
+                localStorage.setItem(PDF_CONFIG_KEY, JSON.stringify(saved));
+            }
             // Restore students list status
             refreshStudentsImportUI();
             // Wire file input
@@ -2334,6 +2578,15 @@
             zone.addEventListener('drop', (e) => {
                 if (e.dataTransfer.files[0]) loadStudentsCSV(e.dataTransfer.files[0]);
             });
+            // URL QR code : restore + save on input
+            const qrInput = document.getElementById('qrUrl');
+            if (qrInput) {
+                const savedUrl = localStorage.getItem(QR_URL_KEY) || '';
+                qrInput.value = savedUrl;
+                qrInput.addEventListener('input', () => {
+                    localStorage.setItem(QR_URL_KEY, qrInput.value.trim());
+                });
+            }
         }
 
         function savePdfConfig() {
@@ -2426,12 +2679,43 @@
             return list[id];
         }
 
+        // Liste de mathématicien(ne)s célèbres pour l'anonymat
+        const MATHEMATICIANS = [
+            'Leonhard Euler', 'Carl Gauss', 'Blaise Pascal', 'Alan Turing',
+            'Andrew Wiles', 'Augustin Cauchy', 'François Viète', 'Henri Poincaré',
+            'Isaac Newton', 'Pierre Fermat', 'René Descartes', 'Sophie Germain',
+            'Emmy Noether', 'Ada Lovelace', 'Maryam Mirzakhani', 'Srinivasa Ramanujan',
+            'Georg Cantor', 'Évariste Galois', 'David Hilbert', 'Bernhard Riemann',
+            'Sophie Kowalevski', 'Karen Uhlenbeck', 'Claire Voisin', 'Katherine Johnson',
+            'Maria Agnesi', 'Julia Robinson', 'Maryna Viazovska', 'Alexandre Grothendieck',
+            'Kurt Gödel', 'Niels Abel'
+        ];
+
+        // Mappe chaque candidateId vers un nom mathématicien (index stable = tri par id)
+        function getMathematicianName(id) {
+            const stats = window.__BILAN_STATS;
+            if (!stats) return MATHEMATICIANS[0];
+            const sortedIds = stats.candidateNotes.map(c => c.id).sort((a, b) => {
+                const na = parseInt(a, 10), nb = parseInt(b, 10);
+                if (!isNaN(na) && !isNaN(nb)) return na - nb;
+                return String(a).localeCompare(String(b));
+            });
+            const idx = sortedIds.indexOf(id);
+            if (idx < 0) return `Candidat n°${id}`;
+            return MATHEMATICIANS[idx % MATHEMATICIANS.length];
+        }
+
         function formatStudentName(id) {
             const info = getStudentInfo(id);
             if (info) {
                 const parts = [info.nom, info.prenom].filter(Boolean).join(' ');
-                return parts || `Candidat n°${id}`;
+                if (parts) return parts;
             }
+            // Pas de CSV importé : anonymat mathématicien si activé
+            try {
+                const cfg = JSON.parse(localStorage.getItem(PDF_CONFIG_KEY) || '{}');
+                if (cfg.anonMath) return getMathematicianName(id);
+            } catch (_) {}
             return `Candidat n°${id}`;
         }
 
@@ -2565,170 +2849,955 @@
             };
         }
 
-        // ---------- Build individual bilan HTML ----------
-        function buildBilanHTML(candidateId, cfg, classStats, collegeStats) {
+        // =====================================================================
+        // ==========  GÉNÉRATION PDF — STYLE MATHEVAL (jsPDF)         =========
+        // =====================================================================
+
+        // Palette MathEval
+        const PDF_C = {
+            primary: [41, 128, 185],
+            success: [39, 174, 96],
+            warning: [230, 126, 34],
+            danger:  [231, 76, 60],
+            dark:    [44, 62, 80],
+            light:   [236, 240, 241],
+            white:   [255, 255, 255]
+        };
+        // Seuils MathEval (exprimés en % sur la note /20 pour DNB2)
+        // TBM≥16, MS≥12, MF≥8 (sur 20) ⇒ 80 / 60 / 40 en %
+        const PDF_TH = { tbm: 80, ms: 60, mf: 40 };
+
+        const COMP_COLORS = {
+            'Modéliser':    [155, 89, 182],
+            'Calculer':     [52, 152, 219],
+            'Raisonner':    [46, 204, 113],
+            'Communiquer':  [230, 126, 34],
+            'Représenter':  [231, 76, 60],
+            'Chercher':     [241, 196, 15]
+        };
+        function compColorRGB(name) { return COMP_COLORS[name] || PDF_C.primary; }
+
+        function pdfLevelFromPct(p) {
+            if (p >= PDF_TH.tbm) return { code: 'TBM', label: 'Très Bonne Maîtrise', color: PDF_C.success };
+            if (p >= PDF_TH.ms)  return { code: 'MS',  label: 'Maîtrise Satisfaisante', color: PDF_C.primary };
+            if (p >= PDF_TH.mf)  return { code: 'MF',  label: 'Maîtrise Fragile',      color: PDF_C.warning };
+            return { code: 'MI', label: 'Maîtrise Insuffisante', color: PDF_C.danger };
+        }
+        function pdfLevelFromNote20(n) {
+            return pdfLevelFromPct((n / 20) * 100);
+        }
+        function fmt1(n) {
+            if (n == null || isNaN(n)) return '–';
+            return (n % 1 === 0) ? String(n) : n.toFixed(1).replace('.', ',');
+        }
+        function fmt2(n) {
+            if (n == null || isNaN(n)) return '–';
+            return (Math.round(n * 100) / 100).toString().replace('.', ',');
+        }
+
+        // Fit text to a width by truncation (ellipsis)
+        function pdfFit(doc, txt, maxW) {
+            let s = String(txt || '');
+            while (doc.getTextWidth(s) > maxW && s.length > 3) s = s.slice(0, -1);
+            if (s.length < String(txt).length) s = s.replace(/\s+$/, '') + '…';
+            return s;
+        }
+
+        // Emoji -> PNG dataURL via canvas (jsPDF ne rend pas les emojis, on les injecte comme images)
+        const _emojiCache = {};
+        function emojiToDataURL(emoji, sizePx = 48) {
+            const key = emoji + '_' + sizePx;
+            if (_emojiCache[key]) return _emojiCache[key];
+            const canvas = document.createElement('canvas');
+            canvas.width = sizePx; canvas.height = sizePx;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, sizePx, sizePx);
+            ctx.font = `${Math.floor(sizePx * 0.85)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, sizePx / 2, sizePx / 2);
+            const url = canvas.toDataURL('image/png');
+            _emojiCache[key] = url;
+            return url;
+        }
+
+        // Distribution sur 9 tranches : 0-4, 4-6, 6-8, 8-10, 10-12, 12-14, 14-16, 16-18, 18-20
+        function pdfScoreDistribution(notes) {
+            const bins = new Array(9).fill(0);
+            const labels = ['0-4', '4-6', '6-8', '8-10', '10-12', '12-14', '14-16', '16-18', '18-20'];
+            const edges = [4, 6, 8, 10, 12, 14, 16, 18, 20.0001];
+            notes.forEach(n => {
+                for (let i = 0; i < edges.length; i++) {
+                    if (n < edges[i]) { bins[i]++; return; }
+                }
+            });
+            return { bins, labels, max: Math.max(...bins, 1) };
+        }
+
+        // ============ Bilan classe (jsPDF) ============
+        function buildClassBilanPDF(classe, cs) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const PW = 210, PH = 297, M = 12, W = PW - 2 * M;
+            const stats = window.__BILAN_STATS;
+            const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const classLabel = classe || 'Toutes copies';
+
+            // Filtrer les candidats de la classe (tri alphabétique)
+            const candidatesInClass = stats.candidateNotes
+                .filter(c => cs.ids.includes(c.id))
+                .sort((a, b) => formatStudentName(a.id).localeCompare(formatStudentName(b.id), 'fr'));
+
+            // Distribution des notes
+            const notes = candidatesInClass.map(c => c.note);
+            const dist = pdfScoreDistribution(notes);
+
+            // Compétences moyennes de la classe
+            const compAvg = {};
+            COMPETENCES.forEach(c => { compAvg[c] = { sum: 0, n: 0 }; });
+            candidatesInClass.forEach(c => {
+                const comp = computeStudentCompetences(c.id);
+                if (!comp) return;
+                COMPETENCES.forEach(cn => {
+                    if (comp.pcts[cn] != null) { compAvg[cn].sum += comp.pcts[cn]; compAvg[cn].n++; }
+                });
+            });
+
+            // Perf par exercice
+            const exData = Object.entries(EXERCISES).map(([exNum, ex]) => {
+                const scs = candidatesInClass.map(c => c.exerciseScores[exNum] || 0);
+                const avg = scs.reduce((a, b) => a + b, 0) / (scs.length || 1);
+                const pct = (avg / ex.max) * 100;
+                return {
+                    num: exNum,
+                    name: ex.name,
+                    max: ex.max,
+                    avg,
+                    pct,
+                    lvl: pdfLevelFromPct(pct)
+                };
+            });
+
+            let y = 0;
+
+            // ==== PAGE 1 : Stats + Graphiques ====
+            // En-tête
+            doc.setFillColor(...PDF_C.primary);
+            doc.rect(0, 0, PW, 24, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(17); doc.setFont('helvetica', 'bold');
+            doc.text('BILAN DE CLASSE — Mathématiques', PW / 2, 10, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text(`DNB Blanc n°2 — ${classLabel} — ${today}`, PW / 2, 17, { align: 'center' });
+            doc.setFontSize(8);
+            doc.text(`${cs.n} élève${cs.n > 1 ? 's' : ''} corrigé${cs.n > 1 ? 's' : ''}`, PW / 2, 21.5, { align: 'center' });
+            y = 30;
+
+            // Stats globales
+            doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+            doc.text('STATISTIQUES GLOBALES', M, y);
+            y += 6;
+
+            const boxW = (W - 12) / 4, boxH = 20;
+            const statBoxes = [
+                { label: 'Moyenne /20',  val: fmt2(cs.moyenne), color: PDF_C.primary },
+                { label: 'Note min',     val: fmt1(cs.min),     color: PDF_C.danger  },
+                { label: 'Note max',     val: fmt1(cs.max),     color: PDF_C.success },
+                { label: 'Écart-type',   val: fmt2(cs.std),     color: PDF_C.dark    }
+            ];
+            statBoxes.forEach((b, i) => {
+                const bx = M + i * (boxW + 4);
+                doc.setFillColor(...PDF_C.light);
+                doc.roundedRect(bx, y, boxW, boxH, 2.5, 2.5, 'F');
+                doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(...b.color);
+                doc.text(b.val, bx + boxW / 2, y + 10, { align: 'center' });
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+                doc.text(b.label, bx + boxW / 2, y + 17, { align: 'center' });
+            });
+            y += boxH + 6;
+
+            // Niveaux (4 cartes)
+            const lvlBoxW = (W - 12) / 4, lvlBoxH = 16;
+            const levels = [
+                { code: 'TBM', count: cs.repart.TBM, color: PDF_C.success },
+                { code: 'MS',  count: cs.repart.MS,  color: PDF_C.primary },
+                { code: 'MF',  count: cs.repart.MF,  color: PDF_C.warning },
+                { code: 'MI',  count: cs.repart.MI,  color: PDF_C.danger  }
+            ];
+            levels.forEach((lv, i) => {
+                const bx = M + i * (lvlBoxW + 4);
+                doc.setDrawColor(...lv.color); doc.setLineWidth(0.6);
+                doc.roundedRect(bx, y, lvlBoxW, lvlBoxH, 2.5, 2.5, 'S');
+                doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lv.color);
+                doc.text(String(lv.count), bx + lvlBoxW / 2, y + 8, { align: 'center' });
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+                doc.text(lv.code, bx + lvlBoxW / 2, y + 13.5, { align: 'center' });
+            });
+            y += lvlBoxH + 7;
+
+            // Histogramme + Compétences côte à côte
+            const chartH = 57;
+            doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+            doc.text('RÉPARTITION DES NOTES', M, y);
+            doc.text('COMPÉTENCES DE LA CLASSE', M + W / 2 + 8, y);
+            y += 6;
+
+            // Histogramme (gauche)
+            if (dist.max > 0) {
+                const histX = M, histW = W / 2 - 8;
+                const nbBins = dist.bins.length, barGap = 2;
+                const barW = (histW - (nbBins - 1) * barGap) / nbBins;
+                for (let i = 0; i < nbBins; i++) {
+                    const x = histX + i * (barW + barGap);
+                    const h = (dist.bins[i] / dist.max) * (chartH - 16);
+                    // Couleur par milieu de tranche (approximatif sur /20)
+                    const midNote = [2, 5, 7, 9, 11, 13, 15, 17, 19][i] || 10;
+                    doc.setFillColor(...pdfLevelFromNote20(midNote).color);
+                    if (h > 0) doc.roundedRect(x, y + chartH - 12 - h, barW, h, 1.2, 1.2, 'F');
+                    if (dist.bins[i] > 0) {
+                        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+                        doc.text(String(dist.bins[i]), x + barW / 2, y + chartH - 14 - h, { align: 'center' });
+                    }
+                    doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+                    doc.text(dist.labels[i], x + barW / 2, y + chartH - 3, { align: 'center' });
+                }
+            }
+
+            // Compétences (droite)
+            const compsActive = COMPETENCES.filter(c => compAvg[c].n > 0);
+            if (compsActive.length > 0) {
+                const cx = M + W / 2 + 8, cw = W / 2 - 8;
+                const barH = 7, gap = Math.max(2, (chartH - compsActive.length * barH) / Math.max(1, compsActive.length));
+                compsActive.forEach((k, i) => {
+                    const avg = Math.round(compAvg[k].sum / compAvg[k].n);
+                    const cc = compColorRGB(k);
+                    const by = y + i * (barH + gap);
+                    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cc);
+                    doc.text(k, cx, by + 5);
+                    const labelW = 30, fillAreaW = cw - labelW - 22;
+                    doc.setFillColor(220, 220, 220);
+                    doc.roundedRect(cx + labelW, by + 1, fillAreaW, barH - 2, 1.2, 1.2, 'F');
+                    doc.setFillColor(...cc);
+                    doc.roundedRect(cx + labelW, by + 1, Math.max(1, (avg / 100) * fillAreaW), barH - 2, 1.2, 1.2, 'F');
+                    const lv = pdfLevelFromPct(avg);
+                    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...lv.color);
+                    doc.text(`${lv.code} ${avg}%`, cx + cw - 1, by + 5, { align: 'right' });
+                });
+            }
+            y += chartH + 8;
+
+            // Taux de réussite par exercice
+            doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+            doc.text('TAUX DE RÉUSSITE PAR EXERCICE', M, y);
+            y += 7;
+
+            const exRowH = 9;
+            doc.setFillColor(...PDF_C.dark);
+            doc.roundedRect(M, y, W, exRowH, 2, 2, 'F');
+            doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+            doc.text('#', M + 5, y + 6);
+            doc.text('Exercice', M + 14, y + 6);
+            doc.text('Max', M + W * 0.42, y + 6);
+            doc.text('Réussite classe', M + W * 0.50, y + 6);
+            doc.text('Niveau', M + W * 0.82, y + 6);
+            y += exRowH + 1;
+
+            exData.forEach((e, i) => {
+                if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(M, y, W, exRowH, 'F'); }
+                const exObj = EXERCISES[e.num];
+                if (exObj && exObj.emoji) {
+                    try { doc.addImage(emojiToDataURL(exObj.emoji, 48), 'PNG', M + 2, y + 2, 5.5, 5.5); } catch(err){}
+                }
+                doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+                doc.text(e.num, M + 9, y + 6);
+                doc.setFont('helvetica', 'normal');
+                doc.text(pdfFit(doc, e.name, W * 0.28), M + 14, y + 6);
+                doc.text(String(e.max), M + W * 0.42 + 3, y + 6);
+                // Barre de progression
+                const barX = M + W * 0.50, barW2 = W * 0.27, barH2 = 5;
+                doc.setFillColor(220, 220, 220);
+                doc.roundedRect(barX, y + 2, barW2, barH2, 1.5, 1.5, 'F');
+                doc.setFillColor(...e.lvl.color);
+                doc.roundedRect(barX, y + 2, Math.max(1, (e.pct / 100) * barW2), barH2, 1.5, 1.5, 'F');
+                doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...e.lvl.color);
+                doc.text(`${Math.round(e.pct)}%`, barX + barW2 + 3, y + 6);
+                doc.setFontSize(9);
+                doc.text(e.lvl.code, M + W * 0.84, y + 6);
+                y += exRowH;
+            });
+            y += 7;
+
+            // Analyse des acquis
+            doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+            doc.text('ANALYSE DES ACQUIS', M, y);
+            y += 7;
+
+            const thirdW = (W - 8) / 3;
+            const sections = [
+                { title: `Acquis (>=${PDF_TH.ms}%)`, items: exData.filter(e => e.pct >= PDF_TH.ms), color: PDF_C.success },
+                { title: `A renforcer (${PDF_TH.mf}-${PDF_TH.ms}%)`, items: exData.filter(e => e.pct >= PDF_TH.mf && e.pct < PDF_TH.ms), color: PDF_C.warning },
+                { title: `Non acquis (<${PDF_TH.mf}%)`, items: exData.filter(e => e.pct < PDF_TH.mf), color: PDF_C.danger }
+            ];
+            const maxItems = Math.max(...sections.map(s => s.items.length), 1);
+            const sectionH = Math.max(20, 13 + maxItems * 6);
+
+            sections.forEach((sec, si) => {
+                const sx = M + si * (thirdW + 4);
+                doc.setDrawColor(...sec.color); doc.setLineWidth(0.5);
+                doc.roundedRect(sx, y, thirdW, sectionH, 2.5, 2.5, 'S');
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
+                doc.text(sec.title, sx + 4, y + 7);
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+                sec.items.forEach((e, ei) => {
+                    const pctTxt = `(${Math.round(e.pct)}%)`;
+                    doc.setFont('helvetica', 'bold'); doc.setTextColor(...sec.color);
+                    const pctW = doc.getTextWidth(pctTxt) + 2;
+                    doc.text(pctTxt, sx + thirdW - 4, y + 13 + ei * 6, { align: 'right' });
+                    doc.setFont('helvetica', 'normal'); doc.setTextColor(...PDF_C.dark);
+                    const maxTitleW = thirdW - 8 - pctW;
+                    const fullTxt = `Ex ${e.num} — ${e.name}`;
+                    doc.text(pdfFit(doc, fullTxt, maxTitleW), sx + 4, y + 13 + ei * 6);
+                });
+                if (!sec.items.length) {
+                    doc.setTextColor(180, 180, 180); doc.setFont('helvetica', 'italic');
+                    doc.text('Aucun', sx + 4, y + 13);
+                }
+            });
+
+            // ==== PAGE 2 : Tableau élèves ====
+            doc.addPage();
+            y = 0;
+            doc.setFillColor(...PDF_C.primary);
+            doc.rect(0, 0, PW, 20, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+            doc.text('RÉCAPITULATIF PAR ÉLÈVE', PW / 2, 8, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text(`${classLabel} — ${cs.n} élèves`, PW / 2, 15, { align: 'center' });
+            y = 25;
+
+            const tM = 10, tW = PW - 2 * tM;
+            const nameW = 56, noteW = 20, nivW = 16;
+            // 6 exos + 1 présentation
+            const exCount = Object.keys(EXERCISES).length;
+            const exCellW = (tW - 6 - nameW - noteW - nivW - 18) / (exCount + 1);
+            const rowH = 8;
+
+            function drawStudentHeader(yPos) {
+                doc.setFillColor(...PDF_C.dark);
+                doc.roundedRect(tM, yPos, tW, rowH + 1, 2, 2, 'F');
+                doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                let hx = tM + 3;
+                doc.text('#', hx, yPos + 5.5); hx += 6;
+                doc.text('Nom Prénom', hx, yPos + 5.5); hx += nameW;
+                doc.text('Note', hx, yPos + 5.5); hx += noteW;
+                doc.text('Niv.', hx, yPos + 5.5); hx += nivW;
+                for (const exNum of Object.keys(EXERCISES)) {
+                    doc.text(`Ex${exNum}`, hx + exCellW / 2, yPos + 5.5, { align: 'center' });
+                    hx += exCellW;
+                }
+                doc.text('Pres.', hx + exCellW / 2, yPos + 5.5, { align: 'center' });
+                return yPos + rowH + 2;
+            }
+
+            y = drawStudentHeader(y);
+
+            candidatesInClass.forEach((c, i) => {
+                if (y > PH - 18) {
+                    doc.addPage();
+                    y = drawStudentHeader(12);
+                }
+                if (i % 2 === 0) { doc.setFillColor(248, 248, 250); doc.rect(tM, y - 1, tW, rowH, 'F'); }
+                const lv = pdfLevelFromNote20(c.note);
+                let tx = tM + 3;
+                doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...PDF_C.dark);
+                doc.text(String(i + 1), tx, y + 5); tx += 6;
+                doc.setFont('helvetica', 'bold');
+                doc.text(pdfFit(doc, formatStudentName(c.id), nameW - 2), tx, y + 5); tx += nameW;
+                doc.setFont('helvetica', 'normal');
+                doc.text(fmt1(c.note), tx, y + 5); tx += noteW;
+                doc.setTextColor(...lv.color); doc.setFont('helvetica', 'bold');
+                doc.text(lv.code, tx, y + 5); tx += nivW;
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(...PDF_C.dark);
+                for (const exNum of Object.keys(EXERCISES)) {
+                    const s = c.exerciseScores[exNum] || 0;
+                    doc.text(fmt1(s), tx + exCellW / 2, y + 5, { align: 'center' });
+                    tx += exCellW;
+                }
+                doc.text(fmt1(c.presScore), tx + exCellW / 2, y + 5, { align: 'center' });
+                y += rowH;
+            });
+
+            // Ligne moyenne
+            y += 2;
+            if (y > PH - 18) { doc.addPage(); y = 14; }
+            doc.setFillColor(...PDF_C.dark);
+            doc.roundedRect(tM, y - 1, tW, rowH + 1, 2, 2, 'F');
+            let tx = tM + 3;
+            doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+            doc.text('Moyenne', tx, y + 5.5); tx += 6 + nameW;
+            doc.text(fmt2(cs.moyenne), tx, y + 5.5); tx += noteW;
+            doc.text(pdfLevelFromNote20(cs.moyenne).code, tx, y + 5.5); tx += nivW;
+            for (const exNum of Object.keys(EXERCISES)) {
+                const avgEx = candidatesInClass.reduce((a, c) => a + (c.exerciseScores[exNum] || 0), 0) / (candidatesInClass.length || 1);
+                doc.text(fmt1(avgEx), tx + exCellW / 2, y + 5.5, { align: 'center' });
+                tx += exCellW;
+            }
+            const avgPres = candidatesInClass.reduce((a, c) => a + (c.presScore || 0), 0) / (candidatesInClass.length || 1);
+            doc.text(fmt1(avgPres), tx + exCellW / 2, y + 5.5, { align: 'center' });
+
+            // Footer (optionnel, toujours affiché ici)
+            doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.setFont('helvetica', 'italic');
+            // Footer avec cœur (emoji rendu en image)
+            const fText = `Bilan réalisé par M.Belhaj `;
+            const fDate = `  —  ${today}  —  DNB Blanc n°2 — Collège Gaston Chaissac`;
+            const fullFooter = fText + '     ' + fDate;
+            const tw = doc.getTextWidth(fullFooter);
+            const startX = PW / 2 - tw / 2;
+            doc.text(fullFooter, startX, PH - 8);
+            try {
+                const heartImg = emojiToDataURL('❤️', 48);
+                const heartX = startX + doc.getTextWidth(fText);
+                doc.addImage(heartImg, 'PNG', heartX, PH - 11.5, 3.5, 3.5);
+            } catch (e) {}
+
+            return doc;
+        }
+
+        // ============ Bilan individuel (jsPDF, 1 page par élève) ============
+        function buildIndividualBilanPDF(candidateId, cfg, classStats, collegeStats, qrDataUrl) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const PW = 210, PH = 297, M = 8, W = PW - 2 * M;
             const stats = window.__BILAN_STATS;
             const data = window.__RAW_DATA;
             const candidate = stats.candidateNotes.find(c => c.id === candidateId);
-            if (!candidate) return '';
+            if (!candidate) return doc;
 
             const note = candidate.note;
-            const level = getLevel(note);
+            const totalBrut = candidate.totalBrut;
+            const totalMax = TOTAL_EXERCISES + PRESENTATION_MAX; // 26
+            const lv = pdfLevelFromNote20(note);
             const name = formatStudentName(candidateId);
             const classe = getStudentClass(candidateId);
             const apprec = data.appState.candidateComments ? (data.appState.candidateComments[candidateId] || '') : '';
             const comp = computeStudentCompetences(candidateId);
+            const rawScores = data.appState.scores[candidateId] || {};
+            const quickStates = data.appState.quickButtonStates || {};
+            const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            let html = `<div class="bilan-pdf">`;
+            // Ordre compétences avec couleurs & icones (DNB2)
+            const COMPS_UI = [
+                { name: 'Modéliser',   color: [139, 92, 246], emoji: '🏗️' },
+                { name: 'Communiquer', color: [249, 115, 22], emoji: '💬' },
+                { name: 'Calculer',    color: [59, 130, 246], emoji: '🧮' },
+                { name: 'Raisonner',   color: [16, 185, 129], emoji: '🧩' },
+                { name: 'Représenter', color: [239, 68, 68],  emoji: '🎨' },
+                { name: 'Chercher',    color: [245, 158, 11], emoji: '🔍' }
+            ];
 
-            // Header
-            if (cfg.header) {
-                html += `
-                <div class="bp-header ${level}">
-                    <div class="bp-id">
-                        <span class="big">${name}</span>
-                        <span class="sub">${classe ? 'Classe ' + classe + ' — ' : ''}DNB Blanc n°2 — Collège G. Chaissac — Avril 2026</span>
-                    </div>
-                    <div class="bp-note">
-                        <div class="big">${fmtNum(note, 2)}</div>
-                        <div class="sub">/ 20</div>
-                    </div>
-                </div>`;
-            }
-
-            // Appréciation
-            if (cfg.apprec && apprec) {
-                html += `<div class="bp-apprec">💬 ${apprec}</div>`;
-            }
-
-            // Barème
-            if (cfg.bareme) {
-                const exosSum = candidate.totalBrut - candidate.presScore;
-                html += `
-                <div class="bp-section">
-                    <div class="bp-section-title">📊 Répartition de la note</div>
-                    <div class="bp-bareme"><span>Exercices (sur 24)</span><span class="val">${fmtNum(exosSum)} pts</span></div>
-                    <div class="bp-bareme"><span>Rédaction &amp; justifications (sur 2)</span><span class="val">${fmtNum(candidate.presScore)} pt${candidate.presScore > 1 ? 's' : ''}</span></div>
-                    <div class="bp-bareme total"><span><strong>Total brut → Note /20 (plafonnée)</strong></span><span class="val"><strong>${fmtNum(candidate.totalBrut)} → ${fmtNum(note, 2)}/20</strong></span></div>
-                </div>`;
-            }
-
-            // Scores par exercice
-            if (cfg.exgrid) {
-                html += `<div class="bp-section"><div class="bp-section-title">🎯 Scores par exercice</div><div class="bp-ex-grid">`;
-                for (const [exNum, ex] of Object.entries(EXERCISES)) {
-                    const score = candidate.exerciseScores[exNum] || 0;
-                    html += `<div class="bp-ex-badge"><span class="emoji">${ex.emoji}</span><span class="label">${ex.name}</span><span class="score">${fmtNum(score)}/${ex.max}</span></div>`;
-                }
-                html += `</div></div>`;
-            }
-
-            // Grille questions traitées + Compétences (2 colonnes)
-            const showNR = cfg.nrgrid;
-            const showComp = cfg.comp && comp;
-            if (showNR || showComp) {
-                html += `<div class="bp-two-col">`;
-
-                if (showNR) {
-                    html += `<div class="bp-section"><div class="bp-section-title">✅ Bilan par question</div>`;
-                    const scores = data.appState.scores[candidateId] || {};
-                    const quickStates = data.appState.quickButtonStates || {};
-                    for (const exNum of Object.keys(EXERCISES)) {
-                        const exData = scores[exNum] || {};
-                        const qKeys = Object.keys(exData).sort((a, b) => parseInt(a.replace('q','')) - parseInt(b.replace('q','')));
-                        let justes = 0;
-                        let cells = '';
-                        for (const qKey of qKeys) {
-                            const q = exData[qKey];
-                            const qsMax = (QUESTION_DETAILS[exNum] && QUESTION_DETAILS[exNum][qKey]) ? QUESTION_DETAILS[exNum][qKey].points : 1;
-                            const qState = (quickStates[candidateId] && quickStates[candidateId][exNum] && quickStates[candidateId][exNum][qKey]) || null;
-                            let cls = 'nr';
-                            // Green = juste (tb + score full), Orange = partiel (tb mais score < max), Red = faux (tf), Gray = non traité
-                            if (qState === 'nr') { cls = 'nr'; }
-                            else if (qState === 'tf') { cls = 'wrong'; }
-                            else if (qState === 'tb' && q.score >= qsMax) { cls = 'ok'; justes++; }
-                            else if (qState === 'tb' && q.score > 0) { cls = 'partial'; }
-                            else if (q.score >= qsMax) { cls = 'ok'; justes++; }
-                            else if (q.score > 0) { cls = 'partial'; }
-                            else { cls = 'nr'; }
-                            cells += `<div class="bp-nr-cell ${cls}" title="Q${qKey.replace('q','')} : ${q.score || 0}/${qsMax}"></div>`;
-                        }
-                        html += `<div class="bp-nr-row"><div class="bp-nr-label">Ex.${exNum}</div><div class="bp-nr-cells">${cells}</div><div class="bp-nr-count">${justes}/${qKeys.length}</div></div>`;
+            // Helper : statut question (aligné sur getStatus du bilan classe)
+            function qStatus(exNum, qKey) {
+                const qbs = (quickStates[candidateId] || {})[exNum];
+                if (qbs && qbs[qKey] !== undefined) {
+                    const st = qbs[qKey];
+                    if (st === 'nr') return 'nr';
+                    if (st === 'tb') return 'tb';
+                    if (st === 'tf') return 'tf';
+                    if (st === null) {
+                        const q = (rawScores[exNum] || {})[qKey];
+                        return (q && q.score > 0) ? 'pp' : 'tf';
                     }
-                    html += `<div style="margin-top:5px;font-size:0.7em;color:#6b7280;display:flex;gap:10px;flex-wrap:wrap"><span>🟩 juste</span><span>🟧 partiel</span><span>🟥 faux</span><span>⬜ non traité</span></div>`;
-                    html += `</div>`;
                 }
-
-                if (showComp) {
-                    html += `<div class="bp-section"><div class="bp-section-title">🏆 Compétences</div>`;
-                    ['Chercher','Modéliser','Représenter','Raisonner','Calculer','Communiquer'].forEach(c => {
-                        const pct = comp.pcts[c] || 0;
-                        const color = getCompColor(pct);
-                        html += `<div class="bp-comp-row"><div class="bp-comp-label">${c}</div><div class="bp-comp-bg"><div class="bp-comp-fg" style="width:${pct}%;background:${color}"></div></div><div class="bp-comp-pct" style="color:${color}">${pct}%</div></div>`;
-                    });
-                    const presMax = 2;
-                    const presPct = Math.round((candidate.presScore / presMax) * 100);
-                    const presColor = getCompColor(presPct);
-                    html += `<div class="bp-comp-row pres"><div class="bp-comp-label"><strong>Rédaction</strong></div><div class="bp-comp-bg"><div class="bp-comp-fg" style="width:${presPct}%;background:${presColor}"></div></div><div class="bp-comp-pct" style="color:${presColor}">${fmtNum(candidate.presScore)}/${presMax}</div></div>`;
-                    html += `</div>`;
-                }
-
-                html += `</div>`;
+                const q = (rawScores[exNum] || {})[qKey];
+                if (!q) return 'nr';
+                const s = q.score || 0;
+                if (s <= 0) return 'tf';
+                return 'pp';
             }
 
-            // Position classe + Position collège (2 colonnes)
+            // Couleurs statut question
+            const STATUS_COLORS = {
+                tb: [34, 197, 94],    // vert (réussi)
+                pp: [245, 158, 11],   // orange (partiel)
+                tf: [239, 68, 68],    // rouge (faux)
+                nr: [209, 213, 219]   // gris (non traité)
+            };
+
+            // ---------- Questions traitées (compteurs) ----------
+            let totalQ = 0, treatedQ = 0;
+            const exNums = Object.keys(EXERCISES);
+            exNums.forEach(exNum => {
+                const qs = (stats.exerciseQuestions && stats.exerciseQuestions[exNum])
+                    || Object.keys(rawScores[exNum] || {});
+                qs.forEach(qKey => {
+                    totalQ++;
+                    const st = qStatus(exNum, qKey);
+                    if (st !== 'nr') treatedQ++;
+                });
+            });
+            const treatedPct = totalQ > 0 ? (treatedQ / totalQ) * 100 : 0;
+            const treatedLvl = pdfLevelFromPct(treatedPct);
+
+            let y = 0;
+
+            // =============== 1. HEADER bleu (18mm) ===============
+            if (cfg.header) {
+                doc.setFillColor(...PDF_C.primary);
+                doc.rect(0, 0, PW, 18, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(15); doc.setFont('helvetica', 'bold');
+                doc.text("BILAN D'ÉVALUATION — Mathématiques", PW / 2, 8, { align: 'center' });
+                doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                doc.text(`DNB Blanc n°2 — Collège Gaston Chaissac • ${today}`, PW / 2, 14, { align: 'center' });
+                y = 20;
+            } else {
+                y = M;
+            }
+
+            // =============== 2. NOM + CARTE NOTE (gauche) + APPRÉCIATION (droite) ===============
+            const leftW  = W * 0.40;
+            const rightW = W * 0.58;
+            const gap = W * 0.02;
+            const topRowH = 40;
+
+            // --- Gauche : nom + carte note colorée ---
+            doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+            doc.text(pdfFit(doc, name, leftW - 22), M, y + 5);
+            if (classe) {
+                doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(110, 110, 110);
+                doc.text(`Classe ${classe}`, M + leftW, y + 5, { align: 'right' });
+            }
+            // Carte note
+            const cardY = y + 8;
+            const cardH = topRowH - 8;
+            doc.setFillColor(...lv.color);
+            doc.roundedRect(M, cardY, leftW, cardH, 2.8, 2.8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(26); doc.setFont('helvetica', 'bold');
+            doc.text(`${fmt2(note)}/20`, M + leftW / 2, cardY + 12, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+            doc.text(`(brut : ${fmt1(totalBrut)}/${totalMax})`, M + leftW / 2, cardY + 19, { align: 'center' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+            doc.text(`${lv.code} — ${lv.label}`, M + leftW / 2, cardY + 27, { align: 'center' });
+
+            // --- Droite : Appréciation ---
+            if (cfg.apprec) {
+                const appX = M + leftW + gap;
+                doc.setFillColor(243, 244, 246);
+                doc.roundedRect(appX, y, rightW, topRowH, 2.2, 2.2, 'F');
+                doc.setFillColor(...lv.color);
+                doc.rect(appX, y, 1.8, topRowH, 'F');
+                doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+                doc.text('Appréciation', appX + 4, y + 5);
+                const appText = apprec && apprec.trim() ? apprec : 'Pas de commentaire.';
+                doc.setFontSize(9); doc.setFont('helvetica', apprec && apprec.trim() ? 'normal' : 'italic');
+                doc.setTextColor(55, 65, 81);
+                const appLines = doc.splitTextToSize(appText, rightW - 7);
+                // Interligne manuel pour meilleure lisibilité (lineHeightFactor)
+                const lineStep = 4.4;
+                const maxLines = 7;
+                const shown = appLines.slice(0, maxLines);
+                shown.forEach((ln, li) => {
+                    doc.text(ln, appX + 4, y + 10 + li * lineStep);
+                });
+            }
+            y += topRowH + 5;
+
+            // =============== 3. BARÈME DÉTAILLÉ ===============
+            if (cfg.bareme) {
+                const barH = 16;
+                doc.setFillColor(248, 250, 252);
+                doc.roundedRect(M, y, W, barH, 2, 2, 'F');
+                doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+                doc.roundedRect(M, y, W, barH, 2, 2, 'S');
+
+                // 4 colonnes : Exercices | Rédaction | Total brut | Note /20
+                const colW = W / 4;
+                const items = [
+                    { lbl: 'Exercices', val: `${fmt1(candidate.totalBrut - (candidate.presScore || 0))}/${TOTAL_EXERCISES}`, c: PDF_C.primary },
+                    { lbl: 'Rédaction', val: `${fmt1(candidate.presScore || 0)}/${PRESENTATION_MAX}`, c: [107, 114, 128] },
+                    { lbl: 'Total brut', val: `${fmt1(totalBrut)}/${totalMax}`, c: PDF_C.dark },
+                    { lbl: 'Note /20', val: `${fmt2(note)}/20`, c: lv.color }
+                ];
+                items.forEach((it, i) => {
+                    const cx = M + i * colW + colW / 2;
+                    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(110, 110, 110);
+                    doc.text(it.lbl, cx, y + 5.5, { align: 'center' });
+                    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...it.c);
+                    doc.text(it.val, cx, y + 12, { align: 'center' });
+                    // séparateur vertical
+                    if (i > 0) {
+                        doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+                        doc.line(M + i * colW, y + 2.5, M + i * colW, y + barH - 2.5);
+                    }
+                });
+                y += barH + 5;
+            }
+
+            // =============== 4+6. EXERCICES (gauche) + COMPÉTENCES (droite) sur 2 colonnes ===============
+            const twoColY = y;
+            const halfW = (W - 3) / 2;
+            const leftColX = M;
+            const rightColX = M + halfW + 3;
+
+            // --- 4. Scores par exercice (gauche, pleine demi-largeur) ---
+            let exEndY = twoColY;
+            if (cfg.exgrid) {
+                doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(110, 110, 110);
+                doc.text('EXERCICES', leftColX, twoColY + 4);
+                const exRowH = 7.6;
+                const exNumsArr = Object.keys(EXERCISES);
+                const startEx = twoColY + 6.5;
+                exNumsArr.forEach((exNum, i) => {
+                    const ex = EXERCISES[exNum];
+                    const s = candidate.exerciseScores[exNum] || 0;
+                    const pct = ex.max > 0 ? (s / ex.max) * 100 : 0;
+                    const elv = pdfLevelFromPct(pct);
+                    const ry = startEx + i * exRowH;
+                    // Fond
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(leftColX, ry, halfW, exRowH - 0.8, 1.2, 1.2, 'F');
+                    // Icône emoji
+                    try { doc.addImage(emojiToDataURL(ex.emoji, 48), 'PNG', leftColX + 1.4, ry + 1, 5, 5); } catch(e){}
+                    // Label
+                    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+                    const labelTxt = `${exNum}. ${ex.name}`;
+                    const txtX = leftColX + 7;
+                    const barX = txtX + halfW * 0.32;
+                    const barAvailW = halfW - (barX - leftColX) - 22;
+                    doc.text(pdfFit(doc, labelTxt, halfW * 0.32 - 1), txtX, ry + 4.4);
+                    // Barre pct
+                    const bh = 4.2;
+                    const byb = ry + (exRowH - 0.8 - bh) / 2;
+                    doc.setFillColor(229, 231, 235);
+                    doc.roundedRect(barX, byb, barAvailW, bh, 1, 1, 'F');
+                    doc.setFillColor(...elv.color);
+                    doc.roundedRect(barX, byb, Math.max(0.3, (pct / 100) * barAvailW), bh, 1, 1, 'F');
+                    // Score
+                    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...elv.color);
+                    doc.text(`${fmt1(s)}/${ex.max} ${elv.code}`, leftColX + halfW - 1.4, ry + 4.4, { align: 'right' });
+                });
+                exEndY = startEx + exNumsArr.length * exRowH;
+            }
+
+            // --- 6. Compétences (droite, pleine demi-largeur) ---
+            let compEndY = twoColY;
+            if (cfg.comp && comp) {
+                doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(110, 110, 110);
+                doc.text('COMPÉTENCES', rightColX, twoColY + 4);
+                const cRowH = 7.6;
+                const startC = twoColY + 6.5;
+                const nameBadgeW = 32;
+                const barX = rightColX + nameBadgeW + 1.8;
+                const rightTextW = 26;
+                const barWC = halfW - nameBadgeW - 1.8 - rightTextW - 1;
+
+                COMPS_UI.forEach((cu, i) => {
+                    const cname = cu.name;
+                    const pct = comp.pcts[cname] || 0;
+                    const ry = startC + i * cRowH;
+                    const clvl = pdfLevelFromPct(pct);
+                    // Badge nom
+                    doc.setFillColor(...cu.color);
+                    doc.roundedRect(rightColX, ry, nameBadgeW, cRowH - 1, 1.2, 1.2, 'F');
+                    try { doc.addImage(emojiToDataURL(cu.emoji, 48), 'PNG', rightColX + 1.2, ry + 0.8, 4.6, 4.6); } catch(e){}
+                    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                    doc.text(pdfFit(doc, cname, nameBadgeW - 7), rightColX + 6.4, ry + 4.2);
+                    // Barre
+                    const bh = cRowH - 2.4;
+                    const byb = ry + 0.7;
+                    doc.setFillColor(229, 231, 235);
+                    doc.roundedRect(barX, byb, barWC, bh, 1, 1, 'F');
+                    doc.setFillColor(...cu.color);
+                    doc.roundedRect(barX, byb, Math.max(0.3, (pct / 100) * barWC), bh, 1, 1, 'F');
+                    // Texte
+                    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...clvl.color);
+                    doc.text(`${clvl.code} ${pct}%`, rightColX + halfW - 0.8, ry + 4.2, { align: 'right' });
+                });
+                compEndY = startC + COMPS_UI.length * cRowH;
+            }
+
+            y = Math.max(exEndY, compEndY) + 5;
+
+            // =============== 5. BILAN PAR QUESTION (pleine largeur) ===============
+            if (cfg.nrgrid) {
+                // Titre + badge "questions traitées" + légende
+                doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(110, 110, 110);
+                doc.text('BILAN PAR QUESTION', M, y + 4);
+                // Badge traité
+                const badgeW = 40, badgeH = 5.4;
+                const badgeX = PW - M - badgeW;
+                doc.setFillColor(...treatedLvl.color);
+                doc.roundedRect(badgeX, y + 0.8, badgeW, badgeH, 1.4, 1.4, 'F');
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                doc.text(`Traitées : ${treatedQ}/${totalQ} • ${treatedLvl.code}`, badgeX + badgeW / 2, y + 4.3, { align: 'center' });
+                // Légende (à gauche du badge)
+                const legX = badgeX - 70;
+                const legends = [
+                    { c: STATUS_COLORS.tb, lbl: 'Juste' },
+                    { c: STATUS_COLORS.pp, lbl: 'Partiel' },
+                    { c: STATUS_COLORS.tf, lbl: 'Faux' },
+                    { c: STATUS_COLORS.nr, lbl: 'Non traité' }
+                ];
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+                let lx = legX;
+                legends.forEach(lg => {
+                    doc.setFillColor(...lg.c);
+                    doc.roundedRect(lx, y + 2, 2.8, 2.8, 0.6, 0.6, 'F');
+                    doc.text(lg.lbl, lx + 3.4, y + 4.3);
+                    lx += doc.getTextWidth(lg.lbl) + 7;
+                });
+
+                const gridStart = y + 6.5;
+                // 6 lignes, une par exo. Chaque ligne : label + cases q1..qN
+                const rowHG = 8.4;
+                const labelW = 44;
+                const cellGap = 0.8;
+                const gridAreaW = W - labelW - 1.5;
+                // Max questions sur un exo
+                let maxQs = 0;
+                exNums.forEach(exNum => {
+                    const qs = (stats.exerciseQuestions && stats.exerciseQuestions[exNum])
+                        || Object.keys(rawScores[exNum] || {});
+                    if (qs.length > maxQs) maxQs = qs.length;
+                });
+                maxQs = Math.max(maxQs, 8); // toujours au moins 8 cases pour uniformité
+                const cellW = (gridAreaW - (maxQs - 1) * cellGap) / maxQs;
+
+                exNums.forEach((exNum, idx) => {
+                    const ex = EXERCISES[exNum];
+                    const ry = gridStart + idx * rowHG;
+                    // Fond alterné
+                    if (idx % 2 === 0) {
+                        doc.setFillColor(249, 250, 251);
+                        doc.rect(M, ry, W, rowHG - 0.6, 'F');
+                    }
+                    // Label exo (gauche)
+                    try { doc.addImage(emojiToDataURL(ex.emoji, 48), 'PNG', M + 1, ry + 1, 4.6, 4.6); } catch(e){}
+                    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+                    doc.text(pdfFit(doc, `${exNum}. ${ex.name}`, labelW - 7), M + 6.4, ry + 4.2);
+
+                    // Cases questions
+                    const qs = (stats.exerciseQuestions && stats.exerciseQuestions[exNum])
+                        || Object.keys(rawScores[exNum] || {});
+                    const gridStartX = M + labelW;
+                    qs.forEach((qKey, qi) => {
+                        const st = qStatus(exNum, qKey);
+                        const cx = gridStartX + qi * (cellW + cellGap);
+                        const cy = ry + 0.7;
+                        const chH = rowHG - 2;
+                        doc.setFillColor(...STATUS_COLORS[st]);
+                        doc.roundedRect(cx, cy, cellW, chH, 0.9, 0.9, 'F');
+                        // Label de la question (numéro réel)
+                        const qLabel = (QUESTION_LABELS[exNum] && QUESTION_LABELS[exNum][qKey])
+                            || (parseInt(qKey.replace('q', '')) + 1);
+                        doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(st === 'nr' ? 80 : 255, st === 'nr' ? 80 : 255, st === 'nr' ? 80 : 255);
+                        doc.text(String(qLabel), cx + cellW / 2, cy + chH / 2 + 1.4, { align: 'center' });
+                    });
+                });
+                y = gridStart + exNums.length * rowHG + 5;
+            }
+
+            // =============== 7+8. POSITION CLASSE / COLLÈGE sur 2 colonnes ===============
             const showClass = cfg.positclass && classStats;
             const showCollege = cfg.positcollege && collegeStats;
             if (showClass || showCollege) {
-                html += `<div class="bp-two-col">`;
+                const sideW = (W - 3) / 2;
+                const sideH = 34;
+                const blocks = [];
+                if (showClass) blocks.push({ title: `CLASSE${classStats.classe !== 'Tous' ? ' ' + classStats.classe : ''}`, st: classStats, x: M });
+                if (showCollege) blocks.push({ title: 'COLLÈGE', st: collegeStats, x: M + sideW + 3 });
+                // Si un seul, on le centre sur pleine largeur
+                if (blocks.length === 1) { blocks[0].x = M; blocks[0].full = true; }
 
-                if (showClass) {
-                    const rank = classStats.ranks[candidateId];
-                    html += `
-                    <div class="bp-section">
-                        <div class="bp-section-title">📈 Position classe ${classStats.classe !== 'Tous' ? classStats.classe : ''} (${classStats.n})</div>
-                        <div class="bp-posit-grid">
-                            <div class="bp-posit-card self"><div class="bp-posit-val">${fmtNum(note, 1)}</div><div class="bp-posit-label">Élève</div></div>
-                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(classStats.moyenne, 1)}</div><div class="bp-posit-label">Moyenne</div></div>
-                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(classStats.min, 1)}</div><div class="bp-posit-label">Min</div></div>
-                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(classStats.max, 1)}</div><div class="bp-posit-label">Max</div></div>
-                        </div>
-                        <div class="bp-posit-rank"><strong>Rang : ${rank}<sup>${rank === 1 ? 'er' : 'e'}</sup> / ${classStats.n}</strong></div>
-                    </div>`;
-                }
+                blocks.forEach(b => {
+                    const bw = b.full ? W : sideW;
+                    const bx = b.x;
+                    // Titre
+                    doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(110, 110, 110);
+                    const rank = b.st.ranks ? b.st.ranks[candidateId] : null;
+                    const rankSuffix = rank ? (rank === 1 ? 'er' : 'e') : '';
+                    const titleTxt = b.title + (rank ? `  —  Rang ${rank}${rankSuffix} / ${b.st.n}` : '');
+                    doc.text(titleTxt, bx, y + 4);
+                    // Fond
+                    const innerY = y + 6;
+                    const innerH = sideH - 6;
+                    doc.setFillColor(248, 250, 252);
+                    doc.roundedRect(bx, innerY, bw, innerH, 2, 2, 'F');
 
-                if (showCollege) {
-                    const rank = collegeStats.ranks[candidateId];
-                    html += `
-                    <div class="bp-section">
-                        <div class="bp-section-title">🏫 Position collège (${collegeStats.n} 3ᵉ)</div>
-                        <div class="bp-posit-grid">
-                            <div class="bp-posit-card self"><div class="bp-posit-val">${fmtNum(note, 1)}</div><div class="bp-posit-label">Élève</div></div>
-                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(collegeStats.moyenne, 1)}</div><div class="bp-posit-label">Moyenne</div></div>
-                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(collegeStats.min, 1)}</div><div class="bp-posit-label">Min</div></div>
-                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(collegeStats.max, 1)}</div><div class="bp-posit-label">Max</div></div>
-                        </div>
-                        <div class="bp-posit-rank"><strong>Rang : ${rank}<sup>${rank === 1 ? 'er' : 'e'}</sup> / ${collegeStats.n}</strong></div>
-                    </div>`;
-                }
+                    // Histogramme distribution des notes avec position de l'élève marquée
+                    const allNotes = window.__BILAN_STATS.candidateNotes
+                        .filter(c => b.st.ids.includes(c.id))
+                        .map(c => c.note);
+                    const dist = pdfScoreDistribution(allNotes);
+                    // Zone chart
+                    const chartX = bx + 3, chartY = innerY + 3;
+                    const chartW = bw - 6, chartH = innerH - 9;
+                    const nbBins = dist.bins.length; // 9
+                    const barGap = 1.2;
+                    const barW = (chartW - (nbBins - 1) * barGap) / nbBins;
+                    const maxBarH = chartH - 3; // laisse place aux chiffres
 
-                html += `</div>`;
+                    // Trouver la tranche de l'élève
+                    const edges = [4, 6, 8, 10, 12, 14, 16, 18, 20.0001];
+                    let studentBin = 0;
+                    for (let i = 0; i < edges.length; i++) { if (note < edges[i]) { studentBin = i; break; } }
+
+                    for (let i = 0; i < nbBins; i++) {
+                        const x = chartX + i * (barW + barGap);
+                        const h = dist.max > 0 ? (dist.bins[i] / dist.max) * maxBarH : 0;
+                        const midVal = i === 0 ? 2 : i === 8 ? 19 : (edges[i-1] + edges[i]) / 2;
+                        const color = pdfLevelFromNote20(midVal).color;
+                        // Barre
+                        if (h > 0) {
+                            doc.setFillColor(...color);
+                            doc.roundedRect(x, chartY + maxBarH - h, barW, h, 0.7, 0.7, 'F');
+                        }
+                        // Highlight tranche élève
+                        if (i === studentBin) {
+                            doc.setDrawColor(31, 41, 55); doc.setLineWidth(0.8);
+                            doc.roundedRect(x - 0.4, chartY - 0.4, barW + 0.8, maxBarH + 0.8, 0.9, 0.9, 'S');
+                        }
+                        // Effectif au-dessus (si > 0)
+                        if (dist.bins[i] > 0) {
+                            doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(60, 60, 60);
+                            doc.text(String(dist.bins[i]), x + barW / 2, chartY + maxBarH - h - 0.6, { align: 'center' });
+                        }
+                        // Label tranche
+                        doc.setFontSize(5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+                        doc.text(dist.labels[i], x + barW / 2, chartY + maxBarH + 2.5, { align: 'center' });
+                    }
+                    // Flèche "toi" au-dessus de la tranche élève
+                    const arrowX = chartX + studentBin * (barW + barGap) + barW / 2;
+                    doc.setFillColor(...lv.color);
+                    // petit triangle pointant vers le bas
+                    doc.triangle(arrowX - 1.4, chartY - 2.2, arrowX + 1.4, chartY - 2.2, arrowX, chartY - 0.3, 'F');
+
+                    // Ligne stats en bas du bloc
+                    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(110, 110, 110);
+                    const statsLine = `Ta note : ${fmt2(note)}  •  Moy ${fmt1(b.st.moyenne)}  •  Min ${fmt1(b.st.min)}  •  Max ${fmt1(b.st.max)}  •  ${b.st.n} corrigés`;
+                    doc.text(statsLine, bx + bw / 2, innerY + innerH - 1.8, { align: 'center' });
+                });
+
+                y += sideH + 5;
             }
 
-            // Footer
+            // =============== 8bis. RECOMMANDATIONS + QR CODE ===============
+            if (cfg.recos || (cfg.qrcode && qrDataUrl)) {
+                // Préparer 3 catégories d'exercices
+                const recoCats = { priority: [], consolidate: [], mastered: [] };
+                Object.entries(EXERCISES).forEach(([exNum, ex]) => {
+                    const score = candidate.exerciseScores[exNum] || 0;
+                    const pct = ex.max > 0 ? (score / ex.max) * 100 : 0;
+                    const entry = `Ex.${exNum} ${ex.name}`;
+                    if (pct < 40) recoCats.priority.push(entry);
+                    else if (pct < 70) recoCats.consolidate.push(entry);
+                    else recoCats.mastered.push(entry);
+                });
+
+                const hasQr = cfg.qrcode && qrDataUrl;
+                const recoW = hasQr ? (W - 30) : W; // 27mm pour QR à droite
+                const qrSize = 25;
+                const recoH = 28;
+
+                // Titre section
+                doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(110, 110, 110);
+                doc.text('RECOMMANDATIONS', M, y + 4);
+
+                if (cfg.recos) {
+                    const colGap = 3;
+                    const colW = (recoW - colGap * 2) / 3;
+                    const cols = [
+                        { title: 'À refaire en priorité', items: recoCats.priority, color: PDF_C.danger },
+                        { title: 'À consolider', items: recoCats.consolidate, color: PDF_C.warning },
+                        { title: 'Bien maîtrisé', items: recoCats.mastered, color: PDF_C.success }
+                    ];
+                    cols.forEach((col, ci) => {
+                        const cx = M + ci * (colW + colGap);
+                        const cy = y + 6;
+                        // Bordure colorée
+                        doc.setFillColor(...col.color);
+                        doc.roundedRect(cx, cy, colW, 4.5, 1, 1, 'F');
+                        doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                        doc.text(col.title, cx + colW / 2, cy + 3.2, { align: 'center' });
+                        // Fond
+                        doc.setFillColor(248, 250, 252);
+                        doc.roundedRect(cx, cy + 4.5, colW, recoH - 4.5, 1, 1, 'F');
+                        doc.setDrawColor(...col.color); doc.setLineWidth(0.4);
+                        doc.roundedRect(cx, cy + 4.5, colW, recoH - 4.5, 1, 1, 'S');
+                        // Liste
+                        if (col.items.length === 0) {
+                            doc.setFontSize(7); doc.setFont('helvetica', 'italic'); doc.setTextColor(150, 150, 150);
+                            doc.text('Aucun', cx + colW / 2, cy + 12, { align: 'center' });
+                        } else {
+                            doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(55, 65, 81);
+                            col.items.forEach((it, ii) => {
+                                doc.text(pdfFit(doc, it, colW - 3), cx + 2, cy + 8 + ii * 4.2);
+                            });
+                        }
+                    });
+                }
+
+                // QR code à droite
+                if (hasQr) {
+                    const qrX = M + recoW + 3;
+                    const qrY = y + 5;
+                    try {
+                        doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+                    } catch(e) {}
+                    doc.setFontSize(6.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(70, 70, 70);
+                    doc.text('Scanne pour la', qrX + qrSize / 2, qrY + qrSize + 2.5, { align: 'center' });
+                    doc.text('correction', qrX + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
+                }
+
+                y += recoH + 5;
+            }
+
+            // =============== 9. SIGNATURES ===============
+            // Placées de préférence près du footer pour garantir l'équilibre visuel
+            const sigY = Math.max(y + 6, PH - 14);
+            doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(110, 110, 110);
+            // Signature élève (gauche)
+            const labelSigEleve = 'Signature élève :';
+            doc.text(labelSigEleve, M, sigY);
+            const sigEleveStartX = M + doc.getTextWidth(labelSigEleve) + 2;
+            const sigEleveEndX = M + (W / 2) - 10;
+            doc.setLineWidth(0.2); doc.setDrawColor(180, 180, 180);
+            doc.line(sigEleveStartX, sigY + 0.5, sigEleveEndX, sigY + 0.5);
+            // Signature parents (droite)
+            const labelSigParents = 'Signature parents :';
+            const sigParentsLabelX = PW - M - 60;
+            doc.text(labelSigParents, sigParentsLabelX, sigY);
+            const sigParentsStartX = sigParentsLabelX + doc.getTextWidth(labelSigParents) + 2;
+            const sigParentsEndX = PW - M - 1;
+            doc.line(sigParentsStartX, sigY + 0.5, sigParentsEndX, sigY + 0.5);
+
+            // =============== 10. FOOTER ===============
             if (cfg.footer) {
-                const today = new Date().toLocaleDateString('fr-FR');
-                html += `<div class="bp-footer">Bilan généré le ${today} — DNB Blanc n°2 — Collège Gaston Chaissac</div>`;
+                doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.setFont('helvetica', 'italic');
+                const fText = `Bilan réalisé par M.Belhaj `;
+                const fDate = `  —  ${today}  —  DNB Blanc n°2 — Collège Gaston Chaissac`;
+                const fullFooter = fText + '     ' + fDate;
+                const tw = doc.getTextWidth(fullFooter);
+                const startX = PW / 2 - tw / 2;
+                doc.text(fullFooter, startX, PH - 5);
+                try {
+                    const heartImg = emojiToDataURL('❤️', 48);
+                    const heartX = startX + doc.getTextWidth(fText);
+                    doc.addImage(heartImg, 'PNG', heartX, PH - 7.2, 2.8, 2.8);
+                } catch (e) {}
             }
 
-            html += `</div>`;
-            return html;
+            return doc;
         }
 
-        // ---------- Generate individual PDFs ----------
+        // ---------- Generate individual PDFs (jsPDF, ZIP) ----------
         async function generateIndividualPDFs() {
             const stats = window.__BILAN_STATS;
             if (!stats) { alert('Aucune donnée chargée.'); return; }
+            if (!window.jspdf) { alert('jsPDF non chargé. Rechargez la page.'); return; }
 
             const cfg = getPdfConfig();
             const progress = document.getElementById('pdfProgress');
@@ -2737,51 +3806,56 @@
             progress.classList.add('visible');
 
             const zip = new JSZip();
-
             const candidates = stats.candidateNotes;
-            // Group by class (for classStats)
-            const list = getStudentsList();
-            const classCache = {}; // classe -> computeClassStats result
-            const collegeStats = computeClassStats(null); // all
+            const classCache = {};
+            const collegeStats = computeClassStats(null);
+
+            // Pré-génération du QR code (lib qrcode-generator)
+            let qrDataUrl = null;
+            if (cfg.qrcode) {
+                if (typeof qrcode !== 'function') {
+                    alert('Bibliothèque QR code non chargée. Recharge la page (Cmd+Shift+R) puis réessaye.');
+                } else {
+                    const qrUrl = (document.getElementById('qrUrl')?.value || '').trim()
+                        || 'https://dnb2-chaissac.vercel.app/correction-dnb2.pdf';
+                    try {
+                        const qr = qrcode(0, 'M');
+                        qr.addData(qrUrl);
+                        qr.make();
+                        qrDataUrl = qr.createDataURL(6, 0);
+                        console.log('QR code généré pour URL :', qrUrl);
+                    } catch (e) {
+                        console.error('QR code échec', e);
+                        alert('Échec génération QR code : ' + (e.message || e));
+                    }
+                }
+            }
 
             for (let i = 0; i < candidates.length; i++) {
                 const c = candidates[i];
-                progress.textContent = `⏳ Génération ${i+1}/${candidates.length} — ${formatStudentName(c.id)}...`;
-                await new Promise(r => setTimeout(r, 10));
+                progress.textContent = `⏳ Génération ${i + 1}/${candidates.length} — ${formatStudentName(c.id)}...`;
+                // yield to UI
+                await new Promise(r => setTimeout(r, 0));
 
-                // Class stats for this student
                 const classe = getStudentClass(c.id);
-                let classStats = null;
+                let classStats;
                 if (classe) {
                     if (!classCache[classe]) classCache[classe] = computeClassStats(classe);
                     classStats = classCache[classe];
                 } else {
-                    classStats = collegeStats; // fallback to global if no class info
+                    classStats = collegeStats;
                 }
 
-                // Fresh container for each PDF (avoids stale layout)
-                const container = document.createElement('div');
-                container.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:white;';
-                container.innerHTML = buildBilanHTML(c.id, cfg, classStats, collegeStats);
-                document.body.appendChild(container);
-                const bilanEl = container.querySelector('.bilan-pdf');
-
-                const opt = {
-                    margin: 0,
-                    filename: `bilan_${c.id}_${formatStudentName(c.id).replace(/\s+/g,'_')}.pdf`,
-                    image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'] }
-                };
                 try {
-                    const pdfBlob = await html2pdf().set(opt).from(bilanEl).outputPdf('blob');
+                    const doc = buildIndividualBilanPDF(c.id, cfg, classStats, collegeStats, qrDataUrl);
+                    const pdfBlob = doc.output('blob');
                     const classFolder = classe ? `${classe}/` : '';
-                    zip.file(`${classFolder}${opt.filename}`, pdfBlob);
+                    const safeName = formatStudentName(c.id).replace(/\s+/g, '_').replace(/[^\w.\-]/g, '');
+                    const filename = `bilan_${c.id}_${safeName}.pdf`;
+                    zip.file(`${classFolder}${filename}`, pdfBlob);
                 } catch (err) {
                     console.error('Erreur PDF pour', c.id, err);
                 }
-                document.body.removeChild(container);
             }
 
             progress.textContent = `📦 Création du ZIP...`;
@@ -2789,7 +3863,7 @@
             const url = URL.createObjectURL(zipBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `bilans_individuels_DNB2_${new Date().toISOString().slice(0,10)}.zip`;
+            a.download = `bilans_individuels_DNB2_${new Date().toISOString().slice(0, 10)}.zip`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -2800,20 +3874,20 @@
             setTimeout(() => progress.classList.remove('visible'), 6000);
         }
 
-        // ---------- Generate class PDF (pdfmake) ----------
+        // ---------- Generate class PDF (jsPDF) ----------
         async function generateClassPDF() {
             const stats = window.__BILAN_STATS;
             if (!stats) { alert('Aucune donnée chargée.'); return; }
+            if (!window.jspdf) { alert('jsPDF non chargé. Rechargez la page.'); return; }
 
             const btn = document.getElementById('btnClassPDF');
             const progress = document.getElementById('pdfProgress');
             btn.disabled = true;
             progress.classList.add('visible');
             progress.textContent = `⏳ Génération des bilans classe...`;
-            await new Promise(r => setTimeout(r, 10));
+            await new Promise(r => setTimeout(r, 0));
 
             const list = getStudentsList();
-
             let classes = [];
             if (list) {
                 const set = new Set();
@@ -2825,32 +3899,31 @@
             }
             if (classes.length === 0) classes = [null];
 
-            const zip = new JSZip();
-            for (const classe of classes) {
-                const cs = computeClassStats(classe);
-                if (!cs) continue;
-                const docDef = buildClassBilanDocDefinition(classe, cs);
-                const pdfBlob = await new Promise((resolve) => {
-                    pdfMake.createPdf(docDef).getBlob(resolve);
-                });
-                const filename = `bilan_classe_${classe || 'global'}.pdf`;
-                zip.file(filename, pdfBlob);
-            }
-
             if (classes.length === 1) {
-                const name = classes[0] ? `bilan_classe_${classes[0]}` : 'bilan_classe_global';
-                const blob = await zip.file(`${name}.pdf`).async('blob');
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = `${name}.pdf`;
-                document.body.appendChild(a); a.click(); a.remove();
-                URL.revokeObjectURL(url);
+                const classe = classes[0];
+                const cs = computeClassStats(classe);
+                if (!cs) {
+                    alert('Impossible de calculer les statistiques de classe.');
+                    btn.disabled = false; progress.classList.remove('visible'); return;
+                }
+                const doc = buildClassBilanPDF(classe, cs);
+                const safe = classe ? classe.replace(/\s+/g, '_') : 'global';
+                doc.save(`bilan_classe_${safe}.pdf`);
             } else {
+                const zip = new JSZip();
+                for (const classe of classes) {
+                    const cs = computeClassStats(classe);
+                    if (!cs) continue;
+                    const doc = buildClassBilanPDF(classe, cs);
+                    const pdfBlob = doc.output('blob');
+                    const safe = classe ? classe.replace(/\s+/g, '_') : 'global';
+                    zip.file(`bilan_classe_${safe}.pdf`, pdfBlob);
+                }
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 const url = URL.createObjectURL(zipBlob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `bilans_classes_DNB2_${new Date().toISOString().slice(0,10)}.zip`;
+                a.download = `bilans_classes_DNB2_${new Date().toISOString().slice(0, 10)}.zip`;
                 document.body.appendChild(a); a.click(); a.remove();
                 URL.revokeObjectURL(url);
             }
@@ -2860,267 +3933,601 @@
             setTimeout(() => progress.classList.remove('visible'), 6000);
         }
 
-        // ---------- Build pdfmake doc for class bilan ----------
-        function buildClassBilanDocDefinition(classe, cs) {
-            const classLabel = classe || 'Toutes copies (anonymes)';
-            const today = new Date().toLocaleDateString('fr-FR');
+        // =====================================================================
+        // ============== MODALES D'APERÇU STYLE MATHEVAL =====================
+        // =====================================================================
+
+        // --- Palette & helpers communs modales ---
+        const MV_COMPS = [
+            { name: 'Modéliser',   color: '#8b5cf6', emoji: '🏗️' },
+            { name: 'Communiquer', color: '#f97316', emoji: '💬' },
+            { name: 'Calculer',    color: '#3b82f6', emoji: '🧮' },
+            { name: 'Raisonner',   color: '#10b981', emoji: '🧩' },
+            { name: 'Représenter', color: '#ef4444', emoji: '🎨' },
+            { name: 'Chercher',    color: '#f59e0b', emoji: '🔍' }
+        ];
+
+        function mvLevel(noteSur20) {
+            if (noteSur20 >= LEVEL_THRESHOLDS.TBM) return { code: 'TBM', label: 'Très Bonne Maîtrise', color: LEVEL_COLORS.TBM };
+            if (noteSur20 >= LEVEL_THRESHOLDS.MS)  return { code: 'MS',  label: 'Maîtrise Satisfaisante', color: LEVEL_COLORS.MS };
+            if (noteSur20 >= LEVEL_THRESHOLDS.MF)  return { code: 'MF',  label: 'Maîtrise Fragile', color: LEVEL_COLORS.MF };
+            return { code: 'MI', label: 'Maîtrise Insuffisante', color: LEVEL_COLORS.MI };
+        }
+        function mvLevelFromPct(p) {
+            // Pour pourcentages (exercices, compétences)
+            if (p >= 80) return { code: 'TBM', color: LEVEL_COLORS.TBM };
+            if (p >= 60) return { code: 'MS',  color: LEVEL_COLORS.MS };
+            if (p >= 40) return { code: 'MF',  color: LEVEL_COLORS.MF };
+            return { code: 'MI', color: LEVEL_COLORS.MI };
+        }
+
+        function mvFmt(n) {
+            if (n == null || isNaN(n)) return '–';
+            return (n % 1 === 0) ? String(n) : (Math.round(n * 10) / 10).toString().replace('.', ',');
+        }
+
+        // Nom élève en fonction config (CSV, anonMath, fallback candidat)
+        function mvStudentName(id) {
+            return formatStudentName(id);
+        }
+
+        // ================== MODALE BILAN CLASSE ==================
+        function showClassPreviewModal() {
             const stats = window.__BILAN_STATS;
-            const candidatesInClass = stats.candidateNotes
-                .filter(c => cs.ids.includes(c.id))
-                .sort((a, b) => formatStudentName(a.id).localeCompare(formatStudentName(b.id), 'fr'));
+            if (!stats || !stats.candidateNotes || !stats.candidateNotes.length) {
+                alert('Aucune donnée disponible. Importez un JSON d\'abord.');
+                return;
+            }
+            const cs = computeClassStats(null); // global (toutes classes)
+            if (!cs) { alert('Impossible de calculer les stats de classe.'); return; }
 
-            // === Stats cards row ===
-            const statsRow = {
-                columns: [
-                    statCard(fmtNum(cs.moyenne, 2), 'Moyenne /20'),
-                    statCard(fmtNum(cs.min, 1), 'Note min'),
-                    statCard(fmtNum(cs.max, 1), 'Note max'),
-                    statCard(fmtNum(cs.std, 2), 'Écart-type')
-                ],
-                columnGap: 8,
-                margin: [0, 0, 0, 12]
-            };
+            const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const avgSur20 = cs.moyenne;
+            const medSur20 = (() => {
+                const notes = stats.candidateNotes.map(c => c.note).sort((a, b) => a - b);
+                const n = notes.length, mid = Math.floor(n / 2);
+                if (n === 0) return 0;
+                return n % 2 === 0 ? (notes[mid - 1] + notes[mid]) / 2 : notes[mid];
+            })();
 
-            // === Répartition par niveau ===
-            const repartRow = {
-                columns: [
-                    levelCard('MI · Insuffisante', cs.repart.MI, LEVEL_COLORS.MI),
-                    levelCard('MF · Fragile', cs.repart.MF, LEVEL_COLORS.MF),
-                    levelCard('MS · Satisfaisante', cs.repart.MS, LEVEL_COLORS.MS),
-                    levelCard('TBM · Très Bonne', cs.repart.TBM, LEVEL_COLORS.TBM)
-                ],
-                columnGap: 8,
-                margin: [0, 4, 0, 12]
-            };
-
-            // === Perf par exercice (table with colored bar) ===
-            const perfRows = Object.entries(EXERCISES).map(([exNum, ex]) => {
-                const scores = candidatesInClass.map(c => c.exerciseScores[exNum] || 0);
-                const avg = scores.reduce((a, b) => a + b, 0) / (scores.length || 1);
-                const pct = Math.round((avg / ex.max) * 100);
-                const color = getCompColor(pct);
-                return [
-                    { text: `Ex.${exNum} ${ex.name}`, style: 'tdLabel' },
-                    { text: `${fmtNum(avg, 1)} / ${ex.max}`, style: 'tdNum' },
-                    { text: `${pct} %`, style: 'tdNum', color: color, bold: true }
-                ];
+            // Histogramme : distribution par tranche de 2 points (0-2, 2-4, ..., 18-20)
+            const distBins = new Array(10).fill(0);
+            const distLabels = ['0-2','2-4','4-6','6-8','8-10','10-12','12-14','14-16','16-18','18-20'];
+            stats.candidateNotes.forEach(c => {
+                const bin = Math.min(9, Math.floor(c.note / 2));
+                distBins[bin]++;
             });
 
-            // === Tableau notes individuelles ===
-            const notesHeader = [
-                { text: 'Élève', style: 'tableHeader' },
-                { text: 'Note /20', style: 'tableHeader', alignment: 'center' },
-                { text: 'Ex1', style: 'tableHeader', alignment: 'center' },
-                { text: 'Ex2', style: 'tableHeader', alignment: 'center' },
-                { text: 'Ex3', style: 'tableHeader', alignment: 'center' },
-                { text: 'Ex4', style: 'tableHeader', alignment: 'center' },
-                { text: 'Ex5', style: 'tableHeader', alignment: 'center' },
-                { text: 'Ex6', style: 'tableHeader', alignment: 'center' },
-                { text: 'Préş.', style: 'tableHeader', alignment: 'center' },
-                { text: 'Niveau', style: 'tableHeader', alignment: 'center' }
-            ];
-            const notesRows = candidatesInClass.map(c => {
-                const level = getLevel(c.note);
-                const color = LEVEL_COLORS[level];
-                const ex = c.exerciseScores;
-                return [
-                    { text: formatStudentName(c.id), style: 'tdName' },
-                    { text: fmtNum(c.note, 1), fillColor: color, color: 'white', alignment: 'center', bold: true },
-                    { text: fmtNum(ex['1'] || 0), alignment: 'center' },
-                    { text: fmtNum(ex['2'] || 0), alignment: 'center' },
-                    { text: fmtNum(ex['3'] || 0), alignment: 'center' },
-                    { text: fmtNum(ex['4'] || 0), alignment: 'center' },
-                    { text: fmtNum(ex['5'] || 0), alignment: 'center' },
-                    { text: fmtNum(ex['6'] || 0), alignment: 'center' },
-                    { text: fmtNum(c.presScore), alignment: 'center' },
-                    { text: level, alignment: 'center', color: color, bold: true }
-                ];
+            // Exercices : pct de réussite avec lvl
+            const exData = Object.entries(EXERCISES).map(([exNum, ex]) => {
+                const perf = stats.exercisePerf[exNum];
+                const pct = perf ? perf.pct : 0;
+                return {
+                    num: exNum,
+                    name: ex.name,
+                    emoji: ex.emoji,
+                    max: ex.max,
+                    pct,
+                    lvl: mvLevelFromPct(pct)
+                };
             });
 
-            return {
-                pageSize: 'A4',
-                pageMargins: [30, 28, 30, 30],
-                defaultStyle: { font: 'Roboto', fontSize: 9, color: '#1f2937' },
-                styles: {
-                    h1: { fontSize: 15, bold: true, color: 'white' },
-                    h1sub: { fontSize: 9, color: 'white', margin: [0, 3, 0, 0] },
-                    h3: { fontSize: 11, bold: true, color: '#4b5563', margin: [0, 10, 0, 6] },
-                    statVal: { fontSize: 16, bold: true, color: '#6366f1', alignment: 'center' },
-                    statLabel: { fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 2, 0, 0] },
-                    levelNum: { fontSize: 17, bold: true, color: 'white', alignment: 'center' },
-                    levelLbl: { fontSize: 8, color: 'white', alignment: 'center', margin: [0, 2, 0, 0] },
-                    tableHeader: { bold: true, fontSize: 8.5, color: '#374151', fillColor: '#f3f4f6' },
-                    tdLabel: { fontSize: 9, bold: false },
-                    tdNum: { fontSize: 9, alignment: 'right' },
-                    tdName: { fontSize: 8.5 },
-                    footer: { fontSize: 8, color: '#9ca3af', alignment: 'center', italics: true }
-                },
-                content: [
-                    // Header box
-                    {
-                        table: {
-                            widths: ['*'],
-                            body: [[{
-                                fillColor: '#6366f1',
-                                stack: [
-                                    { text: `📊 Bilan classe ${classLabel}`, style: 'h1' },
-                                    { text: `DNB Blanc n°2 — Collège Gaston Chaissac — Avril 2026 — ${cs.n} élèves`, style: 'h1sub' }
-                                ],
-                                margin: [12, 10, 12, 10],
-                                border: [false, false, false, false]
-                            }]]
+            // Seuils analyse
+            const TH_MS = 60, TH_MF = 40;
+            const acquis     = exData.filter(e => e.pct >= TH_MS);
+            const renforcer  = exData.filter(e => e.pct >= TH_MF && e.pct < TH_MS);
+            const nonAcquis  = exData.filter(e => e.pct < TH_MF);
+
+            // Lignes élèves avec compétences
+            const studentRows = stats.candidateNotes
+                .slice()
+                .sort((a, b) => b.note - a.note)
+                .map((c, i) => {
+                    const comp = computeStudentCompetences(c.id);
+                    return {
+                        rank: i + 1,
+                        id: c.id,
+                        name: mvStudentName(c.id),
+                        note: c.note,
+                        lvl: mvLevel(c.note),
+                        comps: comp ? comp.pcts : {}
+                    };
+                });
+
+            // Couleur entête
+            const CSS_PRIMARY = '#4f46e5';
+
+            // Construction DOM
+            const overlay = document.createElement('div');
+            overlay.className = 'preview-overlay';
+            overlay.id = 'mv-class-overlay';
+
+            const histId = 'mv-class-hist-' + Date.now();
+
+            overlay.innerHTML = `
+              <div class="preview-panel" onclick="event.stopPropagation()">
+                <div class="preview-header">
+                  <div>
+                    <h2>📊 BILAN DE CLASSE — Mathématiques</h2>
+                    <div class="sub">DNB Blanc n°2 — ${today} • ${cs.n} élève${cs.n > 1 ? 's' : ''}</div>
+                  </div>
+                  <div class="actions">
+                    <button class="preview-btn" id="mv-class-export">📥 Exporter PDF</button>
+                    <button class="preview-btn preview-btn-close" id="mv-class-close">✕</button>
+                  </div>
+                </div>
+                <div class="preview-body">
+
+                  <!-- Stats cards -->
+                  <div class="mv-stats-grid">
+                    <div class="mv-stat-card" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none;">
+                      <div class="mv-stat-val" style="color: white">${mvFmt(avgSur20)}/20</div>
+                      <div class="mv-stat-lbl" style="color: rgba(255,255,255,0.85)">Moyenne</div>
+                    </div>
+                    <div class="mv-stat-card">
+                      <div class="mv-stat-val" style="color: var(--gray-700)">${mvFmt(medSur20)}</div>
+                      <div class="mv-stat-lbl">Médiane</div>
+                    </div>
+                    <div class="mv-stat-card">
+                      <div class="mv-stat-val" style="color: var(--danger)">${mvFmt(cs.min)}</div>
+                      <div class="mv-stat-lbl">Minimum</div>
+                    </div>
+                    <div class="mv-stat-card">
+                      <div class="mv-stat-val" style="color: var(--success)">${mvFmt(cs.max)}</div>
+                      <div class="mv-stat-lbl">Maximum</div>
+                    </div>
+                  </div>
+
+                  <!-- Niveaux -->
+                  <div class="mv-levels">
+                    <div class="mv-level" style="border-color: ${LEVEL_COLORS.TBM}; background: ${LEVEL_COLORS.TBM}15;">
+                      <div class="mv-level-count" style="color: ${LEVEL_COLORS.TBM}">${cs.repart.TBM}</div>
+                      <div class="mv-level-code" style="color: ${LEVEL_COLORS.TBM}">TBM</div>
+                    </div>
+                    <div class="mv-level" style="border-color: ${LEVEL_COLORS.MS}; background: ${LEVEL_COLORS.MS}15;">
+                      <div class="mv-level-count" style="color: ${LEVEL_COLORS.MS}">${cs.repart.MS}</div>
+                      <div class="mv-level-code" style="color: ${LEVEL_COLORS.MS}">MS</div>
+                    </div>
+                    <div class="mv-level" style="border-color: ${LEVEL_COLORS.MF}; background: ${LEVEL_COLORS.MF}15;">
+                      <div class="mv-level-count" style="color: ${LEVEL_COLORS.MF}">${cs.repart.MF}</div>
+                      <div class="mv-level-code" style="color: ${LEVEL_COLORS.MF}">MF</div>
+                    </div>
+                    <div class="mv-level" style="border-color: ${LEVEL_COLORS.MI}; background: ${LEVEL_COLORS.MI}15;">
+                      <div class="mv-level-count" style="color: ${LEVEL_COLORS.MI}">${cs.repart.MI}</div>
+                      <div class="mv-level-code" style="color: ${LEVEL_COLORS.MI}">MI</div>
+                    </div>
+                  </div>
+
+                  <!-- Histogramme + Compétences -->
+                  <div class="mv-twocol">
+                    <div class="mv-card">
+                      <h3>📊 Répartition des notes</h3>
+                      <div style="height: 220px;"><canvas id="${histId}"></canvas></div>
+                    </div>
+                    <div class="mv-card">
+                      <h3>🎯 Compétences de la classe</h3>
+                      ${MV_COMPS.map(comp => {
+                          const pct = stats.competencePercents[comp.name] || 0;
+                          const lvl = mvLevelFromPct(pct);
+                          return `
+                            <div class="mv-compbar">
+                              <div class="mv-compbar-row">
+                                <span class="mv-compbar-name" style="color: ${comp.color}">${comp.emoji} ${comp.name}</span>
+                                <span class="mv-compbar-pct" style="color: ${lvl.color}">${lvl.code} ${pct}%</span>
+                              </div>
+                              <div class="mv-compbar-track">
+                                <div class="mv-compbar-fill" style="width: ${pct}%; background: ${comp.color};"></div>
+                              </div>
+                            </div>`;
+                      }).join('')}
+                    </div>
+                  </div>
+
+                  <!-- Tableau exercices -->
+                  <div class="mv-card" style="margin-bottom: 18px;">
+                    <h3>📈 Taux de réussite par exercice</h3>
+                    <table class="mv-exrank">
+                      <thead><tr>
+                        <th>#</th><th>Exercice</th><th style="text-align: center;">Points</th>
+                        <th style="width: 35%;">Réussite classe</th>
+                        <th style="text-align: center;">Niveau</th>
+                      </tr></thead>
+                      <tbody>
+                        ${exData.map(e => `
+                          <tr>
+                            <td style="font-weight: 700; color: var(--gray-500)">${e.num}</td>
+                            <td>${e.emoji} ${e.name}</td>
+                            <td style="text-align: center;">${e.max}</td>
+                            <td>
+                              <div class="mv-progress-wrap">
+                                <div class="mv-progress-track">
+                                  <div class="mv-progress-fill" style="width: ${e.pct}%; background: ${e.lvl.color};"></div>
+                                </div>
+                                <span style="font-weight: 700; min-width: 38px; text-align: right;">${e.pct}%</span>
+                              </div>
+                            </td>
+                            <td style="text-align: center;">
+                              <span class="mv-badge" style="background: ${e.lvl.color};">${e.lvl.code}</span>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Analyse -->
+                  <h3 style="margin-bottom: 10px; color: var(--gray-700);">Analyse des acquis</h3>
+                  <div class="mv-analyse">
+                    <div class="mv-analyse-box" style="border-color: ${LEVEL_COLORS.TBM}; background: ${LEVEL_COLORS.TBM}10;">
+                      <h4 style="color: ${LEVEL_COLORS.TBM}">✅ Acquis (≥${TH_MS}%)</h4>
+                      ${acquis.length ? acquis.map(e => `<div class="mv-analyse-item"><strong>Ex ${e.num}</strong> — ${e.name} <span style="color: ${LEVEL_COLORS.TBM}; font-weight: 700;">(${e.pct}%)</span></div>`).join('') : '<div class="mv-analyse-item" style="font-style: italic; color: var(--gray-400)">Aucun</div>'}
+                    </div>
+                    <div class="mv-analyse-box" style="border-color: ${LEVEL_COLORS.MF}; background: ${LEVEL_COLORS.MF}10;">
+                      <h4 style="color: ${LEVEL_COLORS.MF}">⚠️ À renforcer (${TH_MF}-${TH_MS}%)</h4>
+                      ${renforcer.length ? renforcer.map(e => `<div class="mv-analyse-item"><strong>Ex ${e.num}</strong> — ${e.name} <span style="color: ${LEVEL_COLORS.MF}; font-weight: 700;">(${e.pct}%)</span></div>`).join('') : '<div class="mv-analyse-item" style="font-style: italic; color: var(--gray-400)">Aucun</div>'}
+                    </div>
+                    <div class="mv-analyse-box" style="border-color: ${LEVEL_COLORS.MI}; background: ${LEVEL_COLORS.MI}10;">
+                      <h4 style="color: ${LEVEL_COLORS.MI}">❌ Non acquis (&lt;${TH_MF}%)</h4>
+                      ${nonAcquis.length ? nonAcquis.map(e => `<div class="mv-analyse-item"><strong>Ex ${e.num}</strong> — ${e.name} <span style="color: ${LEVEL_COLORS.MI}; font-weight: 700;">(${e.pct}%)</span></div>`).join('') : '<div class="mv-analyse-item" style="font-style: italic; color: var(--gray-400)">Aucun</div>'}
+                    </div>
+                  </div>
+
+                  <!-- Tableau élèves -->
+                  <div class="mv-card">
+                    <h3>👥 Récapitulatif par élève</h3>
+                    <div style="overflow-x: auto;">
+                      <table class="mv-stab">
+                        <thead><tr>
+                          <th>#</th>
+                          <th style="text-align: left;">Nom</th>
+                          <th>Note /20</th>
+                          <th>Niveau</th>
+                          ${MV_COMPS.map(c => `<th title="${c.name}">${c.emoji}<br><span style="font-size: 0.72em">${c.name.slice(0, 6)}</span></th>`).join('')}
+                        </tr></thead>
+                        <tbody>
+                          ${studentRows.map(r => `
+                            <tr>
+                              <td style="color: var(--gray-500); font-weight: 700;">${r.rank}</td>
+                              <td class="name">${r.name}</td>
+                              <td style="font-weight: 700;">${mvFmt(r.note)}</td>
+                              <td><span class="mv-badge" style="background: ${r.lvl.color};">${r.lvl.code}</span></td>
+                              ${MV_COMPS.map(c => {
+                                  const p = r.comps[c.name];
+                                  if (p === undefined || p === null) return '<td style="color: #ccc;">—</td>';
+                                  const clv = mvLevelFromPct(p);
+                                  return `<td><span class="mv-mini-badge" style="background: ${clv.color}22; color: ${clv.color};">${p}%</span></td>`;
+                              }).join('')}
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            `;
+
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+            overlay.querySelector('#mv-class-close').addEventListener('click', () => overlay.remove());
+            overlay.querySelector('#mv-class-export').addEventListener('click', () => {
+                overlay.remove();
+                generateClassPDF();
+            });
+            // ESC
+            const escHandler = (e) => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escHandler); } };
+            document.addEventListener('keydown', escHandler);
+
+            // Chart.js histogramme
+            requestAnimationFrame(() => {
+                const ctx = document.getElementById(histId);
+                if (!ctx) return;
+                // Couleurs par bin selon niveau
+                const binColors = distLabels.map((_, i) => {
+                    const midNote = i * 2 + 1;
+                    return mvLevel(midNote).color;
+                });
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: distLabels,
+                        datasets: [{
+                            data: distBins,
+                            backgroundColor: binColors,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: (ctx) => `${ctx.raw} élève${ctx.raw > 1 ? 's' : ''}` } }
                         },
-                        layout: 'noBorders',
-                        margin: [0, 0, 0, 12]
-                    },
-                    statsRow,
-                    { text: `Répartition par niveau (seuils : TBM≥${LEVEL_THRESHOLDS.TBM} / MS≥${LEVEL_THRESHOLDS.MS} / MF≥${LEVEL_THRESHOLDS.MF})`, style: 'h3' },
-                    repartRow,
-                    { text: 'Performance moyenne par exercice', style: 'h3' },
-                    {
-                        table: { widths: ['*', 60, 50], body: perfRows },
-                        layout: {
-                            hLineColor: () => '#e5e7eb',
-                            vLineColor: () => '#e5e7eb',
-                            hLineWidth: () => 0.5,
-                            vLineWidth: () => 0.5,
-                            paddingTop: () => 4, paddingBottom: () => 4
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } },
+                            x: { grid: { display: false } }
                         }
-                    },
-                    { text: 'Notes individuelles', style: 'h3' },
-                    {
-                        table: {
-                            headerRows: 1,
-                            widths: ['*', 44, 22, 22, 22, 22, 22, 22, 28, 35],
-                            body: [notesHeader, ...notesRows]
-                        },
-                        layout: {
-                            hLineColor: () => '#e5e7eb',
-                            vLineColor: () => '#e5e7eb',
-                            hLineWidth: () => 0.5,
-                            vLineWidth: () => 0.5,
-                            paddingTop: () => 3, paddingBottom: () => 3
-                        }
-                    },
-                    { text: `Bilan classe généré le ${today} — M. Belhaj — DNB Blanc n°2`, style: 'footer', margin: [0, 16, 0, 0] }
-                ]
-            };
+                    }
+                });
+            });
         }
 
-        function statCard(val, label) {
-            return {
-                table: {
-                    widths: ['*'],
-                    body: [[{
-                        stack: [{ text: val, style: 'statVal' }, { text: label, style: 'statLabel' }],
-                        fillColor: '#f9fafb',
-                        margin: [6, 8, 6, 8],
-                        border: [true, true, true, true]
-                    }]]
-                },
-                layout: {
-                    hLineColor: () => '#e5e7eb', vLineColor: () => '#e5e7eb',
-                    hLineWidth: () => 0.5, vLineWidth: () => 0.5
-                }
-            };
-        }
-
-        function levelCard(lbl, num, color) {
-            return {
-                table: {
-                    widths: ['*'],
-                    body: [[{
-                        stack: [{ text: lbl, style: 'levelLbl' }, { text: String(num), style: 'levelNum' }],
-                        fillColor: color,
-                        margin: [6, 10, 6, 10],
-                        border: [false, false, false, false]
-                    }]]
-                },
-                layout: 'noBorders'
-            };
-        }
-
-        function buildClassBilanHTML(classe, cs) {
+        // ================== MODALE BILAN INDIVIDUEL ==================
+        function showIndividualPreviewModal() {
             const stats = window.__BILAN_STATS;
-            const list = getStudentsList();
-            // Sort candidates by name (if list) or by id
-            const candidatesInClass = stats.candidateNotes.filter(c => cs.ids.includes(c.id));
-            candidatesInClass.sort((a, b) => {
-                const na = formatStudentName(a.id);
-                const nb = formatStudentName(b.id);
-                return na.localeCompare(nb, 'fr');
-            });
-
-            const classLabel = classe || 'Toutes copies (anonymes)';
-            const today = new Date().toLocaleDateString('fr-FR');
-
-            let rows = '';
-            candidatesInClass.forEach(c => {
-                const level = getLevel(c.note);
-                const color = LEVEL_COLORS[level];
-                const name = formatStudentName(c.id);
-                const ex = c.exerciseScores;
-                rows += `<tr>
-                    <td>${name}</td>
-                    <td><span class="bc-note-pill" style="background:${color}">${fmtNum(c.note, 1)}</span></td>
-                    <td>${fmtNum(ex['1'] || 0)}</td>
-                    <td>${fmtNum(ex['2'] || 0)}</td>
-                    <td>${fmtNum(ex['3'] || 0)}</td>
-                    <td>${fmtNum(ex['4'] || 0)}</td>
-                    <td>${fmtNum(ex['5'] || 0)}</td>
-                    <td>${fmtNum(ex['6'] || 0)}</td>
-                    <td>${fmtNum(c.presScore)}</td>
-                    <td>${level}</td>
-                </tr>`;
-            });
-
-            // Perf par exo
-            let perfHtml = '';
-            for (const [exNum, ex] of Object.entries(EXERCISES)) {
-                const scores = candidatesInClass.map(c => c.exerciseScores[exNum] || 0);
-                const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-                const pct = Math.round((avg / ex.max) * 100);
-                const color = getCompColor(pct);
-                perfHtml += `<div class="bp-comp-row" style="margin-bottom:6px">
-                    <div class="bp-comp-label" style="width:150px">Ex.${exNum} ${ex.name}</div>
-                    <div class="bp-comp-bg" style="flex:1;background:#e5e7eb;border-radius:8px;height:11px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:8px"></div></div>
-                    <div class="bp-comp-pct" style="width:48px;text-align:right;font-weight:700;color:${color}">${pct}%</div>
-                </div>`;
+            if (!stats || !stats.candidateNotes || !stats.candidateNotes.length) {
+                alert('Aucune donnée disponible. Importez un JSON d\'abord.');
+                return;
             }
 
-            return `<div class="bilan-classe-pdf">
-                <div class="bc-header">
-                    <h2>📊 Bilan classe ${classLabel} — DNB Blanc n°2</h2>
-                    <div>Collège Gaston Chaissac — Avril 2026 — <strong>${cs.n} élèves</strong></div>
+            // Liste triée par ID numérique stable (celle utilisée par getMathematicianName)
+            const sortedIds = stats.candidateNotes.map(c => c.id).sort((a, b) => {
+                const na = parseInt(a, 10), nb = parseInt(b, 10);
+                if (!isNaN(na) && !isNaN(nb)) return na - nb;
+                return String(a).localeCompare(String(b));
+            });
+
+            let currentIdx = 0;
+            const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            const overlay = document.createElement('div');
+            overlay.className = 'preview-overlay';
+            overlay.id = 'mv-indiv-overlay';
+
+            overlay.innerHTML = `
+              <div class="preview-panel" onclick="event.stopPropagation()">
+                <div class="preview-header">
+                  <div>
+                    <h2>📝 BILAN INDIVIDUEL — Mathématiques</h2>
+                    <div class="sub">DNB Blanc n°2 — ${today} • ${sortedIds.length} élève${sortedIds.length > 1 ? 's' : ''}</div>
+                  </div>
+                  <div class="actions">
+                    <button class="preview-btn preview-btn-close" id="mv-indiv-close">✕</button>
+                  </div>
                 </div>
-                <div class="bc-stats">
-                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.moyenne, 2)}</div><div class="bc-stat-label">Moyenne /20</div></div>
-                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.min, 1)}</div><div class="bc-stat-label">Note min</div></div>
-                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.max, 1)}</div><div class="bc-stat-label">Note max</div></div>
-                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.std, 2)}</div><div class="bc-stat-label">Écart-type</div></div>
+
+                <div class="mv-indiv-topbar">
+                  <button class="mv-navbtn" id="mv-indiv-prev" title="Élève précédent">←</button>
+                  <span class="mv-indiv-counter" id="mv-indiv-counter">1 / ${sortedIds.length}</span>
+                  <button class="mv-navbtn" id="mv-indiv-next" title="Élève suivant">→</button>
+                  <input type="text" class="mv-indiv-search" id="mv-indiv-search" placeholder="🔍 Rechercher un élève..." />
+                  <button class="mv-indiv-pdfbtn secondary" id="mv-indiv-pdf-one">📄 PDF élève</button>
+                  <button class="mv-indiv-pdfbtn" id="mv-indiv-pdf-all">📦 PDF tous (ZIP)</button>
                 </div>
-                <div class="bc-block">
-                    <h3>Répartition par niveau (seuils : TBM≥${LEVEL_THRESHOLDS.TBM} / MS≥${LEVEL_THRESHOLDS.MS} / MF≥${LEVEL_THRESHOLDS.MF})</h3>
-                    <div class="bc-bars">
-                        <div class="bc-bar" style="background:${LEVEL_COLORS.MI}"><div class="lvl">MI · Insuffisante</div><div class="num">${cs.repart.MI}</div></div>
-                        <div class="bc-bar" style="background:${LEVEL_COLORS.MF}"><div class="lvl">MF · Fragile</div><div class="num">${cs.repart.MF}</div></div>
-                        <div class="bc-bar" style="background:${LEVEL_COLORS.MS}"><div class="lvl">MS · Satisfaisante</div><div class="num">${cs.repart.MS}</div></div>
-                        <div class="bc-bar" style="background:${LEVEL_COLORS.TBM}"><div class="lvl">TBM · Très Bonne</div><div class="num">${cs.repart.TBM}</div></div>
+
+                <div class="mv-indiv-namelist" id="mv-indiv-namelist"></div>
+
+                <div class="preview-body" id="mv-indiv-body"></div>
+              </div>
+            `;
+
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+            const closeAll = () => { overlay.remove(); document.removeEventListener('keydown', keyHandler); };
+            overlay.querySelector('#mv-indiv-close').addEventListener('click', closeAll);
+
+            const nameList  = overlay.querySelector('#mv-indiv-namelist');
+            const body      = overlay.querySelector('#mv-indiv-body');
+            const counter   = overlay.querySelector('#mv-indiv-counter');
+            const searchInp = overlay.querySelector('#mv-indiv-search');
+            const btnPrev   = overlay.querySelector('#mv-indiv-prev');
+            const btnNext   = overlay.querySelector('#mv-indiv-next');
+
+            // Render chips
+            sortedIds.forEach((id, i) => {
+                const chip = document.createElement('button');
+                chip.className = 'mv-namechip';
+                chip.textContent = mvStudentName(id);
+                chip.dataset.idx = i;
+                chip.addEventListener('click', () => goTo(i));
+                nameList.appendChild(chip);
+            });
+
+            function updateActiveChip() {
+                nameList.querySelectorAll('.mv-namechip').forEach((c, i) => {
+                    c.classList.toggle('active', i === currentIdx);
+                });
+                // Scroll chip into view
+                const active = nameList.querySelector('.mv-namechip.active');
+                if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+
+            function goTo(idx) {
+                if (idx < 0 || idx >= sortedIds.length) return;
+                currentIdx = idx;
+                counter.textContent = `${idx + 1} / ${sortedIds.length}`;
+                btnPrev.disabled = (idx === 0);
+                btnNext.disabled = (idx === sortedIds.length - 1);
+                updateActiveChip();
+                renderIndiv(sortedIds[idx]);
+            }
+
+            btnPrev.addEventListener('click', () => goTo(currentIdx - 1));
+            btnNext.addEventListener('click', () => goTo(currentIdx + 1));
+
+            searchInp.addEventListener('input', () => {
+                const q = searchInp.value.trim().toLowerCase();
+                let firstMatch = -1;
+                nameList.querySelectorAll('.mv-namechip').forEach((c, i) => {
+                    const match = c.textContent.toLowerCase().includes(q);
+                    c.classList.toggle('hidden', !match);
+                    if (match && firstMatch < 0) firstMatch = i;
+                });
+                if (q && firstMatch >= 0 && firstMatch !== currentIdx) {
+                    goTo(firstMatch);
+                }
+            });
+
+            const keyHandler = (e) => {
+                if (e.key === 'Escape') { closeAll(); return; }
+                if (document.activeElement === searchInp) return;
+                if (e.key === 'ArrowLeft')  { goTo(currentIdx - 1); e.preventDefault(); }
+                if (e.key === 'ArrowRight') { goTo(currentIdx + 1); e.preventDefault(); }
+            };
+            document.addEventListener('keydown', keyHandler);
+
+            // Boutons PDF
+            overlay.querySelector('#mv-indiv-pdf-one').addEventListener('click', async () => {
+                if (!window.jspdf) { alert('jsPDF non chargé.'); return; }
+                const candidateId = sortedIds[currentIdx];
+                const cfg = getPdfConfig();
+                const cs = computeClassStats(getStudentClass(candidateId));
+                const collegeStats = computeClassStats(null);
+                let qrDataUrl = null;
+                try {
+                    const qrUrl = (localStorage.getItem(QR_URL_KEY) || '').trim();
+                    if (qrUrl && typeof qrcode !== 'undefined') {
+                        const q = qrcode(0, 'M'); q.addData(qrUrl); q.make();
+                        qrDataUrl = q.createDataURL(4, 0);
+                    }
+                } catch (_) {}
+                const doc = buildIndividualBilanPDF(candidateId, cfg, cs, collegeStats, qrDataUrl);
+                const safeName = mvStudentName(candidateId).replace(/\s+/g, '_').replace(/[^\wÀ-ÿ_-]/g, '');
+                doc.save(`bilan_${safeName || candidateId}.pdf`);
+            });
+
+            overlay.querySelector('#mv-indiv-pdf-all').addEventListener('click', () => {
+                overlay.remove();
+                generateIndividualPDFs();
+            });
+
+            function renderIndiv(candidateId) {
+                const candidate = stats.candidateNotes.find(c => c.id === candidateId);
+                if (!candidate) { body.innerHTML = '<p>Élève introuvable.</p>'; return; }
+
+                const note = candidate.note;
+                const totalBrut = candidate.totalBrut;
+                const totalMax  = TOTAL_EXERCISES + PRESENTATION_MAX;
+                const lv = mvLevel(note);
+                const name = mvStudentName(candidateId);
+                const classe = getStudentClass(candidateId);
+                const apprec = (window.__RAW_DATA && window.__RAW_DATA.appState.candidateComments)
+                    ? (window.__RAW_DATA.appState.candidateComments[candidateId] || '') : '';
+                const comp = computeStudentCompetences(candidateId);
+
+                // Exercices pour cet élève
+                const exRows = Object.entries(EXERCISES).map(([exNum, ex]) => {
+                    const s = candidate.exerciseScores[exNum] || 0;
+                    const pct = ex.max > 0 ? Math.round((s / ex.max) * 100) : 0;
+                    const elv = mvLevelFromPct(pct);
+                    return { num: exNum, name: ex.name, emoji: ex.emoji, max: ex.max, score: s, pct, lvl: elv };
+                });
+
+                const histId = 'mv-indiv-hist-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+
+                // Distribution classe + marqueur position élève
+                const distBins = new Array(10).fill(0);
+                const distLabels = ['0-2','2-4','4-6','6-8','8-10','10-12','12-14','14-16','16-18','18-20'];
+                stats.candidateNotes.forEach(c => {
+                    const bin = Math.min(9, Math.floor(c.note / 2));
+                    distBins[bin]++;
+                });
+                const studentBin = Math.min(9, Math.floor(note / 2));
+
+                body.innerHTML = `
+                  <div class="mv-indiv-title">${name}${classe ? ` <span style="font-size: 0.7em; color: var(--gray-500); font-weight: 500;">— Classe ${classe}</span>` : ''}</div>
+                  <div class="mv-indiv-subtitle">BILAN D'ÉVALUATION — DNB Blanc n°2 • ${today}</div>
+
+                  <div class="mv-indiv-row-top">
+                    <div class="mv-indiv-notecard" style="background: linear-gradient(135deg, ${lv.color} 0%, ${lv.color}cc 100%);">
+                      <div class="big">${mvFmt(note)}/20</div>
+                      <div class="brut">brut : ${mvFmt(totalBrut)}/${totalMax}</div>
+                      <div class="lvl">${lv.code} — ${lv.label}</div>
                     </div>
-                </div>
-                <div class="bc-block">
-                    <h3>Performance moyenne par exercice</h3>
-                    ${perfHtml}
-                </div>
-                <div class="bc-block">
-                    <h3>Notes individuelles</h3>
-                    <table class="bc-notes">
-                        <thead><tr><th>Élève</th><th>Note /20</th><th>Ex1</th><th>Ex2</th><th>Ex3</th><th>Ex4</th><th>Ex5</th><th>Ex6</th><th>Présent.</th><th>Niveau</th></tr></thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>
-                <div class="bp-footer" style="margin-top:16px;padding-top:10px;border-top:1px dashed #d1d5db;font-size:0.8em;color:#9ca3af;text-align:center">Bilan classe généré le ${today} — DNB Blanc n°2</div>
-            </div>`;
+                    <div class="mv-apprec" style="border-left-color: ${lv.color};">
+                      <div class="t">Appréciation</div>
+                      <div>${apprec && apprec.trim() ? apprec.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '<em style="color: var(--gray-400)">Pas de commentaire.</em>'}</div>
+                    </div>
+                  </div>
+
+                  <div class="mv-twocol">
+                    <div class="mv-card">
+                      <h3>📈 EXERCICES</h3>
+                      <div class="mv-exlist">
+                        ${exRows.map(e => `
+                          <div class="mv-exrow">
+                            <span class="emo">${e.emoji}</span>
+                            <span class="lbl">${e.num}. ${e.name}</span>
+                            <div class="bar"><div class="barfill" style="width: ${e.pct}%; background: ${e.lvl.color};"></div></div>
+                            <span class="score" style="color: ${e.lvl.color};">${mvFmt(e.score)}/${e.max} · ${e.lvl.code}</span>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                    <div class="mv-card">
+                      <h3>🎯 COMPÉTENCES</h3>
+                      ${MV_COMPS.map(c => {
+                          const pct = comp ? (comp.pcts[c.name] || 0) : 0;
+                          const clvl = mvLevelFromPct(pct);
+                          return `
+                            <div class="mv-compbar">
+                              <div class="mv-compbar-row">
+                                <span class="mv-compbar-name" style="color: ${c.color}">${c.emoji} ${c.name}</span>
+                                <span class="mv-compbar-pct" style="color: ${clvl.color}">${clvl.code} ${pct}%</span>
+                              </div>
+                              <div class="mv-compbar-track">
+                                <div class="mv-compbar-fill" style="width: ${pct}%; background: ${c.color};"></div>
+                              </div>
+                            </div>`;
+                      }).join('')}
+                    </div>
+                  </div>
+
+                  <div class="mv-card">
+                    <h3>📊 POSITION DANS LA CLASSE</h3>
+                    <div style="font-size: 0.85em; color: var(--gray-600); margin-bottom: 8px;">
+                      L'élève est situé dans la tranche <strong style="color: ${lv.color}">${distLabels[studentBin]}</strong>
+                      • Moyenne classe : <strong>${mvFmt(stats.moyenne)}/20</strong>
+                    </div>
+                    <div style="height: 180px;"><canvas id="${histId}"></canvas></div>
+                  </div>
+                `;
+
+                // Chart histogramme avec barre surlignée pour l'élève
+                requestAnimationFrame(() => {
+                    const ctx = document.getElementById(histId);
+                    if (!ctx) return;
+                    const binColors = distLabels.map((_, i) => {
+                        if (i === studentBin) return lv.color; // met en avant la tranche de l'élève
+                        const midNote = i * 2 + 1;
+                        return mvLevel(midNote).color + '66'; // semi-transparent
+                    });
+                    const binBorders = distLabels.map((_, i) => i === studentBin ? '#1f2937' : 'transparent');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: distLabels,
+                            datasets: [{
+                                data: distBins,
+                                backgroundColor: binColors,
+                                borderColor: binBorders,
+                                borderWidth: 2,
+                                borderRadius: 5
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { callbacks: {
+                                    label: (ctx) => `${ctx.raw} élève${ctx.raw > 1 ? 's' : ''}${ctx.dataIndex === studentBin ? ' (dont ce candidat)' : ''}`
+                                } }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { precision: 0 } },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Démarrage
+            goTo(0);
         }
     </script>
 </body>
