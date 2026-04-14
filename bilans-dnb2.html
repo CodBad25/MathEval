@@ -6,6 +6,10 @@
     <title>DNB Blanc n°2 — Bilans & Résultats</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <!-- Libs génération PDF + import CSV/Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         /* === BILANS DNB2 - DESIGN PREMIUM === */
         :root {
@@ -826,6 +830,288 @@
             color: var(--gray-400);
             font-size: 0.85em;
         }
+
+        /* === PDF SECTION (config + génération) === */
+        .pdf-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border: 1px solid var(--gray-200);
+        }
+        .pdf-section h3 {
+            font-size: 1.2em;
+            color: var(--gray-700);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pdf-section h4 {
+            font-size: 0.95em;
+            color: var(--gray-600);
+            margin: 14px 0 8px;
+            font-weight: 600;
+        }
+
+        /* CSV/Excel drop */
+        .students-import {
+            background: var(--gray-50);
+            border: 2px dashed var(--gray-300);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+        .students-import.loaded {
+            background: #ecfdf5;
+            border-color: var(--success);
+            border-style: solid;
+        }
+        .students-import.dragover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+        .students-import-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .students-import-label {
+            font-size: 0.95em;
+            color: var(--gray-700);
+        }
+        .students-import-label .status {
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 0.85em;
+        }
+        .students-import.loaded .status { color: var(--success); }
+        .students-import-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-import-students {
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        .btn-import-students:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .btn-import-students.danger { color: var(--danger); }
+
+        /* Config grid */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+            padding: 14px 18px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        .config-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 7px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .config-item:hover { background: rgba(99, 102, 241, 0.06); }
+        .config-item input[type="checkbox"] { margin-top: 3px; cursor: pointer; flex-shrink: 0; }
+        .config-item .lbl { font-size: 0.9em; color: var(--gray-800); font-weight: 500; display: block; }
+        .config-item .desc { font-size: 0.75em; color: var(--gray-500); display: block; margin-top: 1px; }
+        .config-item.disabled { opacity: 0.45; cursor: not-allowed; }
+        .config-item.disabled input { cursor: not-allowed; }
+
+        /* Actions */
+        .pdf-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            padding-top: 6px;
+        }
+        .pdf-btn {
+            padding: 11px 22px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .pdf-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .pdf-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .pdf-btn-individual {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+            color: white;
+        }
+        .pdf-btn-class {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        .pdf-progress {
+            margin-top: 14px;
+            padding: 10px 14px;
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: var(--primary-dark);
+            display: none;
+        }
+        .pdf-progress.visible { display: block; }
+
+        /* Bilan (rendu pour capture PDF, caché à l'écran) */
+        #pdfRenderZone {
+            position: fixed;
+            top: -10000px;
+            left: 0;
+            width: 210mm;
+            background: white;
+        }
+
+        .bilan-pdf {
+            width: 210mm;
+            height: 297mm;
+            padding: 10mm 12mm;
+            background: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 9pt;
+            color: #1f2937;
+            line-height: 1.3;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .bilan-pdf .bp-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .bilan-pdf .bp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .bilan-pdf .bp-header.TBM { background: linear-gradient(135deg,#10b981 0%,#059669 100%); }
+        .bilan-pdf .bp-header.MS  { background: linear-gradient(135deg,#3b82f6 0%,#2563eb 100%); }
+        .bilan-pdf .bp-header.MF  { background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); }
+        .bilan-pdf .bp-header.MI  { background: linear-gradient(135deg,#ef4444 0%,#dc2626 100%); }
+        .bilan-pdf .bp-header .bp-id .big { font-size: 1.3em; font-weight: 700; display: block; }
+        .bilan-pdf .bp-header .bp-id .sub { font-size: 0.78em; opacity: 0.9; }
+        .bilan-pdf .bp-note {
+            text-align: center; background: rgba(255,255,255,0.25);
+            padding: 8px 14px; border-radius: 10px; min-width: 75px;
+        }
+        .bilan-pdf .bp-note .big { font-size: 1.9em; font-weight: 800; line-height: 1; }
+        .bilan-pdf .bp-note .sub { font-size: 0.7em; opacity: 0.95; margin-top: 2px; }
+
+        .bilan-pdf .bp-section { margin: 8px 0; }
+        .bilan-pdf .bp-section-title {
+            font-weight: 700; font-size: 0.85em; color: #4b5563; margin-bottom: 5px;
+            padding-bottom: 3px; border-bottom: 1.5px solid #e5e7eb;
+        }
+        .bilan-pdf .bp-apprec {
+            background: linear-gradient(135deg,#fef9c3 0%,#fef3c7 100%);
+            border-left: 4px solid #eab308; border-radius: 5px;
+            padding: 8px 12px; font-style: italic; font-size: 0.85em;
+            color: #713f12; margin: 6px 0;
+        }
+        .bilan-pdf .bp-bareme {
+            display: flex; justify-content: space-between; padding: 3px 10px;
+            background: #f9fafb; border-radius: 5px; margin-bottom: 2px; font-size: 0.82em;
+        }
+        .bilan-pdf .bp-bareme.total { background: #eff6ff; border: 1px solid #dbeafe; font-weight: 600; }
+        .bilan-pdf .bp-bareme .val { font-weight: 600; color: #6366f1; }
+        .bilan-pdf .bp-ex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .bilan-pdf .bp-ex-badge {
+            background: #f3f4f6; border-radius: 6px; padding: 5px 7px;
+            display: flex; align-items: center; gap: 5px; font-size: 0.78em;
+        }
+        .bilan-pdf .bp-ex-badge .emoji { font-size: 1em; }
+        .bilan-pdf .bp-ex-badge .label { flex: 1; font-weight: 500; }
+        .bilan-pdf .bp-ex-badge .score { font-weight: 700; color: #6366f1; }
+        .bilan-pdf .bp-nr-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+        .bilan-pdf .bp-nr-label { width: 34px; font-size: 0.72em; color: #6b7280; font-weight: 600; }
+        .bilan-pdf .bp-nr-cells { display: flex; gap: 2px; flex: 1; }
+        .bilan-pdf .bp-nr-cell { width: 11px; height: 11px; border-radius: 2px; }
+        .bilan-pdf .bp-nr-cell.ok { background: #10b981; }
+        .bilan-pdf .bp-nr-cell.nr { background: #d1d5db; }
+        .bilan-pdf .bp-nr-cell.half { background: linear-gradient(90deg,#10b981 50%, #d1d5db 50%); }
+        .bilan-pdf .bp-nr-count { font-size: 0.68em; color: #6b7280; width: 28px; text-align: right; }
+        .bilan-pdf .bp-comp-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 0.78em; }
+        .bilan-pdf .bp-comp-label { width: 85px; color: #4b5563; font-weight: 500; }
+        .bilan-pdf .bp-comp-bg { flex: 1; background: #e5e7eb; border-radius: 6px; height: 9px; overflow: hidden; }
+        .bilan-pdf .bp-comp-fg { height: 100%; border-radius: 6px; }
+        .bilan-pdf .bp-comp-pct { width: 38px; text-align: right; font-weight: 700; font-size: 0.72em; }
+        .bilan-pdf .bp-comp-row.pres { border-top: 1px dashed #d1d5db; padding-top: 3px; margin-top: 3px; }
+        .bilan-pdf .bp-posit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 6px; }
+        .bilan-pdf .bp-posit-card {
+            background: #f9fafb; padding: 6px 4px; border-radius: 6px; text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+        .bilan-pdf .bp-posit-card.self { background: #eff6ff; border-color: #6366f1; }
+        .bilan-pdf .bp-posit-val { font-size: 1.1em; font-weight: 700; color: #6366f1; }
+        .bilan-pdf .bp-posit-label { font-size: 0.64em; color: #6b7280; margin-top: 1px; }
+        .bilan-pdf .bp-posit-rank {
+            text-align: center; margin-top: 4px; font-size: 0.8em; color: #4b5563;
+        }
+        .bilan-pdf .bp-footer {
+            margin-top: 8px; padding-top: 5px; border-top: 1px dashed #d1d5db;
+            font-size: 0.68em; color: #9ca3af; text-align: center;
+        }
+
+        /* Bilan classe PDF */
+        .bilan-classe-pdf {
+            width: 210mm; padding: 12mm 14mm; background: white; box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 10pt; color: #1f2937; line-height: 1.4;
+        }
+        .bilan-classe-pdf .bc-header {
+            background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+            color: white; padding: 16px 22px; border-radius: 12px; margin-bottom: 16px;
+        }
+        .bilan-classe-pdf .bc-header h2 { font-size: 1.4em; margin-bottom: 4px; }
+        .bilan-classe-pdf .bc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .bilan-classe-pdf .bc-stat-card {
+            background: #f9fafb; padding: 14px; border-radius: 10px; text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+        .bilan-classe-pdf .bc-stat-val { font-size: 1.6em; font-weight: 700; color: #6366f1; }
+        .bilan-classe-pdf .bc-stat-label { font-size: 0.78em; color: #6b7280; margin-top: 2px; }
+        .bilan-classe-pdf .bc-block { margin: 16px 0; }
+        .bilan-classe-pdf .bc-block h3 { font-size: 1.05em; margin-bottom: 10px; color: #4b5563; }
+        .bilan-classe-pdf .bc-bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .bilan-classe-pdf .bc-bar { padding: 12px; border-radius: 8px; color: white; text-align: center; }
+        .bilan-classe-pdf .bc-bar .lvl { font-size: 0.78em; opacity: 0.9; }
+        .bilan-classe-pdf .bc-bar .num { font-size: 1.5em; font-weight: 700; margin-top: 2px; }
+        .bilan-classe-pdf table.bc-notes { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.82em; }
+        .bilan-classe-pdf .bc-notes th { background: #f3f4f6; padding: 6px; text-align: left; border-bottom: 2px solid #d1d5db; }
+        .bilan-classe-pdf .bc-notes td { padding: 5px 6px; border-bottom: 1px solid #e5e7eb; }
+        .bilan-classe-pdf .bc-note-pill {
+            display: inline-block; padding: 2px 9px; border-radius: 12px; font-weight: 700;
+            font-size: 0.82em; color: white;
+        }
     </style>
 </head>
 <body>
@@ -871,6 +1157,56 @@
 
             <!-- KPI Cards -->
             <div class="kpi-grid" id="kpiGrid"></div>
+
+            <!-- Bouton pour ouvrir la section PDF -->
+            <div style="text-align:center;margin:20px 0">
+                <button onclick="togglePdfSection()" class="pdf-btn pdf-btn-individual" id="btnTogglePdf" style="padding:14px 28px;font-size:1em">
+                    📄 Générer les bilans PDF
+                </button>
+            </div>
+
+            <!-- PDF Generation Section -->
+            <div class="pdf-section" id="pdfSection" style="display:none">
+                <h3>📄 Générer les bilans PDF</h3>
+
+                <h4>1. Liste des élèves (facultatif)</h4>
+                <div class="students-import" id="studentsImport">
+                    <div class="students-import-header">
+                        <div class="students-import-label">
+                            📋 Importez un fichier <strong>CSV ou Excel</strong> pour lever l'anonymat<br>
+                            <span class="status" id="studentsImportStatus">Aucune liste importée — les élèves apparaîtront par leur numéro de candidat</span>
+                        </div>
+                        <div class="students-import-actions">
+                            <button class="btn-import-students" onclick="document.getElementById('studentsFile').click()">📁 Choisir un fichier</button>
+                            <button class="btn-import-students danger" id="btnClearStudents" onclick="clearStudents()" style="display:none">✖ Retirer</button>
+                        </div>
+                    </div>
+                    <input type="file" id="studentsFile" accept=".csv,.xlsx,.xls,.ods" style="display:none">
+                    <div style="font-size:0.78em;color:var(--gray-500);margin-top:8px">
+                        Colonnes attendues (ordre libre, insensible à la casse) : <strong>numero</strong>, <strong>nom</strong>, <strong>prenom</strong>, <strong>classe</strong>
+                    </div>
+                </div>
+
+                <h4>2. Contenu du bilan individuel</h4>
+                <div class="config-grid" id="pdfConfigGrid">
+                    <label class="config-item"><input type="checkbox" data-cfg="header" checked><span><span class="lbl">En-tête coloré (nom + note /20)</span><span class="desc">Bandeau du haut avec identifiant et note</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="apprec" checked><span><span class="lbl">Appréciation du professeur</span><span class="desc">Commentaire personnalisé en haut du bilan</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="bareme" checked><span><span class="lbl">Détail du barème</span><span class="desc">Répartition exos (24 pts) + rédaction (2 pts)</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="exgrid" checked><span><span class="lbl">Scores par exercice</span><span class="desc">6 badges : émoji + titre + note/max</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="nrgrid" checked><span><span class="lbl">Grille des questions traitées</span><span class="desc">Carrés verts/gris pour chaque question</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="comp" checked><span><span class="lbl">Compétences (6 barres + rédaction)</span><span class="desc">Chercher, Modéliser, Représenter, Raisonner, Calculer, Communiquer</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="positclass" checked><span><span class="lbl">Positionnement dans la classe</span><span class="desc">Note vs moyenne classe, rang, min/max (nécessite CSV élèves)</span></span></label>
+                    <label class="config-item" id="cfgPositCollege"><input type="checkbox" data-cfg="positcollege"><span><span class="lbl">Positionnement dans le collège</span><span class="desc">Comparaison avec tous les 3e (si disponible)</span></span></label>
+                    <label class="config-item"><input type="checkbox" data-cfg="footer" checked><span><span class="lbl">Pied de page (date de génération)</span><span class="desc">Mention "Bilan généré le..."</span></span></label>
+                </div>
+
+                <div class="pdf-actions">
+                    <button class="pdf-btn pdf-btn-class" id="btnClassPDF" onclick="generateClassPDF()">🏫 PDF bilan classe</button>
+                    <button class="pdf-btn pdf-btn-individual" id="btnIndivPDF" onclick="generateIndividualPDFs()">📄 PDFs individuels (ZIP)</button>
+                </div>
+
+                <div class="pdf-progress" id="pdfProgress"></div>
+            </div>
 
             <!-- Charts Row 1 -->
             <div class="charts-grid">
@@ -942,6 +1278,9 @@
     <div class="footer" id="footer" style="display:none;">
         Généré dynamiquement à partir des données JSON — DNB Blanc n°2 — Avril 2026
     </div>
+
+    <!-- Zone de rendu cachée pour capture PDF -->
+    <div id="pdfRenderZone"></div>
 
     <script>
         // Register Chart.js datalabels plugin
@@ -1060,6 +1399,7 @@
 
         // ========== DATA PROCESSING ==========
         function processData(data) {
+            window.__RAW_DATA = data; // Store for PDF generation access
             const { scores, presentationScores, validatedCandidates, quickButtonStates, baremeConfig } = data.appState;
 
             // Identify validated candidates
@@ -1318,11 +1658,15 @@
 
         // ========== RENDER DASHBOARD ==========
         function renderDashboard(stats) {
+            window.__BILAN_STATS = stats; // Store for PDF generation access
             // Show dashboard, hide import
             document.getElementById('importScreen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('headerActions').style.display = 'flex';
             document.getElementById('footer').style.display = 'block';
+
+            // Init PDF section (config + students import)
+            initPdfSection();
 
             // Candidate count
             const badge = document.getElementById('candidateBadge');
@@ -1939,6 +2283,669 @@
             `;
 
             grid.innerHTML = html;
+        }
+
+        // =====================================================
+        // ========== PDF GENERATION & CONFIG ==========
+        // =====================================================
+
+        function togglePdfSection() {
+            const sec = document.getElementById('pdfSection');
+            const btn = document.getElementById('btnTogglePdf');
+            if (sec.style.display === 'none') {
+                sec.style.display = 'block';
+                btn.innerHTML = '▲ Masquer le panneau de génération';
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                sec.style.display = 'none';
+                btn.innerHTML = '📄 Générer les bilans PDF';
+            }
+        }
+
+        const PDF_CONFIG_KEY = 'dnb2BilanPdfConfig';
+        const STUDENTS_KEY = 'dnb2StudentsList';
+        // Seuils niveaux (note /20)
+        const LEVEL_THRESHOLDS = { TBM: 16, MS: 12, MF: 8 }; // MI = reste
+        const LEVEL_COLORS = { TBM: '#10b981', MS: '#3b82f6', MF: '#f59e0b', MI: '#ef4444' };
+
+        // ---------- Init section PDF ----------
+        function initPdfSection() {
+            // Restore config from localStorage
+            const saved = JSON.parse(localStorage.getItem(PDF_CONFIG_KEY) || '{}');
+            document.querySelectorAll('#pdfConfigGrid input[type="checkbox"]').forEach(cb => {
+                const key = cb.dataset.cfg;
+                if (saved[key] !== undefined) cb.checked = saved[key];
+                cb.addEventListener('change', savePdfConfig);
+            });
+            // Restore students list status
+            refreshStudentsImportUI();
+            // Wire file input
+            const fileEl = document.getElementById('studentsFile');
+            fileEl.addEventListener('change', (e) => {
+                if (e.target.files[0]) loadStudentsCSV(e.target.files[0]);
+            });
+            // Drag & drop on students zone
+            const zone = document.getElementById('studentsImport');
+            ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, (e) => {
+                e.preventDefault(); zone.classList.add('dragover');
+            }));
+            ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, (e) => {
+                e.preventDefault(); zone.classList.remove('dragover');
+            }));
+            zone.addEventListener('drop', (e) => {
+                if (e.dataTransfer.files[0]) loadStudentsCSV(e.dataTransfer.files[0]);
+            });
+        }
+
+        function savePdfConfig() {
+            const cfg = {};
+            document.querySelectorAll('#pdfConfigGrid input[type="checkbox"]').forEach(cb => {
+                cfg[cb.dataset.cfg] = cb.checked;
+            });
+            localStorage.setItem(PDF_CONFIG_KEY, JSON.stringify(cfg));
+        }
+
+        function getPdfConfig() {
+            const cfg = {};
+            document.querySelectorAll('#pdfConfigGrid input[type="checkbox"]').forEach(cb => {
+                cfg[cb.dataset.cfg] = cb.checked;
+            });
+            return cfg;
+        }
+
+        // ---------- Import CSV/Excel élèves ----------
+        function loadStudentsCSV(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const firstSheet = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '', raw: false });
+                    if (!rows.length) throw new Error('Fichier vide');
+
+                    // Normalize headers : case-insensitive, accents-insensitive
+                    const normalize = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+                    const students = {};
+                    for (const row of rows) {
+                        const norm = {};
+                        for (const [k, v] of Object.entries(row)) {
+                            norm[normalize(k)] = String(v).trim();
+                        }
+                        const numero = norm['numero'] || norm['num'] || norm['n°'] || norm['no'] || norm['n'];
+                        if (!numero) continue;
+                        students[numero] = {
+                            nom: (norm['nom'] || '').toUpperCase(),
+                            prenom: norm['prenom'] || norm['prénom'] || '',
+                            classe: norm['classe'] || norm['class'] || ''
+                        };
+                    }
+                    if (Object.keys(students).length === 0) {
+                        throw new Error('Aucune ligne exploitable — vérifier la colonne "numero"');
+                    }
+                    localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+                    refreshStudentsImportUI();
+                } catch (err) {
+                    alert('Erreur de lecture du fichier : ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function clearStudents() {
+            if (!confirm('Retirer la liste des élèves importée ?')) return;
+            localStorage.removeItem(STUDENTS_KEY);
+            refreshStudentsImportUI();
+        }
+
+        function refreshStudentsImportUI() {
+            const zone = document.getElementById('studentsImport');
+            const status = document.getElementById('studentsImportStatus');
+            const btnClear = document.getElementById('btnClearStudents');
+            const list = getStudentsList();
+            if (list) {
+                const nb = Object.keys(list).length;
+                const classes = [...new Set(Object.values(list).map(s => s.classe).filter(Boolean))];
+                zone.classList.add('loaded');
+                status.innerHTML = `✅ <strong>${nb} élèves</strong> importés — classes : ${classes.join(', ') || '(aucune)'}`;
+                btnClear.style.display = 'inline-block';
+            } else {
+                zone.classList.remove('loaded');
+                status.textContent = 'Aucune liste importée — les élèves apparaîtront par leur numéro de candidat';
+                btnClear.style.display = 'none';
+            }
+        }
+
+        function getStudentsList() {
+            const raw = localStorage.getItem(STUDENTS_KEY);
+            return raw ? JSON.parse(raw) : null;
+        }
+
+        function getStudentInfo(id) {
+            const list = getStudentsList();
+            if (!list || !list[id]) return null;
+            return list[id];
+        }
+
+        function formatStudentName(id) {
+            const info = getStudentInfo(id);
+            if (info) {
+                const parts = [info.nom, info.prenom].filter(Boolean).join(' ');
+                return parts || `Candidat n°${id}`;
+            }
+            return `Candidat n°${id}`;
+        }
+
+        function getStudentClass(id) {
+            const info = getStudentInfo(id);
+            return info ? info.classe : null;
+        }
+
+        // ---------- Helpers ----------
+        function getLevel(note) {
+            if (note >= LEVEL_THRESHOLDS.TBM) return 'TBM';
+            if (note >= LEVEL_THRESHOLDS.MS) return 'MS';
+            if (note >= LEVEL_THRESHOLDS.MF) return 'MF';
+            return 'MI';
+        }
+
+        function fmtNum(n, dec = 1) {
+            if (n == null || isNaN(n)) return '–';
+            return (Math.round(n * 10**dec) / 10**dec).toString().replace('.', ',');
+        }
+
+        // Compute per-student competence scores from raw data
+        function computeStudentCompetences(candidateId) {
+            const data = window.__RAW_DATA;
+            if (!data) return null;
+            const scores = data.appState.scores[candidateId] || {};
+            // For each competence, sum achieved points
+            const achieved = {};
+            const total = {};
+            COMPETENCES.forEach(c => { achieved[c] = 0; total[c] = 0; });
+
+            // Need the barème's max per question/competence
+            // From raw competences in answers, we approximate: for each question, sum of competences = maxPoints
+            // Since competences are given as raw scores, we compute achieved vs maximum across all questions.
+            for (const exNum of Object.keys(EXERCISES)) {
+                const exData = scores[exNum] || {};
+                for (const qKey of Object.keys(exData)) {
+                    const q = exData[qKey];
+                    if (q && q.competences) {
+                        for (const [comp, val] of Object.entries(q.competences)) {
+                            if (COMPETENCES.includes(comp)) achieved[comp] += (val || 0);
+                        }
+                    }
+                }
+            }
+            // Totals (max) : we sum across ALL candidates' competences to get class max
+            // Simpler: use the __BILAN_STATS.competencePercents aggregate to know order of magnitude
+            // For per-student %, we need per-competence max. We compute from the barème config:
+            // iterate on ALL candidates, find max competence achievable = max observed
+            const rawScores = data.appState.scores;
+            COMPETENCES.forEach(c => {
+                let maxPer = 0;
+                for (const cid of Object.keys(rawScores)) {
+                    let sumForC = 0;
+                    for (const exNum of Object.keys(EXERCISES)) {
+                        const ex = rawScores[cid][exNum] || {};
+                        for (const qK of Object.keys(ex)) {
+                            const q = ex[qK];
+                            if (q && q.competences && q.competences[c]) {
+                                sumForC += q.competences[c] || 0;
+                            }
+                        }
+                    }
+                    if (sumForC > maxPer) maxPer = sumForC;
+                }
+                total[c] = maxPer;
+            });
+
+            const pcts = {};
+            COMPETENCES.forEach(c => {
+                pcts[c] = total[c] > 0 ? Math.round((achieved[c] / total[c]) * 100) : 0;
+            });
+            return { achieved, total, pcts };
+        }
+
+        function getCompColor(pct) {
+            if (pct >= 80) return '#10b981';
+            if (pct >= 60) return '#3b82f6';
+            if (pct >= 40) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        // ---------- Compute class stats (from students list) ----------
+        function computeClassStats(classe) {
+            const stats = window.__BILAN_STATS;
+            if (!stats) return null;
+            const list = getStudentsList();
+            let filteredIds;
+            if (classe && list) {
+                filteredIds = stats.candidateNotes
+                    .filter(c => {
+                        const info = list[c.id];
+                        return info && info.classe === classe;
+                    })
+                    .map(c => c.id);
+            } else {
+                // All candidates (global view or no list)
+                filteredIds = stats.candidateNotes.map(c => c.id);
+            }
+            const notes = stats.candidateNotes
+                .filter(c => filteredIds.includes(c.id))
+                .map(c => c.note);
+            if (!notes.length) return null;
+            const sum = notes.reduce((a, b) => a + b, 0);
+            const moy = sum / notes.length;
+            const sorted = [...notes].sort((a, b) => a - b);
+            const min = sorted[0];
+            const max = sorted[sorted.length - 1];
+            // Std dev
+            const variance = notes.reduce((a, b) => a + Math.pow(b - moy, 2), 0) / notes.length;
+            const std = Math.sqrt(variance);
+            // Level repartition
+            const repart = { TBM: 0, MS: 0, MF: 0, MI: 0 };
+            notes.forEach(n => { repart[getLevel(n)]++; });
+            // Rank of each candidate in this class
+            const ranked = [...stats.candidateNotes]
+                .filter(c => filteredIds.includes(c.id))
+                .sort((a, b) => b.note - a.note);
+            const ranks = {};
+            ranked.forEach((c, i) => { ranks[c.id] = i + 1; });
+            return {
+                classe: classe || 'Tous',
+                n: notes.length,
+                moyenne: Math.round(moy * 100) / 100,
+                min, max,
+                etendue: max - min,
+                std: Math.round(std * 100) / 100,
+                repart,
+                ranks,
+                ids: filteredIds
+            };
+        }
+
+        // ---------- Build individual bilan HTML ----------
+        function buildBilanHTML(candidateId, cfg, classStats, collegeStats) {
+            const stats = window.__BILAN_STATS;
+            const data = window.__RAW_DATA;
+            const candidate = stats.candidateNotes.find(c => c.id === candidateId);
+            if (!candidate) return '';
+
+            const note = candidate.note;
+            const level = getLevel(note);
+            const name = formatStudentName(candidateId);
+            const classe = getStudentClass(candidateId);
+            const apprec = data.appState.candidateComments ? (data.appState.candidateComments[candidateId] || '') : '';
+            const comp = computeStudentCompetences(candidateId);
+
+            let html = `<div class="bilan-pdf">`;
+
+            // Header
+            if (cfg.header) {
+                html += `
+                <div class="bp-header ${level}">
+                    <div class="bp-id">
+                        <span class="big">${name}</span>
+                        <span class="sub">${classe ? 'Classe ' + classe + ' — ' : ''}DNB Blanc n°2 — Collège G. Chaissac — Avril 2026</span>
+                    </div>
+                    <div class="bp-note">
+                        <div class="big">${fmtNum(note, 2)}</div>
+                        <div class="sub">/ 20</div>
+                    </div>
+                </div>`;
+            }
+
+            // Appréciation
+            if (cfg.apprec && apprec) {
+                html += `<div class="bp-apprec">💬 ${apprec}</div>`;
+            }
+
+            // Barème
+            if (cfg.bareme) {
+                const exosSum = candidate.totalBrut - candidate.presScore;
+                html += `
+                <div class="bp-section">
+                    <div class="bp-section-title">📊 Répartition de la note</div>
+                    <div class="bp-bareme"><span>Exercices (sur 24)</span><span class="val">${fmtNum(exosSum)} pts</span></div>
+                    <div class="bp-bareme"><span>Rédaction &amp; justifications (sur 2)</span><span class="val">${fmtNum(candidate.presScore)} pt${candidate.presScore > 1 ? 's' : ''}</span></div>
+                    <div class="bp-bareme total"><span><strong>Total brut → Note /20 (plafonnée)</strong></span><span class="val"><strong>${fmtNum(candidate.totalBrut)} → ${fmtNum(note, 2)}/20</strong></span></div>
+                </div>`;
+            }
+
+            // Scores par exercice
+            if (cfg.exgrid) {
+                html += `<div class="bp-section"><div class="bp-section-title">🎯 Scores par exercice</div><div class="bp-ex-grid">`;
+                for (const [exNum, ex] of Object.entries(EXERCISES)) {
+                    const score = candidate.exerciseScores[exNum] || 0;
+                    html += `<div class="bp-ex-badge"><span class="emoji">${ex.emoji}</span><span class="label">${ex.name}</span><span class="score">${fmtNum(score)}/${ex.max}</span></div>`;
+                }
+                html += `</div></div>`;
+            }
+
+            // Grille questions traitées + Compétences (2 colonnes)
+            const showNR = cfg.nrgrid;
+            const showComp = cfg.comp && comp;
+            if (showNR || showComp) {
+                html += `<div class="bp-two-col">`;
+
+                if (showNR) {
+                    html += `<div class="bp-section"><div class="bp-section-title">📝 Questions traitées</div>`;
+                    const scores = data.appState.scores[candidateId] || {};
+                    const quickStates = data.appState.quickButtonStates || {};
+                    for (const exNum of Object.keys(EXERCISES)) {
+                        const exData = scores[exNum] || {};
+                        const qKeys = Object.keys(exData).sort((a, b) => parseInt(a.replace('q','')) - parseInt(b.replace('q','')));
+                        let treated = 0;
+                        let cells = '';
+                        for (const qKey of qKeys) {
+                            const q = exData[qKey];
+                            const qsMax = (QUESTION_DETAILS[exNum] && QUESTION_DETAILS[exNum][qKey]) ? QUESTION_DETAILS[exNum][qKey].points : 1;
+                            const qState = (quickStates[candidateId] && quickStates[candidateId][exNum] && quickStates[candidateId][exNum][qKey]) || null;
+                            let cls = 'nr';
+                            if (qState === 'nr') { cls = 'nr'; }
+                            else if (q.score >= qsMax) { cls = 'ok'; treated++; }
+                            else if (q.score > 0) { cls = 'half'; treated++; }
+                            else { cls = 'nr'; }
+                            cells += `<div class="bp-nr-cell ${cls}"></div>`;
+                        }
+                        html += `<div class="bp-nr-row"><div class="bp-nr-label">Ex.${exNum}</div><div class="bp-nr-cells">${cells}</div><div class="bp-nr-count">${treated}/${qKeys.length}</div></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                if (showComp) {
+                    html += `<div class="bp-section"><div class="bp-section-title">🏆 Compétences</div>`;
+                    ['Chercher','Modéliser','Représenter','Raisonner','Calculer','Communiquer'].forEach(c => {
+                        const pct = comp.pcts[c] || 0;
+                        const color = getCompColor(pct);
+                        html += `<div class="bp-comp-row"><div class="bp-comp-label">${c}</div><div class="bp-comp-bg"><div class="bp-comp-fg" style="width:${pct}%;background:${color}"></div></div><div class="bp-comp-pct" style="color:${color}">${pct}%</div></div>`;
+                    });
+                    const presMax = 2;
+                    const presPct = Math.round((candidate.presScore / presMax) * 100);
+                    const presColor = getCompColor(presPct);
+                    html += `<div class="bp-comp-row pres"><div class="bp-comp-label"><strong>Rédaction</strong></div><div class="bp-comp-bg"><div class="bp-comp-fg" style="width:${presPct}%;background:${presColor}"></div></div><div class="bp-comp-pct" style="color:${presColor}">${fmtNum(candidate.presScore)}/${presMax}</div></div>`;
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            // Position classe + Position collège (2 colonnes)
+            const showClass = cfg.positclass && classStats;
+            const showCollege = cfg.positcollege && collegeStats;
+            if (showClass || showCollege) {
+                html += `<div class="bp-two-col">`;
+
+                if (showClass) {
+                    const rank = classStats.ranks[candidateId];
+                    html += `
+                    <div class="bp-section">
+                        <div class="bp-section-title">📈 Position classe ${classStats.classe !== 'Tous' ? classStats.classe : ''} (${classStats.n})</div>
+                        <div class="bp-posit-grid">
+                            <div class="bp-posit-card self"><div class="bp-posit-val">${fmtNum(note, 1)}</div><div class="bp-posit-label">Élève</div></div>
+                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(classStats.moyenne, 1)}</div><div class="bp-posit-label">Moyenne</div></div>
+                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(classStats.min, 1)}</div><div class="bp-posit-label">Min</div></div>
+                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(classStats.max, 1)}</div><div class="bp-posit-label">Max</div></div>
+                        </div>
+                        <div class="bp-posit-rank"><strong>Rang : ${rank}<sup>${rank === 1 ? 'er' : 'e'}</sup> / ${classStats.n}</strong></div>
+                    </div>`;
+                }
+
+                if (showCollege) {
+                    const rank = collegeStats.ranks[candidateId];
+                    html += `
+                    <div class="bp-section">
+                        <div class="bp-section-title">🏫 Position collège (${collegeStats.n} 3ᵉ)</div>
+                        <div class="bp-posit-grid">
+                            <div class="bp-posit-card self"><div class="bp-posit-val">${fmtNum(note, 1)}</div><div class="bp-posit-label">Élève</div></div>
+                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(collegeStats.moyenne, 1)}</div><div class="bp-posit-label">Moyenne</div></div>
+                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(collegeStats.min, 1)}</div><div class="bp-posit-label">Min</div></div>
+                            <div class="bp-posit-card"><div class="bp-posit-val">${fmtNum(collegeStats.max, 1)}</div><div class="bp-posit-label">Max</div></div>
+                        </div>
+                        <div class="bp-posit-rank"><strong>Rang : ${rank}<sup>${rank === 1 ? 'er' : 'e'}</sup> / ${collegeStats.n}</strong></div>
+                    </div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            // Footer
+            if (cfg.footer) {
+                const today = new Date().toLocaleDateString('fr-FR');
+                html += `<div class="bp-footer">Bilan généré le ${today} — DNB Blanc n°2 — Collège Gaston Chaissac</div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        // ---------- Generate individual PDFs ----------
+        async function generateIndividualPDFs() {
+            const stats = window.__BILAN_STATS;
+            if (!stats) { alert('Aucune donnée chargée.'); return; }
+
+            const cfg = getPdfConfig();
+            const progress = document.getElementById('pdfProgress');
+            const btn = document.getElementById('btnIndivPDF');
+            btn.disabled = true;
+            progress.classList.add('visible');
+
+            const zone = document.getElementById('pdfRenderZone');
+            const zip = new JSZip();
+
+            const candidates = stats.candidateNotes;
+            // Group by class (for classStats)
+            const list = getStudentsList();
+            const classCache = {}; // classe -> computeClassStats result
+            const collegeStats = computeClassStats(null); // all
+
+            for (let i = 0; i < candidates.length; i++) {
+                const c = candidates[i];
+                progress.textContent = `⏳ Génération ${i+1}/${candidates.length} — ${formatStudentName(c.id)}...`;
+                await new Promise(r => setTimeout(r, 10));
+
+                // Class stats for this student
+                const classe = getStudentClass(c.id);
+                let classStats = null;
+                if (classe) {
+                    if (!classCache[classe]) classCache[classe] = computeClassStats(classe);
+                    classStats = classCache[classe];
+                } else {
+                    classStats = collegeStats; // fallback to global if no class info
+                }
+
+                // Build HTML, render to zone, capture PDF
+                zone.innerHTML = buildBilanHTML(c.id, cfg, classStats, collegeStats);
+                const bilanEl = zone.querySelector('.bilan-pdf');
+
+                const opt = {
+                    margin: 0,
+                    filename: `bilan_${c.id}_${formatStudentName(c.id).replace(/\s+/g,'_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all'] }
+                };
+                try {
+                    const pdfBlob = await html2pdf().set(opt).from(bilanEl).outputPdf('blob');
+                    const classFolder = classe ? `${classe}/` : '';
+                    zip.file(`${classFolder}${opt.filename}`, pdfBlob);
+                } catch (err) {
+                    console.error('Erreur PDF pour', c.id, err);
+                }
+            }
+
+            zone.innerHTML = '';
+            progress.textContent = `📦 Création du ZIP...`;
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bilans_individuels_DNB2_${new Date().toISOString().slice(0,10)}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+
+            progress.innerHTML = `✅ <strong>${candidates.length} bilans PDF</strong> générés et regroupés en ZIP.`;
+            btn.disabled = false;
+            setTimeout(() => progress.classList.remove('visible'), 6000);
+        }
+
+        // ---------- Generate class PDF ----------
+        async function generateClassPDF() {
+            const stats = window.__BILAN_STATS;
+            if (!stats) { alert('Aucune donnée chargée.'); return; }
+
+            const btn = document.getElementById('btnClassPDF');
+            const progress = document.getElementById('pdfProgress');
+            btn.disabled = true;
+            progress.classList.add('visible');
+            progress.textContent = `⏳ Génération des bilans classe...`;
+            await new Promise(r => setTimeout(r, 10));
+
+            const list = getStudentsList();
+            const zone = document.getElementById('pdfRenderZone');
+
+            // Collect classes
+            let classes = [];
+            if (list) {
+                const set = new Set();
+                stats.candidateNotes.forEach(c => {
+                    const info = list[c.id];
+                    if (info && info.classe) set.add(info.classe);
+                });
+                classes = [...set].sort();
+            }
+            if (classes.length === 0) {
+                classes = [null]; // single "global" bilan
+            }
+
+            const zip = new JSZip();
+            for (const classe of classes) {
+                const cs = computeClassStats(classe);
+                if (!cs) continue;
+                zone.innerHTML = buildClassBilanHTML(classe, cs);
+                const el = zone.querySelector('.bilan-classe-pdf');
+                const opt = {
+                    margin: 0,
+                    filename: `bilan_classe_${classe || 'global'}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
+                zip.file(opt.filename, pdfBlob);
+            }
+            zone.innerHTML = '';
+
+            if (classes.length === 1) {
+                // Single PDF download
+                const name = classes[0] ? `bilan_classe_${classes[0]}` : 'bilan_classe_global';
+                const blob = await zip.file(`${name}.pdf`).async('blob');
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `${name}.pdf`;
+                document.body.appendChild(a); a.click(); a.remove();
+                URL.revokeObjectURL(url);
+            } else {
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bilans_classes_DNB2_${new Date().toISOString().slice(0,10)}.zip`;
+                document.body.appendChild(a); a.click(); a.remove();
+                URL.revokeObjectURL(url);
+            }
+
+            progress.innerHTML = `✅ <strong>${classes.length} bilan(s) classe</strong> généré(s).`;
+            btn.disabled = false;
+            setTimeout(() => progress.classList.remove('visible'), 6000);
+        }
+
+        function buildClassBilanHTML(classe, cs) {
+            const stats = window.__BILAN_STATS;
+            const list = getStudentsList();
+            // Sort candidates by name (if list) or by id
+            const candidatesInClass = stats.candidateNotes.filter(c => cs.ids.includes(c.id));
+            candidatesInClass.sort((a, b) => {
+                const na = formatStudentName(a.id);
+                const nb = formatStudentName(b.id);
+                return na.localeCompare(nb, 'fr');
+            });
+
+            const classLabel = classe || 'Toutes copies (anonymes)';
+            const today = new Date().toLocaleDateString('fr-FR');
+
+            let rows = '';
+            candidatesInClass.forEach(c => {
+                const level = getLevel(c.note);
+                const color = LEVEL_COLORS[level];
+                const name = formatStudentName(c.id);
+                const ex = c.exerciseScores;
+                rows += `<tr>
+                    <td>${name}</td>
+                    <td><span class="bc-note-pill" style="background:${color}">${fmtNum(c.note, 1)}</span></td>
+                    <td>${fmtNum(ex['1'] || 0)}</td>
+                    <td>${fmtNum(ex['2'] || 0)}</td>
+                    <td>${fmtNum(ex['3'] || 0)}</td>
+                    <td>${fmtNum(ex['4'] || 0)}</td>
+                    <td>${fmtNum(ex['5'] || 0)}</td>
+                    <td>${fmtNum(ex['6'] || 0)}</td>
+                    <td>${fmtNum(c.presScore)}</td>
+                    <td>${level}</td>
+                </tr>`;
+            });
+
+            // Perf par exo
+            let perfHtml = '';
+            for (const [exNum, ex] of Object.entries(EXERCISES)) {
+                const scores = candidatesInClass.map(c => c.exerciseScores[exNum] || 0);
+                const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+                const pct = Math.round((avg / ex.max) * 100);
+                const color = getCompColor(pct);
+                perfHtml += `<div class="bp-comp-row" style="margin-bottom:6px">
+                    <div class="bp-comp-label" style="width:150px">Ex.${exNum} ${ex.name}</div>
+                    <div class="bp-comp-bg" style="flex:1;background:#e5e7eb;border-radius:8px;height:11px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:8px"></div></div>
+                    <div class="bp-comp-pct" style="width:48px;text-align:right;font-weight:700;color:${color}">${pct}%</div>
+                </div>`;
+            }
+
+            return `<div class="bilan-classe-pdf">
+                <div class="bc-header">
+                    <h2>📊 Bilan classe ${classLabel} — DNB Blanc n°2</h2>
+                    <div>Collège Gaston Chaissac — Avril 2026 — <strong>${cs.n} élèves</strong></div>
+                </div>
+                <div class="bc-stats">
+                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.moyenne, 2)}</div><div class="bc-stat-label">Moyenne /20</div></div>
+                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.min, 1)}</div><div class="bc-stat-label">Note min</div></div>
+                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.max, 1)}</div><div class="bc-stat-label">Note max</div></div>
+                    <div class="bc-stat-card"><div class="bc-stat-val">${fmtNum(cs.std, 2)}</div><div class="bc-stat-label">Écart-type</div></div>
+                </div>
+                <div class="bc-block">
+                    <h3>Répartition par niveau (seuils : TBM≥${LEVEL_THRESHOLDS.TBM} / MS≥${LEVEL_THRESHOLDS.MS} / MF≥${LEVEL_THRESHOLDS.MF})</h3>
+                    <div class="bc-bars">
+                        <div class="bc-bar" style="background:${LEVEL_COLORS.MI}"><div class="lvl">MI · Insuffisante</div><div class="num">${cs.repart.MI}</div></div>
+                        <div class="bc-bar" style="background:${LEVEL_COLORS.MF}"><div class="lvl">MF · Fragile</div><div class="num">${cs.repart.MF}</div></div>
+                        <div class="bc-bar" style="background:${LEVEL_COLORS.MS}"><div class="lvl">MS · Satisfaisante</div><div class="num">${cs.repart.MS}</div></div>
+                        <div class="bc-bar" style="background:${LEVEL_COLORS.TBM}"><div class="lvl">TBM · Très Bonne</div><div class="num">${cs.repart.TBM}</div></div>
+                    </div>
+                </div>
+                <div class="bc-block">
+                    <h3>Performance moyenne par exercice</h3>
+                    ${perfHtml}
+                </div>
+                <div class="bc-block">
+                    <h3>Notes individuelles</h3>
+                    <table class="bc-notes">
+                        <thead><tr><th>Élève</th><th>Note /20</th><th>Ex1</th><th>Ex2</th><th>Ex3</th><th>Ex4</th><th>Ex5</th><th>Ex6</th><th>Présent.</th><th>Niveau</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="bp-footer" style="margin-top:16px;padding-top:10px;border-top:1px dashed #d1d5db;font-size:0.8em;color:#9ca3af;text-align:center">Bilan classe généré le ${today} — DNB Blanc n°2</div>
+            </div>`;
         }
     </script>
 </body>

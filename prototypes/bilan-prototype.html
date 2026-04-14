@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Prototype v2 — Bilan DNB Blanc 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #e5e7eb; padding: 30px; color: #1f2937;
+  }
+  .toolbar {
+    max-width: 900px; margin: 0 auto 20px; padding: 16px 20px;
+    background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .toolbar h1 { font-size: 1.1em; color: #6366f1; flex: 1; }
+  .toolbar button {
+    padding: 8px 14px; border: none; border-radius: 8px; background: #6366f1; color: white;
+    cursor: pointer; font-size: 0.9em; font-weight: 600;
+  }
+  .section-title {
+    max-width: 900px; margin: 30px auto 12px; font-size: 1.15em;
+    font-weight: 700; color: #4b5563; padding-left: 10px;
+  }
+
+  /* === CONFIG PANEL === */
+  .config-panel {
+    max-width: 900px; margin: 0 auto 20px; background: white;
+    border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 20px 24px;
+  }
+  .config-panel h2 {
+    font-size: 1.05em; color: #4b5563; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .config-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px;
+    padding: 12px; background: #f9fafb; border-radius: 8px;
+  }
+  .config-item {
+    display: flex; align-items: flex-start; gap: 10px; padding: 6px 8px;
+    border-radius: 6px; cursor: pointer; transition: background 0.15s;
+  }
+  .config-item:hover { background: #eff6ff; }
+  .config-item input[type="checkbox"] { margin-top: 3px; cursor: pointer; }
+  .config-item .lbl { font-size: 0.9em; color: #1f2937; font-weight: 500; }
+  .config-item .desc { font-size: 0.75em; color: #6b7280; display: block; margin-top: 1px; }
+  .config-item.disabled { opacity: 0.5; cursor: not-allowed; }
+  .config-item.disabled .lbl::after {
+    content: " (non disponible)"; font-size: 0.75em; color: #9ca3af; font-weight: 400;
+  }
+
+  .config-actions {
+    margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;
+  }
+  .btn-primary {
+    padding: 10px 20px; background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    color: white; border: none; border-radius: 8px; cursor: pointer;
+    font-weight: 600; font-size: 0.95em;
+  }
+  .btn-secondary {
+    padding: 10px 16px; background: white; color: #6366f1; border: 2px solid #e5e7eb;
+    border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9em;
+  }
+
+  /* === BILAN INDIVIDUEL (A4 complet 1 élève/page) === */
+  .bilan {
+    width: 210mm; min-height: 297mm; margin: 0 auto 20px; background: white;
+    padding: 14mm 16mm; box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    font-size: 10pt; line-height: 1.4; page-break-after: always;
+  }
+  .bilan-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; border-radius: 12px; color: white; margin-bottom: 12px;
+  }
+  .niveau-TBM { background: linear-gradient(135deg,#10b981 0%,#059669 100%); }
+  .niveau-MS  { background: linear-gradient(135deg,#3b82f6 0%,#2563eb 100%); }
+  .niveau-MF  { background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); }
+  .niveau-MI  { background: linear-gradient(135deg,#ef4444 0%,#dc2626 100%); }
+
+  .bilan-header .id .big { font-size: 1.5em; font-weight: 700; display: block; }
+  .bilan-header .id .sub { font-size: 0.85em; opacity: 0.9; }
+  .bilan-header .note {
+    text-align: center; background: rgba(255,255,255,0.25); padding: 10px 18px;
+    border-radius: 12px; min-width: 85px;
+  }
+  .bilan-header .note .big { font-size: 2.2em; font-weight: 800; line-height: 1; }
+  .bilan-header .note .sub { font-size: 0.75em; opacity: 0.95; margin-top: 2px; }
+
+  .section-block { margin: 14px 0; }
+  .section-block-title {
+    font-weight: 700; font-size: 0.95em; color: #4b5563; margin-bottom: 8px;
+    padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Appréciation (maintenant en haut) */
+  .apprec {
+    background: linear-gradient(135deg,#fef9c3 0%,#fef3c7 100%);
+    border-left: 5px solid #eab308; border-radius: 6px;
+    padding: 12px 14px; font-style: italic; font-size: 0.95em; color: #713f12;
+    margin: 10px 0;
+  }
+  .apprec::before { content: "💬 "; }
+
+  /* Barème détaillé */
+  .bareme-row {
+    display: flex; justify-content: space-between; padding: 5px 12px;
+    background: #f9fafb; border-radius: 6px; margin-bottom: 4px; font-size: 0.9em;
+  }
+  .bareme-row .label { color: #4b5563; }
+  .bareme-row .val { font-weight: 600; color: #6366f1; }
+  .bareme-row.total { background: #eff6ff; border: 1px solid #dbeafe; }
+
+  /* Exercices badges */
+  .ex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ex-badge {
+    background: #f3f4f6; border-radius: 8px; padding: 8px 10px;
+    display: flex; align-items: center; gap: 8px; font-size: 0.88em;
+  }
+  .ex-emoji { font-size: 1.3em; }
+  .ex-label { flex: 1; font-weight: 500; color: #374151; }
+  .ex-score { font-weight: 700; color: #6366f1; }
+
+  /* Grille NR */
+  .nr-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .nr-row-label { width: 50px; font-size: 0.8em; color: #6b7280; font-weight: 600; }
+  .nr-cells { display: flex; gap: 3px; flex: 1; }
+  .nr-cell { width: 16px; height: 16px; border-radius: 3px; }
+  .nr-cell.ok { background: #10b981; }
+  .nr-cell.nr { background: #d1d5db; }
+  .nr-count { font-size: 0.78em; color: #6b7280; width: 36px; text-align: right; }
+
+  /* Compétences */
+  .comp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 0.88em; }
+  .comp-label { width: 110px; color: #4b5563; font-weight: 500; }
+  .comp-bar-bg { flex: 1; background: #e5e7eb; border-radius: 8px; height: 12px; overflow: hidden; }
+  .comp-bar-fg { height: 100%; border-radius: 8px; }
+  .comp-pct { width: 45px; text-align: right; font-weight: 700; font-size: 0.82em; }
+
+  /* Positionnement classe */
+  .posit-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-bottom: 8px;
+  }
+  .posit-card {
+    background: #f9fafb; padding: 10px 8px; border-radius: 8px; text-align: center;
+    border: 1px solid #e5e7eb;
+  }
+  .posit-card.self { background: #eff6ff; border-color: #6366f1; }
+  .posit-val { font-size: 1.3em; font-weight: 700; color: #6366f1; }
+  .posit-label { font-size: 0.72em; color: #6b7280; margin-top: 2px; }
+
+  .posit-bar-wrap { position: relative; height: 28px; background: linear-gradient(to right,#fee2e2,#fef3c7,#dbeafe,#d1fae5); border-radius: 6px; margin: 10px 0 4px; }
+  .posit-bar-marker {
+    position: absolute; top: -4px; width: 4px; height: 36px; background: #1f2937;
+    border-radius: 2px;
+  }
+  .posit-bar-mean {
+    position: absolute; top: 0; width: 2px; height: 28px; background: #9ca3af;
+    border-left: 2px dashed #6b7280;
+  }
+  .posit-bar-labels {
+    display: flex; justify-content: space-between; font-size: 0.72em; color: #6b7280;
+  }
+
+  /* Collège (placeholder) */
+  .collegue-placeholder {
+    background: repeating-linear-gradient(45deg,#f9fafb,#f9fafb 10px,#f3f4f6 10px,#f3f4f6 20px);
+    border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center;
+    color: #6b7280; font-style: italic; font-size: 0.88em;
+  }
+
+  .footer {
+    margin-top: 12px; padding-top: 8px; border-top: 1px dashed #d1d5db;
+    font-size: 0.75em; color: #9ca3af; text-align: center;
+  }
+
+  /* Bilan classe (inchangé, + resserré) */
+  .bilan-classe {
+    width: 210mm; margin: 0 auto; background: white;
+    padding: 14mm 16mm; box-shadow: 0 4px 14px rgba(0,0,0,0.1); font-size: 10pt;
+  }
+  .classe-header {
+    background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+    color: white; padding: 16px 22px; border-radius: 12px; margin-bottom: 16px;
+  }
+  .classe-header h2 { font-size: 1.4em; margin-bottom: 4px; }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0;
+  }
+  .stat-card {
+    background: #f9fafb; padding: 14px; border-radius: 10px; text-align: center;
+    border: 1px solid #e5e7eb;
+  }
+  .stat-val { font-size: 1.6em; font-weight: 700; color: #6366f1; }
+  .stat-label { font-size: 0.78em; color: #6b7280; margin-top: 2px; }
+
+  .repart-block { margin: 16px 0; }
+  .repart-block h3 { font-size: 1.05em; margin-bottom: 10px; color: #4b5563; }
+  .repart-bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .repart-bar { padding: 12px; border-radius: 8px; color: white; text-align: center; }
+  .repart-bar .lvl { font-size: 0.78em; opacity: 0.9; }
+  .repart-bar .num { font-size: 1.5em; font-weight: 700; margin-top: 2px; }
+
+  table.notes-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85em; }
+  .notes-table th { background: #f3f4f6; padding: 7px; text-align: left; border-bottom: 2px solid #d1d5db; }
+  .notes-table td { padding: 6px 7px; border-bottom: 1px solid #e5e7eb; }
+  .note-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 0.88em; color: white; }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .toolbar, .section-title, .config-panel { display: none; }
+    .bilan, .bilan-classe { box-shadow: none; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>🎨 Prototype v2 — Bilan DNB Blanc 2 (1 élève / page A4)</h1>
+  <button onclick="window.print()">🖨️ Aperçu impression</button>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 1 : PANNEAU DE CONFIG (UI à venir) -->
+<!-- ============================================ -->
+<div class="section-title">① Panneau de configuration (ce que verra le prof dans la page Bilans)</div>
+
+<div class="config-panel">
+  <h2>⚙️ Que doit contenir le bilan individuel de chaque élève ?</h2>
+
+  <div class="config-grid">
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">En-tête coloré (nom + note /20)</span>
+        <span class="desc">Bandeau du haut avec identifiant et note</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Appréciation du professeur</span>
+        <span class="desc">Commentaire personnalisé en haut du bilan</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Détail du barème</span>
+        <span class="desc">Répartition exos (24 pts) + rédaction (2 pts)</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Scores par exercice</span>
+        <span class="desc">6 badges : émoji + titre + note/max</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Grille des questions traitées</span>
+        <span class="desc">Carrés verts/gris pour chaque question</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Compétences (6 barres + rédaction)</span>
+        <span class="desc">Chercher, Modéliser, Représenter, Raisonner, Calculer, Communiquer</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Positionnement dans la classe</span>
+        <span class="desc">Note vs moyenne classe, rang, min/max</span>
+      </span>
+    </label>
+
+    <label class="config-item disabled">
+      <input type="checkbox" disabled>
+      <span>
+        <span class="lbl">Positionnement dans le collège</span>
+        <span class="desc">Nécessite l'import d'un JSON multi-classes</span>
+      </span>
+    </label>
+
+    <label class="config-item">
+      <input type="checkbox" checked>
+      <span>
+        <span class="lbl">Pied de page (date de génération)</span>
+        <span class="desc">Mention "bilan généré le..." + nom du prof</span>
+      </span>
+    </label>
+  </div>
+
+  <div class="config-actions">
+    <button class="btn-secondary">↻ Réinitialiser</button>
+    <button class="btn-primary">📄 Générer les bilans PDF</button>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 2 : BILAN INDIVIDUEL A4 COMPLET -->
+<!-- ============================================ -->
+<div class="section-title">② Bilan individuel (post-désanonymisation) — 1 élève par page A4</div>
+
+<div class="bilan">
+  <!-- En-tête -->
+  <div class="bilan-header niveau-TBM">
+    <div class="id">
+      <span class="big">DUPONT Jean</span>
+      <span class="sub">Classe 3<sup>e</sup> A — DNB Blanc n°2 — Collège G. Chaissac — Avril 2026</span>
+    </div>
+    <div class="note">
+      <div class="big">19</div>
+      <div class="sub">/ 20</div>
+    </div>
+  </div>
+
+  <!-- Appréciation (MAINTENANT EN HAUT) -->
+  <div class="apprec">
+    « Un ensemble très satisfaisant malgré quelques points à améliorer notamment en géométrie,
+    où tu dois revoir le théorème de Thalès et la trigonométrie. Essaye également de trouver
+    des solutions pour améliorer ta présentation (utiliser des couleurs, surligner...). »
+  </div>
+
+  <!-- Barème -->
+  <div class="section-block">
+    <div class="section-block-title">📊 Répartition de la note</div>
+    <div class="bareme-row"><span class="label">Exercices (sur 24)</span><span class="val">18,0 pts</span></div>
+    <div class="bareme-row"><span class="label">Rédaction & justifications (sur 2)</span><span class="val">1,0 pt</span></div>
+    <div class="bareme-row total"><span class="label"><strong>Total brut → Note /20 (plafonnée)</strong></span><span class="val"><strong>19,0 → 19/20</strong></span></div>
+  </div>
+
+  <!-- Scores par exercice -->
+  <div class="section-block">
+    <div class="section-block-title">🎯 Scores par exercice</div>
+    <div class="ex-grid">
+      <div class="ex-badge"><span class="ex-emoji">🔢</span><span class="ex-label">Automatismes</span><span class="ex-score">6/6</span></div>
+      <div class="ex-badge"><span class="ex-emoji">🏃</span><span class="ex-label">Circuits</span><span class="ex-score">2,5/2</span></div>
+      <div class="ex-badge"><span class="ex-emoji">🧮</span><span class="ex-label">Programme</span><span class="ex-score">1,5/3</span></div>
+      <div class="ex-badge"><span class="ex-emoji">🌿</span><span class="ex-label">Jardin (géo)</span><span class="ex-score">3/3</span></div>
+      <div class="ex-badge"><span class="ex-emoji">🕶️</span><span class="ex-label">Lunettes (stats)</span><span class="ex-score">2/2</span></div>
+      <div class="ex-badge"><span class="ex-emoji">📈</span><span class="ex-label">Fonctions</span><span class="ex-score">3/4</span></div>
+    </div>
+  </div>
+
+  <!-- Questions traitées -->
+  <div class="section-block">
+    <div class="section-block-title">📝 Questions traitées</div>
+    <div class="nr-row"><div class="nr-row-label">Ex.1</div><div class="nr-cells"><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div></div><div class="nr-count">6/6</div></div>
+    <div class="nr-row"><div class="nr-row-label">Ex.2</div><div class="nr-cells"><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell nr"></div></div><div class="nr-count">3/4</div></div>
+    <div class="nr-row"><div class="nr-row-label">Ex.3</div><div class="nr-cells"><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell nr"></div><div class="nr-cell nr"></div></div><div class="nr-count">3/5</div></div>
+    <div class="nr-row"><div class="nr-row-label">Ex.4</div><div class="nr-cells"><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell nr"></div><div class="nr-cell nr"></div><div class="nr-cell nr"></div></div><div class="nr-count">4/7</div></div>
+    <div class="nr-row"><div class="nr-row-label">Ex.5</div><div class="nr-cells"><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell nr"></div></div><div class="nr-count">4/5</div></div>
+    <div class="nr-row"><div class="nr-row-label">Ex.6</div><div class="nr-cells"><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell ok"></div><div class="nr-cell nr"></div><div class="nr-cell nr"></div></div><div class="nr-count">6/8</div></div>
+  </div>
+
+  <!-- Compétences -->
+  <div class="section-block">
+    <div class="section-block-title">🏆 Maîtrise des compétences</div>
+    <div class="comp-row"><div class="comp-label">Chercher</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:75%;background:#3b82f6"></div></div><div class="comp-pct" style="color:#3b82f6">75%</div></div>
+    <div class="comp-row"><div class="comp-label">Modéliser</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:50%;background:#f59e0b"></div></div><div class="comp-pct" style="color:#f59e0b">50%</div></div>
+    <div class="comp-row"><div class="comp-label">Représenter</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:60%;background:#f59e0b"></div></div><div class="comp-pct" style="color:#f59e0b">60%</div></div>
+    <div class="comp-row"><div class="comp-label">Raisonner</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:80%;background:#3b82f6"></div></div><div class="comp-pct" style="color:#3b82f6">80%</div></div>
+    <div class="comp-row"><div class="comp-label">Calculer</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:90%;background:#10b981"></div></div><div class="comp-pct" style="color:#10b981">90%</div></div>
+    <div class="comp-row"><div class="comp-label">Communiquer</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:50%;background:#f59e0b"></div></div><div class="comp-pct" style="color:#f59e0b">50%</div></div>
+    <div class="comp-row" style="border-top:1px dashed #d1d5db;padding-top:5px;margin-top:5px"><div class="comp-label"><strong>Rédaction / Justif.</strong></div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:50%;background:#f59e0b"></div></div><div class="comp-pct" style="color:#f59e0b">1/2</div></div>
+  </div>
+
+  <!-- Positionnement dans la classe (données fictives pour le prototype) -->
+  <div class="section-block">
+    <div class="section-block-title">📈 Ta position dans la classe 3<sup>e</sup> A (28 élèves) <span style="font-size:0.78em;color:#9ca3af;font-weight:400">— données fictives pour le prototype</span></div>
+    <div class="posit-grid">
+      <div class="posit-card self"><div class="posit-val">19,0</div><div class="posit-label">Ta note</div></div>
+      <div class="posit-card"><div class="posit-val">11,5</div><div class="posit-label">Moyenne 3<sup>e</sup> A</div></div>
+      <div class="posit-card"><div class="posit-val">4,0</div><div class="posit-label">Note min</div></div>
+      <div class="posit-card"><div class="posit-val">20,0</div><div class="posit-label">Note max</div></div>
+    </div>
+    <div class="posit-bar-wrap">
+      <div class="posit-bar-mean" style="left: 57.5%"></div>
+      <div class="posit-bar-marker" style="left: 95%"></div>
+    </div>
+    <div class="posit-bar-labels"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span></div>
+    <div style="text-align:center;margin-top:8px;font-size:0.88em;color:#4b5563">
+      <strong>Rang : 2<sup>e</sup> / 28</strong> — au-dessus de la moyenne de la classe (11,5)
+    </div>
+  </div>
+
+  <!-- Positionnement collège (optionnel, décoché par défaut) -->
+  <div class="section-block" style="opacity:0.75">
+    <div class="section-block-title">🏫 Ta position dans le collège <span style="font-size:0.78em;color:#9ca3af;font-weight:400">— section optionnelle, décochée par défaut</span></div>
+    <div class="posit-grid">
+      <div class="posit-card self"><div class="posit-val">19,0</div><div class="posit-label">Ta note</div></div>
+      <div class="posit-card"><div class="posit-val">10,8</div><div class="posit-label">Moyenne collège</div></div>
+      <div class="posit-card"><div class="posit-val">2,0</div><div class="posit-label">Note min</div></div>
+      <div class="posit-card"><div class="posit-val">20,0</div><div class="posit-label">Note max</div></div>
+    </div>
+    <div style="text-align:center;margin-top:8px;font-size:0.88em;color:#4b5563">
+      <strong>Rang : 5<sup>e</sup> / 112</strong> sur l'ensemble des 3<sup>e</sup> du collège
+    </div>
+  </div>
+
+  <div class="footer">Bilan généré par le professeur principal — DNB Blanc n°2 — Collège G. Chaissac</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 3 : BILAN CLASSE (post-désanonymisation, pour prof principal) -->
+<!-- ============================================ -->
+<div class="section-title">③ Bilan classe (PDF séparé pour le prof principal — post-désanonymisation)</div>
+
+<div class="bilan-classe">
+  <div class="classe-header">
+    <h2>📊 Bilan classe 3<sup>e</sup> A — DNB Blanc n°2</h2>
+    <div>Collège G. Chaissac — Avril 2026 — <strong>28 élèves</strong> <span style="opacity:0.7">(données fictives pour le prototype)</span></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">10,13</div><div class="stat-label">Moyenne /20</div></div>
+    <div class="stat-card"><div class="stat-val">5,0</div><div class="stat-label">Note min</div></div>
+    <div class="stat-card"><div class="stat-val">20,0</div><div class="stat-label">Note max</div></div>
+    <div class="stat-card"><div class="stat-val">5,1</div><div class="stat-label">Écart-type</div></div>
+  </div>
+
+  <div class="repart-block">
+    <h3>Répartition par niveau de maîtrise <em style="font-weight:400;font-size:0.85em;color:#9ca3af">(seuils à ajuster)</em></h3>
+    <div class="repart-bars">
+      <div class="repart-bar" style="background:#ef4444"><div class="lvl">MI · Insuffisante</div><div class="num">6</div></div>
+      <div class="repart-bar" style="background:#f59e0b"><div class="lvl">MF · Fragile</div><div class="num">5</div></div>
+      <div class="repart-bar" style="background:#3b82f6"><div class="lvl">MS · Satisfaisante</div><div class="num">1</div></div>
+      <div class="repart-bar" style="background:#10b981"><div class="lvl">TBM · Très Bonne</div><div class="num">3</div></div>
+    </div>
+  </div>
+
+  <div class="repart-block">
+    <h3>Performance moyenne par exercice</h3>
+    <div class="comp-row"><div class="comp-label" style="width:150px">Ex.1 Automatismes</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:70%;background:#3b82f6"></div></div><div class="comp-pct">70%</div></div>
+    <div class="comp-row"><div class="comp-label" style="width:150px">Ex.2 Circuits</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:55%;background:#f59e0b"></div></div><div class="comp-pct">55%</div></div>
+    <div class="comp-row"><div class="comp-label" style="width:150px">Ex.3 Programme</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:35%;background:#ef4444"></div></div><div class="comp-pct">35%</div></div>
+    <div class="comp-row"><div class="comp-label" style="width:150px">Ex.4 Jardin (géo)</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:30%;background:#ef4444"></div></div><div class="comp-pct">30%</div></div>
+    <div class="comp-row"><div class="comp-label" style="width:150px">Ex.5 Lunettes</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:62%;background:#f59e0b"></div></div><div class="comp-pct">62%</div></div>
+    <div class="comp-row"><div class="comp-label" style="width:150px">Ex.6 Fonctions</div><div class="comp-bar-bg"><div class="comp-bar-fg" style="width:40%;background:#ef4444"></div></div><div class="comp-pct">40%</div></div>
+  </div>
+
+  <div class="repart-block">
+    <h3>Notes individuelles</h3>
+    <table class="notes-table">
+      <thead><tr><th>Élève</th><th>Note /20</th><th>Ex1</th><th>Ex2</th><th>Ex3</th><th>Ex4</th><th>Ex5</th><th>Ex6</th><th>Présent.</th><th>Niveau</th></tr></thead>
+      <tbody>
+        <tr><td>BERNARD Léa</td><td><span class="note-pill" style="background:#f59e0b">9,0</span></td><td>3</td><td>1</td><td>1,5</td><td>1,5</td><td>0,5</td><td>0,5</td><td>1</td><td>MF</td></tr>
+        <tr><td>DUBOIS Paul</td><td><span class="note-pill" style="background:#ef4444">7,0</span></td><td>2</td><td>1</td><td>1</td><td>0,5</td><td>1,5</td><td>0,5</td><td>0,5</td><td>MI</td></tr>
+        <tr><td>DUPONT Jean</td><td><span class="note-pill" style="background:#10b981">19,0</span></td><td>6</td><td>2,5</td><td>1,5</td><td>3</td><td>2</td><td>3</td><td>1</td><td>TBM</td></tr>
+        <tr><td>MARTIN Alice</td><td><span class="note-pill" style="background:#3b82f6">15,0</span></td><td>5</td><td>1,5</td><td>2,5</td><td>1</td><td>1</td><td>2</td><td>2</td><td>MS</td></tr>
+        <tr><td>MOREAU Noah</td><td><span class="note-pill" style="background:#10b981">16,5</span></td><td>5</td><td>2</td><td>2</td><td>2</td><td>1,5</td><td>2</td><td>2</td><td>TBM</td></tr>
+        <tr><td>PETIT Emma</td><td><span class="note-pill" style="background:#10b981">20,0</span></td><td>6</td><td>2</td><td>2,5</td><td>3</td><td>2</td><td>3</td><td>2</td><td>TBM</td></tr>
+        <tr style="color:#9ca3af"><td colspan="10" style="text-align:center;font-style:italic">... + 22 autres élèves de la classe 3<sup>e</sup> A ...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Bilan classe — généré le 14/04/2026 — DNB Blanc n°2</div>
+</div>
+
+</body>
+</html>
