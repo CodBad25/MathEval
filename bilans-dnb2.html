@@ -980,9 +980,9 @@
 
         /* Bilan (rendu pour capture PDF, caché à l'écran) */
         #pdfRenderZone {
-            position: fixed;
-            top: -10000px;
-            left: 0;
+            position: absolute;
+            top: 0;
+            left: -10000px;
             width: 210mm;
             background: white;
         }
@@ -2763,7 +2763,7 @@
                     margin: 0,
                     filename: `bilan_${c.id}_${formatStudentName(c.id).replace(/\s+/g,'_')}.pdf`,
                     image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                     pagebreak: { mode: ['css', 'legacy'] }
                 };
@@ -2832,7 +2832,7 @@
                     margin: 0,
                     filename: `bilan_classe_${classe || 'global'}.pdf`,
                     image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
