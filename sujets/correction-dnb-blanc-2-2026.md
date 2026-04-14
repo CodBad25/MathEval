@@ -1,8 +1,17 @@
 # Correction — DNB Blanc n°2 — Mathématiques
 ## Collège Gaston Chaissac — Pouzauges — Jeudi 9 avril 2026
 
-> **Remarque** : l'ordre des exercices dans le sujet est : 1) Automatismes, 2) Circuits, 3) Programme de calcul, 4) Jardin botanique, 5) Fonctions, 6) Lunettes de soleil.
-> Les barèmes par question rappelés ci-dessous suivent le barème de correction fourni (`bareme_dnb_blanc_2.json`, 20 points au total).
+> **Barème global** : 24 pts exercices + 2 pts rédaction = 26 pts bruts, note /20 plafonnée (`min(total_brut, 20)`, pas de conversion proportionnelle).
+>
+> **Répartition des exercices** (ordre app, celui vu par les élèves dans leur bilan) :
+> 1. Automatismes — 6 pts
+> 2. Circuits d'entraînement (PGCD/PPCM) — 3 pts
+> 3. Programme de calcul — 3 pts
+> 4. Jardin botanique (géométrie) — 5 pts
+> 5. Lunettes de soleil (tableur/stats) — 3 pts
+> 6. Fonctions — 4 pts
+>
+> **Rédaction & justifications** : 2 pts (bonus/transparence).
 
 ---
 
@@ -92,7 +101,7 @@ Fin
 
 ---
 
-## Exercice 2 — Circuits d'entraînement (PGCD/PPCM) (2 pts)
+## Exercice 2 — Circuits d'entraînement (PGCD/PPCM) (3 pts)
 
 ### Question 1 (0,5 pt) — Durées des circuits
 
@@ -127,7 +136,7 @@ $$\boxed{280 = 2^3 \times 5 \times 7 \qquad 350 = 2 \times 5^2 \times 7}$$
 
 ---
 
-### Question 3a (0,5 pt) — Position à 2 800 s
+### Question 3a (1 pt) — Position à 2 800 s
 
 **Énoncé** : Expliquer pourquoi, à 2 800 s, Camille est de nouveau au départ du circuit 1. Où se trouve Dominique à cet instant ?
 
@@ -145,7 +154,7 @@ Donc à 2 800 s, Dominique termine exactement son 8ᵉ tour du circuit 2. Comme 
 
 ---
 
-### Question 3b (0,5 pt) — Première rencontre au départ (PPCM)
+### Question 3b (1 pt) — Première rencontre au départ (PPCM)
 
 **Énoncé** : Combien de temps faut-il pour que Camille et Dominique se retrouvent en même temps au départ de leur circuit pour la première fois ? Exprimer en minute et seconde.
 
@@ -227,7 +236,7 @@ $$= x^2 - 4x + x - 4 = x^2 - 3x - 4$$
 
 ---
 
-## Exercice 4 — Jardin botanique (3 pts)
+## Exercice 4 — Jardin botanique (5 pts)
 
 Données : ABCD quadrilatère ; AB = 500 m, BE = 250 m, DE = 750 m ; [AC] et [BD] se coupent en E ; angles droits marqués en A (angle DAB), en D (angle ADC) et en E (angle AEB ou similaire — diagonales perpendiculaires).
 
@@ -243,7 +252,7 @@ $$DB = 250 + 750 = 1\,000 \text{ m}$$
 
 ---
 
-### Question 2 (0,5 pt) — Longueur [AD] (Pythagore dans ABD)
+### Question 2 (1 pt) — Longueur [AD] (Pythagore dans ABD)
 
 **Correction** : Le triangle ABD est rectangle en A (angle droit codé en A). D'après le **théorème de Pythagore** :
 
@@ -257,7 +266,7 @@ $$AD = \sqrt{750\,000} \approx 866{,}025 \text{ m}$$
 
 ---
 
-### Question 3a (partie 0,5 pt) — Sinus de l'angle EAB
+### Question 3a (0,5 pt) — Sinus de l'angle EAB
 
 **Correction** : Dans le triangle ABE, l'angle en E est droit (les diagonales se coupent perpendiculairement en E). Le triangle ABE est donc rectangle en E.
 
@@ -271,7 +280,7 @@ $$\sin(\widehat{\text{EAB}}) = \dfrac{BE}{AB} = \dfrac{250}{500} = \dfrac{1}{2} 
 
 ---
 
-### Question 3b (inclus dans 0,5 pt) — Mesure de l'angle
+### Question 3b (0,5 pt) — Mesure de l'angle
 
 **Correction** : On cherche $\widehat{\text{EAB}}$ tel que $\sin(\widehat{\text{EAB}}) = 0{,}5$.
 
@@ -293,7 +302,7 @@ Deux droites perpendiculaires à une même troisième droite sont parallèles en
 
 ---
 
-### Question 4b (0,5 pt) — CD = 1 500 m (Thalès)
+### Question 4b (1 pt) — CD = 1 500 m (Thalès)
 
 **Correction** : Les droites (AC) et (BD) se coupent en E. D'après la question 4a, les droites (AB) et (CD) sont parallèles. On peut donc appliquer le **théorème de Thalès** dans cette configuration (triangles EAB et ECD en « papillon » avec E sommet commun) :
 
@@ -311,7 +320,7 @@ $$\dfrac{AB}{CD} = \dfrac{1}{3} \iff CD = 3 \times AB = 3 \times 500 = 1\,500 \t
 
 ---
 
-### Question 5 (0,5 pt) — Temps du tour du jardin
+### Question 5 (1 pt) — Temps du tour du jardin
 
 **Correction** : On calcule le périmètre du quadrilatère ABCD :
 
@@ -328,7 +337,71 @@ Or 1 heure = 3 600 s. Donc $t \approx 3\,808 \text{ s} > 3\,600 \text{ s}$.
 
 ---
 
-## Exercice 5 — Fonctions (4 pts)
+## Exercice 5 — Lunettes de soleil (tableur/stats) (3 pts)
+
+Données : prix à l'unité des 5 modèles : 75 € ; 100 € ; 110 € ; 140 € ; 160 €.
+Nombres de paires vendues : 1 200 ; 950 ; 875 ; 250 ; 300.
+
+### Question 1 (0,5 pt) — Étendue des prix
+
+**Correction** : L'étendue = plus grande valeur − plus petite valeur.
+
+- Prix maximum : 160 €
+- Prix minimum : 75 €
+
+$$\text{Étendue} = 160 - 75 = 85 \text{ €}$$
+
+**Réponse** : $\boxed{\text{Étendue} = 85 \text{ €}}$
+
+---
+
+### Question 2a (0,5 pt) — Formule en G2
+
+**Correction** : En G2, on veut la somme des paires vendues (plage B2:F2).
+
+**Réponse** : $\boxed{\texttt{=SOMME(B2:F2)}}$
+
+---
+
+### Question 2b (0,5 pt) — Nombre total de paires vendues
+
+**Correction** :
+
+$$1\,200 + 950 + 875 + 250 + 300 = 3\,575 \text{ paires}$$
+
+**Réponse** : $\boxed{\text{Total} = 3\,575 \text{ paires}}$
+
+---
+
+### Question 3a (1 pt) — Montant total des ventes
+
+**Correction** : Pour chaque modèle, on multiplie le prix par la quantité vendue, puis on additionne :
+
+- Modèle 1 : $1\,200 \times 75 = 90\,000$ €
+- Modèle 2 : $950 \times 100 = 95\,000$ €
+- Modèle 3 : $875 \times 110 = 96\,250$ €
+- Modèle 4 : $250 \times 140 = 35\,000$ €
+- Modèle 5 : $300 \times 160 = 48\,000$ €
+
+Total : $90\,000 + 95\,000 + 96\,250 + 35\,000 + 48\,000 = 364\,250$ €
+
+**Réponse** : $\boxed{\text{Montant total} = 364\,250 \text{ €}}$
+
+---
+
+### Question 3b (0,5 pt) — Prix moyen
+
+**Correction** : Le prix moyen d'une paire de lunettes est le montant total divisé par le nombre total de paires vendues :
+
+$$\bar{p} = \dfrac{364\,250}{3\,575} \approx 101{,}8881\ldots \text{ €}$$
+
+Arrondi au centime près :
+
+**Réponse** : $\boxed{\bar{p} \approx 101{,}89 \text{ €}}$
+
+---
+
+## Exercice 6 — Fonctions (4 pts)
 
 Programme A (schéma arborescent) : choisir un nombre → d'un côté « Ajouter 3 » ; de l'autre côté « Soustraire 4 » → multiplier les deux résultats.
 
@@ -428,81 +501,20 @@ d'où $x = -1$ ou $x = 5$. On lit graphiquement les deux points d'intersection d
 
 ---
 
-## Exercice 6 — Lunettes de soleil (tableur/stats) (2 pts)
-
-Données : prix à l'unité des 5 modèles : 75 € ; 100 € ; 110 € ; 140 € ; 160 €.
-Nombres de paires vendues : 1 200 ; 950 ; 875 ; 250 ; 300.
-
-### Question 1 (0,5 pt) — Étendue des prix
-
-**Correction** : L'étendue = plus grande valeur − plus petite valeur.
-
-- Prix maximum : 160 €
-- Prix minimum : 75 €
-
-$$\text{Étendue} = 160 - 75 = 85 \text{ €}$$
-
-**Réponse** : $\boxed{\text{Étendue} = 85 \text{ €}}$
-
----
-
-### Question 2a (partie 0,5 pt) — Formule en G2
-
-**Correction** : En G2, on veut la somme des paires vendues (plage B2:F2).
-
-**Réponse** : $\boxed{\texttt{=SOMME(B2:F2)}}$
-
----
-
-### Question 2b (inclus dans 0,5 pt) — Nombre total de paires vendues
-
-**Correction** :
-
-$$1\,200 + 950 + 875 + 250 + 300 = 3\,575 \text{ paires}$$
-
-**Réponse** : $\boxed{\text{Total} = 3\,575 \text{ paires}}$
-
----
-
-### Question 3a (partie 0,5 pt) — Montant total des ventes
-
-**Correction** : Pour chaque modèle, on multiplie le prix par la quantité vendue, puis on additionne :
-
-- Modèle 1 : $1\,200 \times 75 = 90\,000$ €
-- Modèle 2 : $950 \times 100 = 95\,000$ €
-- Modèle 3 : $875 \times 110 = 96\,250$ €
-- Modèle 4 : $250 \times 140 = 35\,000$ €
-- Modèle 5 : $300 \times 160 = 48\,000$ €
-
-Total : $90\,000 + 95\,000 + 96\,250 + 35\,000 + 48\,000 = 364\,250$ €
-
-**Réponse** : $\boxed{\text{Montant total} = 364\,250 \text{ €}}$
-
----
-
-### Question 3b (0,5 pt) — Prix moyen
-
-**Correction** : Le prix moyen d'une paire de lunettes est le montant total divisé par le nombre total de paires vendues :
-
-$$\bar{p} = \dfrac{364\,250}{3\,575} \approx 101{,}8881\ldots \text{ €}$$
-
-Arrondi au centime près :
-
-**Réponse** : $\boxed{\bar{p} \approx 101{,}89 \text{ €}}$
-
----
-
 ## Récapitulatif barème
 
 | Exercice | Thème | Points |
 |---|---|---|
 | 1 | Automatismes | 6 |
-| 2 | Circuits (PGCD/PPCM) | 2 |
+| 2 | Circuits (PGCD/PPCM) | 3 |
 | 3 | Programme de calcul | 3 |
-| 4 | Jardin botanique | 3 |
-| 5 | Fonctions | 4 |
-| 6 | Lunettes de soleil (tableur/stats) | 2 |
-| **Total** | | **20** |
+| 4 | Jardin botanique | 5 |
+| 5 | Lunettes de soleil (tableur/stats) | 3 |
+| 6 | Fonctions | 4 |
+| **Sous-total exercices** | | **24** |
+| Rédaction & justifications | (bonus/transparence) | 2 |
+| **Total brut** | | **26** |
+| **Note finale** | `min(total_brut, 20)` — plafonnée à 20 | **/20** |
 
 ---
 
