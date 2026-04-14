@@ -981,8 +981,8 @@
         /* Bilan (rendu pour capture PDF, caché à l'écran) */
         #pdfRenderZone {
             position: absolute;
-            top: 0;
-            left: -10000px;
+            top: -10000px;
+            left: 0;
             width: 210mm;
             background: white;
         }
@@ -1053,10 +1053,11 @@
         .bilan-pdf .bp-nr-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
         .bilan-pdf .bp-nr-label { width: 34px; font-size: 0.72em; color: #6b7280; font-weight: 600; }
         .bilan-pdf .bp-nr-cells { display: flex; gap: 2px; flex: 1; }
-        .bilan-pdf .bp-nr-cell { width: 11px; height: 11px; border-radius: 2px; }
+        .bilan-pdf .bp-nr-cell { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.06); }
         .bilan-pdf .bp-nr-cell.ok { background: #10b981; }
+        .bilan-pdf .bp-nr-cell.wrong { background: #ef4444; }
+        .bilan-pdf .bp-nr-cell.partial { background: #f59e0b; }
         .bilan-pdf .bp-nr-cell.nr { background: #d1d5db; }
-        .bilan-pdf .bp-nr-cell.half { background: linear-gradient(90deg,#10b981 50%, #d1d5db 50%); }
         .bilan-pdf .bp-nr-count { font-size: 0.68em; color: #6b7280; width: 28px; text-align: right; }
         .bilan-pdf .bp-comp-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 0.78em; }
         .bilan-pdf .bp-comp-label { width: 85px; color: #4b5563; font-weight: 500; }
@@ -2630,27 +2631,32 @@
                 html += `<div class="bp-two-col">`;
 
                 if (showNR) {
-                    html += `<div class="bp-section"><div class="bp-section-title">📝 Questions traitées</div>`;
+                    html += `<div class="bp-section"><div class="bp-section-title">✅ Bilan par question</div>`;
                     const scores = data.appState.scores[candidateId] || {};
                     const quickStates = data.appState.quickButtonStates || {};
                     for (const exNum of Object.keys(EXERCISES)) {
                         const exData = scores[exNum] || {};
                         const qKeys = Object.keys(exData).sort((a, b) => parseInt(a.replace('q','')) - parseInt(b.replace('q','')));
-                        let treated = 0;
+                        let justes = 0;
                         let cells = '';
                         for (const qKey of qKeys) {
                             const q = exData[qKey];
                             const qsMax = (QUESTION_DETAILS[exNum] && QUESTION_DETAILS[exNum][qKey]) ? QUESTION_DETAILS[exNum][qKey].points : 1;
                             const qState = (quickStates[candidateId] && quickStates[candidateId][exNum] && quickStates[candidateId][exNum][qKey]) || null;
                             let cls = 'nr';
+                            // Green = juste (tb + score full), Orange = partiel (tb mais score < max), Red = faux (tf), Gray = non traité
                             if (qState === 'nr') { cls = 'nr'; }
-                            else if (q.score >= qsMax) { cls = 'ok'; treated++; }
-                            else if (q.score > 0) { cls = 'half'; treated++; }
+                            else if (qState === 'tf') { cls = 'wrong'; }
+                            else if (qState === 'tb' && q.score >= qsMax) { cls = 'ok'; justes++; }
+                            else if (qState === 'tb' && q.score > 0) { cls = 'partial'; }
+                            else if (q.score >= qsMax) { cls = 'ok'; justes++; }
+                            else if (q.score > 0) { cls = 'partial'; }
                             else { cls = 'nr'; }
-                            cells += `<div class="bp-nr-cell ${cls}"></div>`;
+                            cells += `<div class="bp-nr-cell ${cls}" title="Q${qKey.replace('q','')} : ${q.score || 0}/${qsMax}"></div>`;
                         }
-                        html += `<div class="bp-nr-row"><div class="bp-nr-label">Ex.${exNum}</div><div class="bp-nr-cells">${cells}</div><div class="bp-nr-count">${treated}/${qKeys.length}</div></div>`;
+                        html += `<div class="bp-nr-row"><div class="bp-nr-label">Ex.${exNum}</div><div class="bp-nr-cells">${cells}</div><div class="bp-nr-count">${justes}/${qKeys.length}</div></div>`;
                     }
+                    html += `<div style="margin-top:5px;font-size:0.7em;color:#6b7280;display:flex;gap:10px;flex-wrap:wrap"><span>🟩 juste</span><span>🟧 partiel</span><span>🟥 faux</span><span>⬜ non traité</span></div>`;
                     html += `</div>`;
                 }
 
@@ -2731,7 +2737,6 @@
             btn.disabled = true;
             progress.classList.add('visible');
 
-            const zone = document.getElementById('pdfRenderZone');
             const zip = new JSZip();
 
             const candidates = stats.candidateNotes;
@@ -2755,9 +2760,12 @@
                     classStats = collegeStats; // fallback to global if no class info
                 }
 
-                // Build HTML, render to zone, capture PDF
-                zone.innerHTML = buildBilanHTML(c.id, cfg, classStats, collegeStats);
-                const bilanEl = zone.querySelector('.bilan-pdf');
+                // Fresh container for each PDF (avoids stale layout)
+                const container = document.createElement('div');
+                container.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:white;';
+                container.innerHTML = buildBilanHTML(c.id, cfg, classStats, collegeStats);
+                document.body.appendChild(container);
+                const bilanEl = container.querySelector('.bilan-pdf');
 
                 const opt = {
                     margin: 0,
@@ -2774,9 +2782,9 @@
                 } catch (err) {
                     console.error('Erreur PDF pour', c.id, err);
                 }
+                document.body.removeChild(container);
             }
 
-            zone.innerHTML = '';
             progress.textContent = `📦 Création du ZIP...`;
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(zipBlob);
@@ -2806,7 +2814,6 @@
             await new Promise(r => setTimeout(r, 10));
 
             const list = getStudentsList();
-            const zone = document.getElementById('pdfRenderZone');
 
             // Collect classes
             let classes = [];
@@ -2826,19 +2833,26 @@
             for (const classe of classes) {
                 const cs = computeClassStats(classe);
                 if (!cs) continue;
-                zone.innerHTML = buildClassBilanHTML(classe, cs);
-                const el = zone.querySelector('.bilan-classe-pdf');
+
+                // Fresh container for each PDF
+                const container = document.createElement('div');
+                container.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:white;';
+                container.innerHTML = buildClassBilanHTML(classe, cs);
+                document.body.appendChild(container);
+                const el = container.querySelector('.bilan-classe-pdf');
+
                 const opt = {
                     margin: 0,
                     filename: `bilan_classe_${classe || 'global'}.pdf`,
                     image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'] }
                 };
                 const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
                 zip.file(opt.filename, pdfBlob);
+                document.body.removeChild(container);
             }
-            zone.innerHTML = '';
 
             if (classes.length === 1) {
                 // Single PDF download
