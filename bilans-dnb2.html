@@ -2800,7 +2800,7 @@
             setTimeout(() => progress.classList.remove('visible'), 6000);
         }
 
-        // ---------- Generate class PDF ----------
+        // ---------- Generate class PDF (pdfmake) ----------
         async function generateClassPDF() {
             const stats = window.__BILAN_STATS;
             if (!stats) { alert('Aucune donnée chargée.'); return; }
@@ -2814,7 +2814,6 @@
 
             const list = getStudentsList();
 
-            // Collect classes
             let classes = [];
             if (list) {
                 const set = new Set();
@@ -2824,37 +2823,21 @@
                 });
                 classes = [...set].sort();
             }
-            if (classes.length === 0) {
-                classes = [null]; // single "global" bilan
-            }
+            if (classes.length === 0) classes = [null];
 
             const zip = new JSZip();
             for (const classe of classes) {
                 const cs = computeClassStats(classe);
                 if (!cs) continue;
-
-                // Fresh container for each PDF
-                const container = document.createElement('div');
-                container.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:white;';
-                container.innerHTML = buildClassBilanHTML(classe, cs);
-                document.body.appendChild(container);
-                const el = container.querySelector('.bilan-classe-pdf');
-
-                const opt = {
-                    margin: 0,
-                    filename: `bilan_classe_${classe || 'global'}.pdf`,
-                    image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'] }
-                };
-                const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
-                zip.file(opt.filename, pdfBlob);
-                document.body.removeChild(container);
+                const docDef = buildClassBilanDocDefinition(classe, cs);
+                const pdfBlob = await new Promise((resolve) => {
+                    pdfMake.createPdf(docDef).getBlob(resolve);
+                });
+                const filename = `bilan_classe_${classe || 'global'}.pdf`;
+                zip.file(filename, pdfBlob);
             }
 
             if (classes.length === 1) {
-                // Single PDF download
                 const name = classes[0] ? `bilan_classe_${classes[0]}` : 'bilan_classe_global';
                 const blob = await zip.file(`${name}.pdf`).async('blob');
                 const url = URL.createObjectURL(blob);
@@ -2875,6 +2858,186 @@
             progress.innerHTML = `✅ <strong>${classes.length} bilan(s) classe</strong> généré(s).`;
             btn.disabled = false;
             setTimeout(() => progress.classList.remove('visible'), 6000);
+        }
+
+        // ---------- Build pdfmake doc for class bilan ----------
+        function buildClassBilanDocDefinition(classe, cs) {
+            const classLabel = classe || 'Toutes copies (anonymes)';
+            const today = new Date().toLocaleDateString('fr-FR');
+            const stats = window.__BILAN_STATS;
+            const candidatesInClass = stats.candidateNotes
+                .filter(c => cs.ids.includes(c.id))
+                .sort((a, b) => formatStudentName(a.id).localeCompare(formatStudentName(b.id), 'fr'));
+
+            // === Stats cards row ===
+            const statsRow = {
+                columns: [
+                    statCard(fmtNum(cs.moyenne, 2), 'Moyenne /20'),
+                    statCard(fmtNum(cs.min, 1), 'Note min'),
+                    statCard(fmtNum(cs.max, 1), 'Note max'),
+                    statCard(fmtNum(cs.std, 2), 'Écart-type')
+                ],
+                columnGap: 8,
+                margin: [0, 0, 0, 12]
+            };
+
+            // === Répartition par niveau ===
+            const repartRow = {
+                columns: [
+                    levelCard('MI · Insuffisante', cs.repart.MI, LEVEL_COLORS.MI),
+                    levelCard('MF · Fragile', cs.repart.MF, LEVEL_COLORS.MF),
+                    levelCard('MS · Satisfaisante', cs.repart.MS, LEVEL_COLORS.MS),
+                    levelCard('TBM · Très Bonne', cs.repart.TBM, LEVEL_COLORS.TBM)
+                ],
+                columnGap: 8,
+                margin: [0, 4, 0, 12]
+            };
+
+            // === Perf par exercice (table with colored bar) ===
+            const perfRows = Object.entries(EXERCISES).map(([exNum, ex]) => {
+                const scores = candidatesInClass.map(c => c.exerciseScores[exNum] || 0);
+                const avg = scores.reduce((a, b) => a + b, 0) / (scores.length || 1);
+                const pct = Math.round((avg / ex.max) * 100);
+                const color = getCompColor(pct);
+                return [
+                    { text: `Ex.${exNum} ${ex.name}`, style: 'tdLabel' },
+                    { text: `${fmtNum(avg, 1)} / ${ex.max}`, style: 'tdNum' },
+                    { text: `${pct} %`, style: 'tdNum', color: color, bold: true }
+                ];
+            });
+
+            // === Tableau notes individuelles ===
+            const notesHeader = [
+                { text: 'Élève', style: 'tableHeader' },
+                { text: 'Note /20', style: 'tableHeader', alignment: 'center' },
+                { text: 'Ex1', style: 'tableHeader', alignment: 'center' },
+                { text: 'Ex2', style: 'tableHeader', alignment: 'center' },
+                { text: 'Ex3', style: 'tableHeader', alignment: 'center' },
+                { text: 'Ex4', style: 'tableHeader', alignment: 'center' },
+                { text: 'Ex5', style: 'tableHeader', alignment: 'center' },
+                { text: 'Ex6', style: 'tableHeader', alignment: 'center' },
+                { text: 'Préş.', style: 'tableHeader', alignment: 'center' },
+                { text: 'Niveau', style: 'tableHeader', alignment: 'center' }
+            ];
+            const notesRows = candidatesInClass.map(c => {
+                const level = getLevel(c.note);
+                const color = LEVEL_COLORS[level];
+                const ex = c.exerciseScores;
+                return [
+                    { text: formatStudentName(c.id), style: 'tdName' },
+                    { text: fmtNum(c.note, 1), fillColor: color, color: 'white', alignment: 'center', bold: true },
+                    { text: fmtNum(ex['1'] || 0), alignment: 'center' },
+                    { text: fmtNum(ex['2'] || 0), alignment: 'center' },
+                    { text: fmtNum(ex['3'] || 0), alignment: 'center' },
+                    { text: fmtNum(ex['4'] || 0), alignment: 'center' },
+                    { text: fmtNum(ex['5'] || 0), alignment: 'center' },
+                    { text: fmtNum(ex['6'] || 0), alignment: 'center' },
+                    { text: fmtNum(c.presScore), alignment: 'center' },
+                    { text: level, alignment: 'center', color: color, bold: true }
+                ];
+            });
+
+            return {
+                pageSize: 'A4',
+                pageMargins: [30, 28, 30, 30],
+                defaultStyle: { font: 'Roboto', fontSize: 9, color: '#1f2937' },
+                styles: {
+                    h1: { fontSize: 15, bold: true, color: 'white' },
+                    h1sub: { fontSize: 9, color: 'white', margin: [0, 3, 0, 0] },
+                    h3: { fontSize: 11, bold: true, color: '#4b5563', margin: [0, 10, 0, 6] },
+                    statVal: { fontSize: 16, bold: true, color: '#6366f1', alignment: 'center' },
+                    statLabel: { fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 2, 0, 0] },
+                    levelNum: { fontSize: 17, bold: true, color: 'white', alignment: 'center' },
+                    levelLbl: { fontSize: 8, color: 'white', alignment: 'center', margin: [0, 2, 0, 0] },
+                    tableHeader: { bold: true, fontSize: 8.5, color: '#374151', fillColor: '#f3f4f6' },
+                    tdLabel: { fontSize: 9, bold: false },
+                    tdNum: { fontSize: 9, alignment: 'right' },
+                    tdName: { fontSize: 8.5 },
+                    footer: { fontSize: 8, color: '#9ca3af', alignment: 'center', italics: true }
+                },
+                content: [
+                    // Header box
+                    {
+                        table: {
+                            widths: ['*'],
+                            body: [[{
+                                fillColor: '#6366f1',
+                                stack: [
+                                    { text: `📊 Bilan classe ${classLabel}`, style: 'h1' },
+                                    { text: `DNB Blanc n°2 — Collège Gaston Chaissac — Avril 2026 — ${cs.n} élèves`, style: 'h1sub' }
+                                ],
+                                margin: [12, 10, 12, 10],
+                                border: [false, false, false, false]
+                            }]]
+                        },
+                        layout: 'noBorders',
+                        margin: [0, 0, 0, 12]
+                    },
+                    statsRow,
+                    { text: `Répartition par niveau (seuils : TBM≥${LEVEL_THRESHOLDS.TBM} / MS≥${LEVEL_THRESHOLDS.MS} / MF≥${LEVEL_THRESHOLDS.MF})`, style: 'h3' },
+                    repartRow,
+                    { text: 'Performance moyenne par exercice', style: 'h3' },
+                    {
+                        table: { widths: ['*', 60, 50], body: perfRows },
+                        layout: {
+                            hLineColor: () => '#e5e7eb',
+                            vLineColor: () => '#e5e7eb',
+                            hLineWidth: () => 0.5,
+                            vLineWidth: () => 0.5,
+                            paddingTop: () => 4, paddingBottom: () => 4
+                        }
+                    },
+                    { text: 'Notes individuelles', style: 'h3' },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: ['*', 44, 22, 22, 22, 22, 22, 22, 28, 35],
+                            body: [notesHeader, ...notesRows]
+                        },
+                        layout: {
+                            hLineColor: () => '#e5e7eb',
+                            vLineColor: () => '#e5e7eb',
+                            hLineWidth: () => 0.5,
+                            vLineWidth: () => 0.5,
+                            paddingTop: () => 3, paddingBottom: () => 3
+                        }
+                    },
+                    { text: `Bilan classe généré le ${today} — M. Belhaj — DNB Blanc n°2`, style: 'footer', margin: [0, 16, 0, 0] }
+                ]
+            };
+        }
+
+        function statCard(val, label) {
+            return {
+                table: {
+                    widths: ['*'],
+                    body: [[{
+                        stack: [{ text: val, style: 'statVal' }, { text: label, style: 'statLabel' }],
+                        fillColor: '#f9fafb',
+                        margin: [6, 8, 6, 8],
+                        border: [true, true, true, true]
+                    }]]
+                },
+                layout: {
+                    hLineColor: () => '#e5e7eb', vLineColor: () => '#e5e7eb',
+                    hLineWidth: () => 0.5, vLineWidth: () => 0.5
+                }
+            };
+        }
+
+        function levelCard(lbl, num, color) {
+            return {
+                table: {
+                    widths: ['*'],
+                    body: [[{
+                        stack: [{ text: lbl, style: 'levelLbl' }, { text: String(num), style: 'levelNum' }],
+                        fillColor: color,
+                        margin: [6, 10, 6, 10],
+                        border: [false, false, false, false]
+                    }]]
+                },
+                layout: 'noBorders'
+            };
         }
 
         function buildClassBilanHTML(classe, cs) {
