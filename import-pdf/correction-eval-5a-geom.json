@@ -1,0 +1,70 @@
+{
+  "exercises": [
+    {
+      "title": "Exercice 1 — Cours",
+      "questions": [
+        {
+          "numero": 1,
+          "enonce": "ABC est un triangle. Écris les trois inégalités triangulaires.",
+          "correction": "AB < AC + BC\nAC < AB + BC\nBC < AB + AC\n(Dans un triangle, chaque côté est strictement inférieur à la somme des deux autres.)",
+          "points": 3,
+          "competences": ["Raisonner", "Communiquer"]
+        },
+        {
+          "numero": 2,
+          "enonce": "On considère la figure ci-dessous, où I, J et K sont trois points alignés. Écris l'égalité correspondante.",
+          "correction": "IJ + JK = IK\n(Si J est entre I et K sur une droite, alors IJ + JK = IK.)",
+          "points": 1,
+          "competences": ["Raisonner"]
+        },
+        {
+          "numero": 3,
+          "enonce": "Écris la définition de la médiatrice d'un segment.",
+          "correction": "La médiatrice d'un segment est la droite perpendiculaire à ce segment et passant par son milieu.",
+          "points": 2,
+          "competences": ["Communiquer"]
+        },
+        {
+          "numero": 4,
+          "enonce": "Écris la définition de la bissectrice d'un angle.",
+          "correction": "La bissectrice d'un angle est la demi-droite qui partage cet angle en deux angles de même mesure.",
+          "points": 2,
+          "competences": ["Communiquer"]
+        }
+      ]
+    },
+    {
+      "title": "Exercice 2 — Construction",
+      "questions": [
+        {
+          "numero": 1,
+          "enonce": "Construis un triangle MAT tel que MA = 6 cm, MT = 9 cm, angle M = 100°",
+          "correction": "1) Tracer le segment [MA] = 6 cm.\n2) Au point M, tracer un angle de 100° au rapporteur.\n3) Sur ce côté, reporter MT = 9 cm.\n4) Relier A et T.",
+          "points": 3,
+          "competences": ["Représenter", "Chercher"]
+        },
+        {
+          "numero": 2,
+          "enonce": "Trace en vert les trois médiatrices des côtés du triangle.",
+          "correction": "Pour chaque côté [MA], [MT] et [AT] :\n1) Ouvrir le compas à plus de la moitié du côté.\n2) Tracer deux arcs depuis chaque extrémité.\n3) Relier les intersections des arcs → c'est la médiatrice.\nLes trois médiatrices se coupent en un même point (le centre du cercle circonscrit).",
+          "points": 3,
+          "competences": ["Représenter"]
+        },
+        {
+          "numero": 3,
+          "enonce": "Trace en bleu les trois bissectrices des trois angles du triangle.",
+          "correction": "Pour chaque angle du triangle :\n1) Tracer un arc de cercle centré sur le sommet.\n2) Depuis les deux points d'intersection avec les côtés, tracer deux arcs de même rayon.\n3) Relier le sommet au point d'intersection des arcs → c'est la bissectrice.\nLes trois bissectrices se coupent en un même point (le centre du cercle inscrit).",
+          "points": 3,
+          "competences": ["Représenter"]
+        },
+        {
+          "numero": 4,
+          "enonce": "Construis le cercle circonscrit au triangle MAT (il doit passer par les trois sommets M, A et T).",
+          "correction": "Le centre du cercle circonscrit est le point d'intersection des trois médiatrices (tracées en vert).\n1) Identifier ce point O.\n2) Ouvrir le compas au rayon OM.\n3) Tracer le cercle de centre O et de rayon OM.\nVérification : le cercle passe par M, A et T.",
+          "points": 3,
+          "competences": ["Représenter", "Chercher"]
+        }
+      ]
+    }
+  ]
+}

@@ -5584,6 +5584,56 @@ function handleBaremeImport(event) {
 }
 
 // === RENDU DES EXERCICES ===
+/**
+ * Rend le statement d'une question avec conversion des tableaux Markdown en HTML
+ */
+function renderStatementWithTables(text) {
+    if (!text) return '';
+    // Détecter les blocs de tableau Markdown (lignes commençant par |)
+    var lines = text.split('\n');
+    var result = [];
+    var tableLines = [];
+    var inTable = false;
+
+    function flushTable() {
+        if (tableLines.length < 2) {
+            result.push(tableLines.join('\n'));
+            tableLines = [];
+            return;
+        }
+        var html = '<table style="border-collapse:collapse;margin:8px 0;font-size:0.9em;">';
+        tableLines.forEach(function (line, i) {
+            // Ignorer les lignes séparateurs (| --- | --- |)
+            if (/^\|[\s\-:]+\|$/.test(line.trim())) return;
+            var cells = line.split('|').filter(function (c, ci, arr) { return ci > 0 && ci < arr.length - 1; });
+            var tag = i === 0 ? 'th' : 'td';
+            html += '<tr>';
+            cells.forEach(function (cell) {
+                var style = 'border:1px solid #d1d5db;padding:6px 10px;';
+                if (i === 0) style += 'background:#f3f4f6;font-weight:bold;';
+                html += '<' + tag + ' style="' + style + '">' + cell.trim() + '</' + tag + '>';
+            });
+            html += '</tr>';
+        });
+        html += '</table>';
+        result.push(html);
+        tableLines = [];
+    }
+
+    lines.forEach(function (line) {
+        if (line.trim().startsWith('|')) {
+            inTable = true;
+            tableLines.push(line);
+        } else {
+            if (inTable) { flushTable(); inTable = false; }
+            result.push(line);
+        }
+    });
+    if (inTable) flushTable();
+
+    return result.join('\n');
+}
+
 function renderExerciseContent(exerciseNumber) {
     const exercise = exercisesData[exerciseNumber];
     const candidate = appState.activeCandidates[appState.currentCandidateIndex];
@@ -5671,12 +5721,17 @@ function renderExerciseContent(exerciseNumber) {
                     </div>
                 </div>
                 
-                <div class="question-text">${question.statement}</div>
-                
+                <div class="question-text">${renderStatementWithTables(question.statement)}</div>
+                ${(question.images && question.images.length > 0) ? `
+                <div style="margin: 10px 0; display: flex; flex-wrap: wrap; gap: 10px;">
+                    ${question.images.map(src => `<img src="${src}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid #e5e7eb;" alt="figure">`).join('')}
+                </div>
+                ` : ''}
+
                 <div class="answer-section">
                     <div class="answer-label">Réponse attendue :</div>
                     <div class="answer-content">
-                        ${question.answer.split('\n').map(line => `<p>${line}</p>`).join('')}
+                        ${renderStatementWithTables(question.answer).split('\n').map(line => `<p>${line}</p>`).join('')}
                     </div>
                 </div>
                 

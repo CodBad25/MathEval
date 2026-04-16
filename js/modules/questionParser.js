@@ -12,8 +12,15 @@
  * - Lignes sur le même Y → fusionnées en une seule ligne
  */
 function autoDetectQuestions() {
+    // Si on a des paragraphes ODT/DOCX, utiliser ceux-là
+    var odtParagraphs = appState.pdfImport._odtParagraphs;
+    if (odtParagraphs && odtParagraphs.length > 0) {
+        autoDetectFromOdt(odtParagraphs);
+        return;
+    }
+
     var pdf = appState.pdfImport.pdfDoc;
-    if (!pdf) { alert('Chargez un PDF d\'abord.'); return; }
+    if (!pdf) { alert('Chargez un fichier (PDF, ODT ou DOCX) d\'abord.'); return; }
 
     // Analyser toutes les pages
     var allItems = [];
@@ -27,6 +34,9 @@ function autoDetectQuestions() {
         pagesItems.forEach(function (items) {
             allItems = allItems.concat(items);
         });
+
+        // Cacher le texte brut pour la détection IA
+        appState.pdfImport._cachedText = allItems.map(function (i) { return i.text; }).join(' ');
 
         // Fusionner les items sur la même ligne (même page + même Y ±2px)
         var lines = mergeItemsIntoLines(allItems);
@@ -125,7 +135,7 @@ function parseExercisesFromLines(lines) {
     var currentQuestion = null;
 
     // Patterns de détection
-    var exPattern = /^exercice\s+(\d+)/i;
+    var exPattern = /exercice\s+(\d+)/i;
     var qNumPattern = /^(\d+)\s*[).]\s*/;
     var qLetterPattern = /^([a-f])\s*[).]\s*/i;
     var questionCounter = 0;
@@ -409,11 +419,17 @@ function renderExercisePanel() {
     panel.innerHTML = exercises.map(function (ex, ei) {
         var color = exColors[ei % exColors.length];
         var questionsHtml = ex.questions.map(function (q, qi) {
+            var imgHtml = '';
+            if (q.images && q.images.length > 0) {
+                imgHtml = q.images.map(function (src) {
+                    return '<img src="' + src + '" style="max-width:100%;max-height:80px;border-radius:4px;margin-top:4px;border:1px solid #e5e7eb;" alt="figure">';
+                }).join('');
+            }
             return '<div style="margin-left:12px;padding:8px 10px;margin-bottom:4px;border-radius:6px;background:' + color + '08;border-left:3px solid ' + color + ';">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                 '<span style="font-size:0.85em;"><strong>Q' + q.num + '</strong> <span style="color:#666;">' + (q.text ? truncate(q.text, 40) : '<em style="color:#bbb;">voir le PDF</em>') + '</span></span>' +
                 '<button onclick="deleteQuestion(' + ei + ',' + qi + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.8em;" title="Supprimer">✕</button>' +
-                '</div></div>';
+                '</div>' + imgHtml + '</div>';
         }).join('');
 
         // Bouton OCR si l'exercice a des questions sans texte (probablement une image)
@@ -480,6 +496,384 @@ function updateZonesButtons() {
     var exercises = appState.pdfImport.exercises || [];
     var totalQ = exercises.reduce(function (s, ex) { return s + ex.questions.length; }, 0);
     if (btn) btn.disabled = totalQ === 0 && appState.pdfImport.zones.length === 0;
+}
+
+// ============================================================================
+// DÉTECTION IA — Parsing structure via Mistral (plus fiable que les heuristiques)
+// ============================================================================
+
+function aiDetectQuestions() {
+    var apiKey = getMistralApiKey();
+    if (!apiKey) {
+        alert('Clé API Mistral non configurée.\nAllez dans Paramètres → OCR par IA pour saisir votre clé.\n\nSinon, utilisez la détection auto (heuristiques).');
+        return;
+    }
+
+    // Feedback visuel
+    var btn = document.querySelector('[onclick*="aiDetectQuestions"]');
+    if (btn) { btn.textContent = '⏳ Extraction...'; btn.disabled = true; }
+
+    // Si on a le fichier PDF original → utiliser Mistral OCR (le vrai, parfait)
+    // Sinon (ODT/DOCX) → envoyer le texte à mistral-small
+    var file = appState.pdfImport.file;
+    if (file && appState.pdfImport.fileType === 'pdf') {
+        if (btn) btn.textContent = '⏳ Upload PDF...';
+        mistralOcrPipeline(file, btn);
+    } else {
+        extractAllText().then(function (text) {
+            if (!text || text.trim().length < 20) {
+                alert('Aucun texte extrait du document.');
+                if (btn) { btn.textContent = '🤖 Détection IA'; btn.disabled = false; }
+                return;
+            }
+            if (btn) btn.textContent = '⏳ Analyse IA...';
+            sendToMistralForParsing(text, btn);
+        });
+    }
+}
+
+function extractAllText() {
+    // ODT/DOCX : paragraphes déjà extraits
+    var paragraphs = appState.pdfImport._odtParagraphs;
+    if (paragraphs && paragraphs.length > 0) {
+        var text = paragraphs.map(function (p) { return p.text || ''; }).filter(function (t) { return t; }).join('\n');
+        return Promise.resolve(text);
+    }
+
+    // PDF : extraire le texte de toutes les pages
+    var pdf = appState.pdfImport.pdfDoc;
+    if (!pdf) return Promise.resolve(null);
+
+    var promises = [];
+    for (var p = 1; p <= pdf.numPages; p++) {
+        (function (pageNum) {
+            promises.push(
+                pdf.getPage(pageNum).then(function (page) {
+                    return page.getTextContent().then(function (content) {
+                        var items = content.items.filter(function (i) { return i.str.trim(); });
+                        items.sort(function (a, b) {
+                            var yDiff = b.transform[5] - a.transform[5];
+                            if (Math.abs(yDiff) > 5) return yDiff;
+                            return a.transform[4] - b.transform[4];
+                        });
+                        return items.map(function (i) { return i.str; }).join(' ');
+                    });
+                })
+            );
+        })(p);
+    }
+
+    return Promise.all(promises).then(function (pages) {
+        var text = pages.join('\n\n');
+        appState.pdfImport._cachedText = text;
+        return text;
+    });
+}
+
+function sendToMistralForParsing(text, btn) {
+
+    console.log('🤖 Détection IA : envoi de ' + text.length + ' caractères à Mistral');
+
+    var apiKey = getMistralApiKey();
+    fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'mistral-small-latest',
+            messages: [{
+                role: 'user',
+                content: 'Tu es un parser de devoirs de mathématiques français (collège). Extrais la structure du devoir en JSON strict.\n\nFormat attendu :\n{"exercises":[{"title":"Exercice 1 — Titre","questions":[{"numero":1,"text":"texte complet de la question"}]}]}\n\nRègles :\n- Chaque exercice a un titre (ex: "Exercice 1 — Cours")\n- Les sous-questions a), b), c) comptent comme des questions séparées\n- Garde le texte complet de chaque question avec le contexte\n- Inclus les tableaux Markdown dans le texte si présents\n- Ne mets PAS les corrections, uniquement les énoncés\n- Ignore les en-têtes (nom, classe, date, compétences évaluées)\n\nDevoir :\n' + text.substring(0, 6000)
+            }],
+            max_tokens: 6000,
+            response_format: { type: 'json_object' }
+        })
+    }).then(function (response) {
+        if (!response.ok) throw new Error('Erreur Mistral ' + response.status);
+        return response.json();
+    }).then(function (data) {
+        if (!data.choices || !data.choices[0]) throw new Error('Réponse vide');
+
+        if (data.usage) trackMistralUsage(data.usage.prompt_tokens || 0, data.usage.completion_tokens || 0);
+
+        var result = JSON.parse(data.choices[0].message.content);
+        // Gérer les deux clés possibles (exercises ou exercices)
+        if (!result.exercises && result.exercices) result.exercises = result.exercices;
+        console.log('✅ Détection IA (texte) : ' + (result.exercises || []).length + ' exercices');
+        applyMistralResult(result, btn);
+    }).catch(function (err) {
+        console.error('❌ Détection IA échouée:', err);
+        alert('Erreur : ' + err.message);
+        if (btn) { btn.textContent = '🤖 Détection IA'; btn.disabled = false; }
+    });
+}
+
+
+/**
+ * Pipeline Mistral OCR : Upload PDF → OCR → Markdown → Structure JSON
+ * Utilise le VRAI endpoint /v1/ocr (pas le chat vision)
+ */
+function mistralOcrPipeline(file, btn) {
+    var apiKey = getMistralApiKey();
+
+    // Étape 1 : Upload du fichier PDF
+    console.log('📤 Upload PDF vers Mistral (' + file.size + ' bytes)...');
+
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('purpose', 'ocr');
+
+    fetch('https://api.mistral.ai/v1/files', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + apiKey },
+        body: formData
+    }).then(function (response) {
+        if (!response.ok) throw new Error('Upload échoué : ' + response.status);
+        return response.json();
+    }).then(function (uploadResult) {
+        var fileId = uploadResult.id;
+        console.log('✅ PDF uploadé, ID : ' + fileId);
+
+        // Étape 2 : Appeler Mistral OCR
+        if (btn) btn.textContent = '⏳ OCR en cours...';
+
+        return fetch('https://api.mistral.ai/v1/ocr', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'mistral-ocr-latest',
+                document: { type: 'file', file_id: fileId },
+                include_image_base64: true
+            })
+        });
+    }).then(function (response) {
+        if (!response.ok) return response.text().then(function (t) { throw new Error('OCR échoué : ' + t); });
+        return response.json();
+    }).then(function (ocrResult) {
+        // Combiner le markdown de toutes les pages
+        var markdown = '';
+        var ocrImages = {};
+
+        (ocrResult.pages || []).forEach(function (page) {
+            markdown += (page.markdown || '') + '\n\n';
+            // Extraire les images avec leur ID
+            (page.images || []).forEach(function (img) {
+                if (img.id && img.image_base64) {
+                    // image_base64 contient déjà le préfixe data:image/...;base64,
+                    ocrImages[img.id] = img.image_base64.startsWith('data:') ? img.image_base64 : ('data:image/jpeg;base64,' + img.image_base64);
+                }
+            });
+        });
+
+        var nbImages = Object.keys(ocrImages).length;
+        console.log('✅ OCR terminé : ' + markdown.length + ' chars, ' + (ocrResult.pages || []).length + ' page(s), ' + nbImages + ' image(s)');
+
+        // Stocker le texte OCR et les images SÉPARÉMENT
+        // Le markdown envoyé au parsing ne contient PAS les base64 (sinon il explose la limite)
+        appState.pdfImport._cachedText = markdown;
+        appState.pdfImport._ocrMarkdown = markdown;
+        appState.pdfImport._ocrImages = ocrImages;
+
+        // Étape 3 : Parser la structure avec mistral-small
+        if (btn) btn.textContent = '⏳ Structuration...';
+        sendToMistralForParsing(markdown, btn);
+    }).catch(function (err) {
+        console.error('❌ Pipeline OCR échoué:', err);
+        alert('Erreur OCR : ' + err.message);
+        if (btn) { btn.textContent = '🤖 Détection IA'; btn.disabled = false; }
+    });
+}
+
+/**
+ * Capture toutes les pages du PDF en images base64
+ */
+function capturePdfPagesAsImages(pdf) {
+    var promises = [];
+    for (var p = 1; p <= pdf.numPages; p++) {
+        (function (pageNum) {
+            promises.push(
+                pdf.getPage(pageNum).then(function (page) {
+                    var scale = 1.5;
+                    var viewport = page.getViewport({ scale: scale });
+                    var canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    var ctx = canvas.getContext('2d');
+                    return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+                        return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                    });
+                })
+            );
+        })(p);
+    }
+    return Promise.all(promises);
+}
+
+/**
+ * Envoie les images PDF à Pixtral pour parsing visuel
+ */
+function sendPdfImagesToMistral(images, btn) {
+    var apiKey = getMistralApiKey();
+    console.log('🤖 Détection IA (vision) : ' + images.length + ' page(s)');
+
+    // Construire le contenu avec toutes les images
+    var content = [
+        {
+            type: 'text',
+            text: 'Tu es un parser de devoirs de mathématiques français (collège). Analyse les images de ce devoir et extrais la structure en JSON strict.\n\nFormat attendu :\n{"exercises":[{"title":"Exercice 1 — Titre","questions":[{"numero":1,"text":"texte complet de la question"}]}]}\n\nRègles :\n- Chaque exercice a un titre\n- Les sous-questions a), b), c) comptent comme des questions séparées\n- Garde le texte complet de chaque question\n- Ne mets PAS les corrections, uniquement les énoncés\n- Ignore les en-têtes (nom, classe, date, compétences évaluées)\n- Gère les mises en page multi-colonnes'
+        }
+    ];
+
+    images.forEach(function (base64) {
+        content.push({
+            type: 'image_url',
+            image_url: { url: 'data:image/jpeg;base64,' + base64 }
+        });
+    });
+
+    fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'pixtral-large-latest',
+            messages: [{ role: 'user', content: content }],
+            max_tokens: 4000,
+            response_format: { type: 'json_object' }
+        })
+    }).then(function (response) {
+        if (!response.ok) return response.text().then(function (t) { throw new Error('Mistral ' + response.status + ': ' + t); });
+        return response.json();
+    }).then(function (data) {
+        if (!data.choices || !data.choices[0]) throw new Error('Réponse vide');
+        if (data.usage) trackMistralUsage(data.usage.prompt_tokens || 0, data.usage.completion_tokens || 0);
+
+        var result = JSON.parse(data.choices[0].message.content);
+        console.log('✅ Détection IA (vision) : ' + (result.exercises || []).length + ' exercices');
+        applyMistralResult(result, btn);
+    }).catch(function (err) {
+        console.error('❌ Détection IA échouée:', err);
+        alert('Erreur : ' + err.message);
+        if (btn) { btn.textContent = '🤖 Détection IA'; btn.disabled = false; }
+    });
+}
+
+/**
+ * Applique le résultat Mistral (commun aux modes texte et vision)
+ */
+function applyMistralResult(result, btn) {
+    var ocrImages = appState.pdfImport._ocrImages || {};
+    var ocrMarkdown = appState.pdfImport._ocrMarkdown || '';
+
+    var exercises = (result.exercises || []).map(function (ex, ei) {
+        var exNum = ei + 1;
+        return {
+            id: 'ex' + exNum,
+            num: exNum,
+            title: ex.title || ('Exercice ' + exNum),
+            page: 1, y: ei * 200 + 50,
+            questions: (ex.questions || []).map(function (q, qi) {
+                var qNum = qi + 1;
+                // Chercher les images associées à cette question
+                var questionImages = [];
+                var qText = q.text || '';
+                // Chercher les refs ![img-X.jpeg](img-X.jpeg) dans le texte
+                var imgRefs = qText.match(/!\[([^\]]*)\]\([^)]*\)/g) || [];
+                imgRefs.forEach(function (ref) {
+                    var idMatch = ref.match(/!\[([^\]]*)\]/);
+                    if (idMatch) {
+                        var imgId = idMatch[1];
+                        if (ocrImages[imgId]) questionImages.push(ocrImages[imgId]);
+                    }
+                });
+                // Aussi chercher les IDs d'images mentionnés directement (img-0, img-1, etc.)
+                if (questionImages.length === 0) {
+                    var idRefs = qText.match(/img-\d+\.\w+/g) || [];
+                    idRefs.forEach(function (id) {
+                        if (ocrImages[id]) questionImages.push(ocrImages[id]);
+                    });
+                }
+                return {
+                    id: 'ex' + exNum + '_q' + qNum, num: qNum,
+                    label: 'Question ' + qNum,
+                    text: (q.text || '').replace(/!\[[^\]]*\]\([^)]*\)/g, '').trim(),
+                    images: questionImages,
+                    page: 1, y: ei * 200 + 50 + qNum * 40,
+                    points: q.points || 1, competences: q.competences || [], answer: ''
+                };
+            })
+        };
+    });
+
+    // Associer les images OCR aux exercices depuis le markdown
+    if (Object.keys(ocrImages).length > 0 && ocrMarkdown) {
+        // Découper le markdown par section # (heading)
+        var exSections = ocrMarkdown.split(/(?=^#+\s)/m);
+        var exSectionMap = {}; // exNum → section text
+
+        exSections.forEach(function (section) {
+            // Chercher le numéro d'exercice dans le titre de la section
+            var exMatch = section.match(/exercice\s+(\d+)/i);
+            if (exMatch) exSectionMap[parseInt(exMatch[1])] = section;
+        });
+
+        console.log('🖼️ Association images OCR aux exercices:', Object.keys(exSectionMap).map(function(k) { return 'Ex' + k; }));
+
+        exercises.forEach(function (ex) {
+            var section = exSectionMap[ex.num] || '';
+            // Trouver les IDs d'images uniques dans cette section
+            var sectionImgs = section.match(/img-\d+\.\w+/g) || [];
+            var uniqueImgs = [];
+            sectionImgs.forEach(function (id) {
+                if (uniqueImgs.indexOf(id) < 0) uniqueImgs.push(id);
+            });
+
+            uniqueImgs.forEach(function (imgId) {
+                if (!ocrImages[imgId]) return;
+                var dataUrl = ocrImages[imgId];
+                // Vérifier si déjà assignée
+                var alreadyAssigned = ex.questions.some(function (q) {
+                    return q.images && q.images.indexOf(dataUrl) >= 0;
+                });
+                if (!alreadyAssigned && ex.questions.length > 0) {
+                    // Assigner à la première question
+                    if (!ex.questions[0].images) ex.questions[0].images = [];
+                    ex.questions[0].images.push(dataUrl);
+                    console.log('🖼️ Image ' + imgId + ' → ' + ex.title + ' Q1');
+                }
+            });
+        });
+    }
+
+    appState.pdfImport.exercises = exercises;
+    appState.pdfImport.zones = [];
+    exercises.forEach(function (ex) {
+        ex.questions.forEach(function (q) {
+            appState.pdfImport.zones.push({
+                page: 1, x: 20, y: q.y, w: 550, h: 35,
+                exerciseId: ex.id, exerciseNum: ex.num,
+                questionId: q.id, questionNum: q.num,
+                label: 'Ex' + ex.num + ' Q' + q.num
+            });
+        });
+    });
+
+    renderExercisePanel();
+    updateZonesButtons();
+
+    var pdf = appState.pdfImport.pdfDoc;
+    if (pdf) realignZonesFromPdf(pdf);
+    if (btn) { btn.textContent = '🤖 Détection IA'; btn.disabled = false; }
+
+    var totalQ = exercises.reduce(function (s, ex) { return s + ex.questions.length; }, 0);
+    console.log('✅ ' + exercises.length + ' exercices, ' + totalQ + ' questions');
 }
 
 // ============================================================================

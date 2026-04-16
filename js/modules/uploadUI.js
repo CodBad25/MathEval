@@ -178,17 +178,47 @@ function loadDocxFile(file) {
     var reader = new FileReader();
     reader.onload = function (e) {
         mammoth.convertToHtml({ arrayBuffer: e.target.result }).then(function (result) {
-            // Afficher le HTML dans le canvas container
+            var htmlContent = result.value;
+            console.log('📄 DOCX converti en HTML (' + htmlContent.length + ' caractères)');
+
+            // Extraire les paragraphes du HTML pour la détection
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            var paragraphs = [];
+            var elements = tempDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, td, th');
+            for (var i = 0; i < elements.length; i++) {
+                var el = elements[i];
+                var text = (el.textContent || '').trim();
+                if (text) {
+                    var isBold = el.tagName.charAt(0) === 'H' || el.querySelector('strong, b') !== null;
+                    paragraphs.push({
+                        text: text,
+                        style: '', bold: isBold, underline: false,
+                        fontSize: '', hasImage: el.querySelector('img') !== null, imagePaths: []
+                    });
+                }
+            }
+            appState.pdfImport._odtParagraphs = paragraphs;
+
+            // Lancer la détection auto
+            autoDetectFromOdt(paragraphs);
+
+            // Afficher le HTML dans le container
             var container = document.getElementById('pdfCanvasContainer');
             document.getElementById('pdfCanvas').style.display = 'none';
             document.getElementById('zoneOverlay').style.display = 'none';
             var div = document.getElementById('docxContent') || document.createElement('div');
             div.id = 'docxContent';
-            div.style.cssText = 'padding:30px; background:white; max-width:800px; margin:0 auto;';
-            div.innerHTML = result.value;
+            div.style.cssText = 'padding:30px; background:white; max-width:800px; margin:0 auto; font-family:Verdana,sans-serif; font-size:10pt; line-height:1.5;';
+            div.innerHTML = htmlContent;
             container.appendChild(div);
+            container.scrollTop = 0;
+
             appState.pdfImport.totalPages = 1;
             pdfImportGoToStep(2);
+        }).catch(function (err) {
+            console.error('Erreur DOCX:', err);
+            alert('Erreur lors de la lecture du fichier DOCX : ' + err.message);
         });
     };
     reader.readAsArrayBuffer(file);
@@ -315,7 +345,7 @@ function realignZonesFromPdf(pdf) {
         var lines = mergeItemsIntoLines(allItems);
 
         // Patterns
-        var exPattern = /^exercice\s+(\d+)/i;
+        var exPattern = /exercice\s+(\d+)/i;
         var qPattern = /^(\d+)\s*[).]\s*/;
 
         // Trouver les positions Y réelles de chaque exercice et question
@@ -673,7 +703,7 @@ function autoDetectFromOdt(paragraphs) {
     var currentExercise = null;
     var currentQuestion = null;
 
-    var exPattern = /^exercice\s+(\d+)/i;
+    var exPattern = /exercice\s+(\d+)/i;
     var qNumPattern = /^(\d+)\s*[).]\s*/;
     var qLetterPattern = /^([a-f])\s*[).]\s*/i;
     var questionCounter = 0;

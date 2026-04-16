@@ -206,6 +206,7 @@ function finalizePdfImport() {
                     points: q.points || 1,
                     statement: q.text || q.label || '',
                     answer: corr.text || q.answer || '',
+                    images: q.images || [],
                     competences: qCompetences.map(function (cName) {
                         var found = allComps.find(function (c) { return c.name === cName; });
                         return {
@@ -221,12 +222,24 @@ function finalizePdfImport() {
             })
         };
 
+        // Construire questionPoints et questionCompetences pour le format canonique
+        var qPoints = {};
+        var qComps = {};
+        var allSelectedComps = [];
+        exercisesData[exNum].questions.forEach(function (q) {
+            qPoints[q.id] = q.points;
+            qComps[q.id] = q.competences.map(function (c) { return c.name; });
+            q.competences.forEach(function (c) {
+                if (allSelectedComps.indexOf(c.name) < 0) allSelectedComps.push(c.name);
+            });
+        });
+
         appState.baremeConfig.exercises[String(exNum)] = {
             totalPoints: exTotal,
-            selectedCompetences: [],
-            questionCompetences: {},
+            selectedCompetences: allSelectedComps,
+            questionCompetences: qComps,
             questionCompetencePoints: {},
-            questionPoints: {},
+            questionPoints: qPoints,
             competenceDetails: {},
             questionCompetenceDetails: {}
         };
@@ -235,4 +248,86 @@ function finalizePdfImport() {
     console.log('✅ exercisesData généré : ' + exercises.length + ' exercices, ' + totalQ + ' questions');
     console.log(exercisesData);
     showPage('setupPage');
+}
+
+function exportBilansPdfJson() {
+    if (!appState || !appState.candidates || !appState.scores || !appState.baremeConfig) {
+        alert('⚠️ Aucune donnée de correction disponible. Commencez une correction d\'abord.');
+        return;
+    }
+
+    var candidates = appState.candidates || [];
+    var activeCandidates = appState.activeCandidates || [];
+    var scores = appState.scores || {};
+    var quickButtonStates = appState.quickButtonStates || {};
+    var candidateComments = appState.candidateComments || {};
+    var baremeConfig = appState.baremeConfig || {};
+    var validatedCandidates = appState.validatedCandidates || {};
+    var presentationScores = appState.presentationScores || {};
+
+    var questionPointsMap = {};
+    var questionCompetencesMap = {};
+
+    Object.keys(exercisesData || {}).forEach(function (exId) {
+        var ex = exercisesData[exId];
+        var exConfig = baremeConfig.exercises ? baremeConfig.exercises[exId] : {};
+
+        questionPointsMap[exId] = {};
+        questionCompetencesMap[exId] = {};
+
+        (ex.questions || []).forEach(function (q) {
+            var qId = q.id;
+            var qPoints = q.points || 1;
+
+            questionPointsMap[exId][qId] = qPoints;
+
+            var qComps = q.competences ? q.competences.map(function (c) { return c.name; }) : [];
+            questionCompetencesMap[exId][qId] = qComps;
+        });
+    });
+
+    var canonical = {
+        appState: {
+            candidates: candidates,
+            activeCandidates: activeCandidates,
+            scores: scores,
+            quickButtonStates: quickButtonStates,
+            candidateComments: candidateComments,
+            validatedCandidates: validatedCandidates,
+            presentationScores: presentationScores,
+            baremeConfig: {
+                mode: baremeConfig.mode || 'b',
+                totalMax: baremeConfig.totalMax || 20,
+                exercises: {}
+            }
+        },
+        exercisesData: exercisesData || {},
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+    };
+
+    Object.keys(exercisesData || {}).forEach(function (exId) {
+        var exData = exercisesData[exId];
+        var exConfig = baremeConfig.exercises ? baremeConfig.exercises[exId] : {};
+
+        canonical.appState.baremeConfig.exercises[exId] = {
+            totalPoints: exData.totalPoints || 0,
+            selectedCompetences: exConfig.selectedCompetences || [],
+            questionPoints: questionPointsMap[exId] || {},
+            questionCompetences: questionCompetencesMap[exId] || {}
+        };
+    });
+
+    var filename = 'bilans-' + new Date().toISOString().split('T')[0] + '.json';
+    var blob = new Blob([JSON.stringify(canonical, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log('✅ Export bilans PDF JSON : ' + filename);
 }

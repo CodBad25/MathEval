@@ -32,6 +32,7 @@ function renderPdfBaremeConfig() {
                 'style="width:65px;padding:5px;border:2px solid #d1d5db;border-radius:6px;text-align:center;font-weight:bold;">' +
                 '</div></div>' +
                 (q.text ? '<div style="font-size:0.85em;color:#666;margin-bottom:8px;font-style:italic;">' + escapeHtml(cleanLatexForDisplay(q.text)) + '</div>' : '') +
+                (q.images && q.images.length > 0 ? '<div style="margin-bottom:8px;">' + q.images.map(function(src) { return '<img src="' + src + '" style="max-width:100%;max-height:150px;border-radius:4px;border:1px solid #e5e7eb;" alt="figure">'; }).join('') + '</div>' : '') +
                 '<div style="margin-bottom:6px;font-weight:600;color:#555;font-size:0.8em;">Compétences :</div>' +
                 '<div id="pdfQComp_' + ei + '_' + qi + '" style="display:flex;flex-wrap:wrap;gap:5px;"></div>' +
                 '</div>';
