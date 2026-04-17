@@ -47,12 +47,12 @@ function renderCorrectionPathContent(path) {
         container.innerHTML =
             '<div style="background:white;padding:20px;border-radius:12px;">' +
             '<h3 style="color:#2c3e50;margin-bottom:15px;">Importer les corrections (JSON)</h3>' +
-            '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
-            '<button onclick="document.getElementById(\'jsonFileInput\').click()" style="padding:10px 20px;background:#4F46E5;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95em;">📁 Charger un fichier JSON</button>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">' +
+            '<button onclick="pasteAndImportJson()" style="padding:10px 20px;background:#8b5cf6;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95em;">📋 Coller les corrections</button>' +
+            '<button onclick="document.getElementById(\'jsonFileInput\').click()" style="padding:10px 20px;background:#4F46E5;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95em;">📁 Charger un fichier</button>' +
             '<input type="file" id="jsonFileInput" accept=".json" style="display:none;" onchange="loadJsonFile(event)">' +
-            '<span style="color:#999;align-self:center;">ou collez le JSON ci-dessous</span>' +
             '</div>' +
-            '<textarea id="jsonCorrectionInput" rows="8" placeholder=\'{"exercises":[{"questions":[{"numero":1,"correction":"..."}]}]}\' ' +
+            '<textarea id="jsonCorrectionInput" rows="6" placeholder=\'Ou collez le JSON manuellement ici\' ' +
             'style="width:100%;padding:12px;border:2px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:0.85em;"></textarea>' +
             '<button onclick="parseJsonCorrection()" style="margin-top:10px;padding:8px 20px;background:#10b981;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Importer</button>' +
             '<div id="jsonPreview" style="margin-top:15px;"></div></div>';
@@ -85,6 +85,27 @@ function handlePhotoUpload(event) {
             '<img src="' + url + '" style="max-width:100%;max-height:120px;border-radius:4px;">' +
             '<div style="font-size:0.8em;color:#555;margin-top:4px;">' + label + '</div></div>';
     }).join('');
+}
+
+function pasteAndImportJson() {
+    navigator.clipboard.readText().then(function (text) {
+        if (!text || !text.trim()) {
+            alert('Le presse-papier est vide. Lancez d\'abord /correction dans Claude Code.');
+            return;
+        }
+        // Vérifier que c'est du JSON valide
+        try {
+            JSON.parse(text);
+        } catch (e) {
+            alert('Le presse-papier ne contient pas de JSON valide.');
+            return;
+        }
+        var textarea = document.getElementById('jsonCorrectionInput');
+        if (textarea) textarea.value = text;
+        parseJsonCorrection();
+    }).catch(function (err) {
+        alert('Impossible de lire le presse-papier. Utilisez Cmd+V dans le champ texte puis cliquez Importer.');
+    });
 }
 
 function loadJsonFile(event) {

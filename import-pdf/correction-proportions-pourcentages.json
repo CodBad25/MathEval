@@ -1,0 +1,73 @@
+{
+  "exercises": [
+    {
+      "title": "Exercice 1 — Tri des déchets et proportions",
+      "questions": [
+        {
+          "numero": 1,
+          "enonce": "Compléter les deux diagrammes suivants, avec les réponses « oui » et « non », ainsi que les proportions correspondantes.",
+          "correction": "5eA : oui = 12/15 = 4/5 ; non = 3/15 = 1/5.\n5eB : oui = 15/20 = 3/4 ; non = 5/20 = 1/4.\nCompléter les diagrammes circulaires avec ces proportions.",
+          "points": 2,
+          "competences": ["Représenter", "Calculer"]
+        },
+        {
+          "numero": 2,
+          "enonce": "Dans quelle classe les élèves sont-ils les plus écoresponsables ? Justifier.",
+          "correction": "En 5eA : 12/15 = 4/5 = 0,8 soit 80 % des élèves trient.\nEn 5eB : 15/20 = 3/4 = 0,75 soit 75 % des élèves trient.\n80 % > 75 %, donc les élèves de 5eA sont les plus écoresponsables.",
+          "points": 2,
+          "competences": ["Raisonner", "Communiquer"]
+        },
+        {
+          "numero": 3,
+          "enonce": "Comparer les fractions suivantes : 12/15 et 15/20, puis 3/15 et 5/20.",
+          "correction": "12/15 = 48/60 et 15/20 = 45/60. Comme 48 > 45, on a 12/15 > 15/20.\n3/15 = 12/60 et 5/20 = 15/60. Comme 12 < 15, on a 3/15 < 5/20.",
+          "points": 2,
+          "competences": ["Calculer"]
+        }
+      ]
+    },
+    {
+      "title": "Exercice 2 — Pourcentages et prix",
+      "questions": [
+        {
+          "numero": 1,
+          "enonce": "Un commerçant a accordé un rabais de 15 % sur un article qui coûtait initialement 230 €. Quel sera son nouveau prix de vente ?",
+          "correction": "Montant du rabais : 230 × 15/100 = 34,50 €.\nNouveau prix : 230 − 34,50 = 195,50 €.",
+          "points": 2,
+          "competences": ["Calculer"]
+        },
+        {
+          "numero": 2,
+          "enonce": "Il décide de faire une remise de 25 % sur un article qui coûte 125 €. Quel sera son nouveau prix de vente ?",
+          "correction": "Montant de la remise : 125 × 25/100 = 31,25 €.\nNouveau prix : 125 − 31,25 = 93,75 €.",
+          "points": 2,
+          "competences": ["Calculer"]
+        }
+      ]
+    },
+    {
+      "title": "Exercice 3 — Résultats du DNB",
+      "questions": [
+        {
+          "numero": 1,
+          "enonce": "Résultats DNB : Collège de Lucas (143 réussi, 19 échoué), Collège de Maëlle (139 réussi, 14 échoué). Lucas et Maëlle affirment que leur collège a les meilleurs résultats. Qui a raison ?",
+          "correction": "Collège de Lucas : 143 + 19 = 162 élèves au total. Taux de réussite : 143/162 ≈ 88,3 %.\nCollège de Maëlle : 139 + 14 = 153 élèves au total. Taux de réussite : 139/153 ≈ 90,8 %.\n90,8 % > 88,3 %, donc Maëlle a raison : son collège a un meilleur taux de réussite.",
+          "points": 3,
+          "competences": ["Chercher", "Raisonner", "Communiquer"]
+        }
+      ]
+    },
+    {
+      "title": "Exercice 4 — Production et marchés",
+      "questions": [
+        {
+          "numero": 1,
+          "enonce": "Une entreprise a produit 350 tonnes d'écrous et de vis. Un quart sur le marché national, 30 % européen, 10 % américain, le reste asiatique. Calculer la production en tonnes.",
+          "correction": "Marché national : 350 × 1/4 = 87,5 tonnes.\nMarché européen : 350 × 30/100 = 105 tonnes.\nMarché américain : 350 × 10/100 = 35 tonnes.\nMarché asiatique : 350 − 87,5 − 105 − 35 = 122,5 tonnes.",
+          "points": 3,
+          "competences": ["Calculer", "Chercher"]
+        }
+      ]
+    }
+  ]
+}
