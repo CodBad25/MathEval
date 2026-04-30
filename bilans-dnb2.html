@@ -3371,6 +3371,47 @@
             return s;
         }
 
+        // Sépare "NOM(s) Prénom (n°X)" en ["NOM(s) (n°X)" optionnel ; "Prénom"] pour wrap éventuel.
+        // Retourne [text] si pas de découpe propre possible.
+        function splitNameForWrap(text) {
+            const t = String(text || '').trim();
+            const m = t.match(/^(.+?)\s*(\(n°\d+\))$/);
+            const main = m ? m[1].trim() : t;
+            const suffix = m ? m[2] : '';
+            const parts = main.split(/\s+/);
+            // Détecter le bloc initial en MAJUSCULES (= nom de famille, possiblement composé)
+            const isUpper = (w) => /^[A-ZÀ-ÖØ-Ý'\-]+$/.test(w);
+            let endNom = 0;
+            for (let j = 0; j < parts.length; j++) {
+                if (isUpper(parts[j])) endNom = j + 1; else break;
+            }
+            if (endNom === 0 || endNom === parts.length) return [t]; // tout en MAJ ou aucun MAJ → pas de split
+            const nom = parts.slice(0, endNom).join(' ');
+            const prenom = parts.slice(endNom).join(' ');
+            return [nom, (prenom + (suffix ? ' ' + suffix : '')).trim()];
+        }
+
+        // Adapte la taille de police pour qu'un nom tienne dans maxW. Si toujours trop long
+        // et allowWrap=true, retourne 2 lignes (nom / prénom + n°). Sinon tronque avec …
+        function pdfFitName(doc, text, maxW, { baseSize = 13, minSize = 9.5, allowWrap = false } = {}) {
+            const t = String(text || '');
+            for (let size = baseSize; size >= minSize; size -= 0.5) {
+                doc.setFontSize(size);
+                if (doc.getTextWidth(t) <= maxW) return { size, lines: [t] };
+            }
+            if (allowWrap) {
+                const split = splitNameForWrap(t);
+                if (split.length === 2) {
+                    for (let size = baseSize; size >= minSize; size -= 0.5) {
+                        doc.setFontSize(size);
+                        if (split.every(l => doc.getTextWidth(l) <= maxW)) return { size, lines: split };
+                    }
+                }
+            }
+            doc.setFontSize(minSize);
+            return { size: minSize, lines: [pdfFit(doc, t, maxW)] };
+        }
+
         // Emoji -> PNG dataURL via canvas (jsPDF ne rend pas les emojis, on les injecte comme images)
         const _emojiCache = {};
         function emojiToDataURL(emoji, sizePx = 48) {
@@ -3681,8 +3722,11 @@
                 doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...PDF_C.dark);
                 doc.text(String(i + 1), tx, y + 5); tx += 6;
                 doc.setFont('helvetica', 'bold');
-                doc.text(pdfFit(doc, formatStudentDisplay(c.id), nameW - 2), tx, y + 5); tx += nameW;
-                doc.setFont('helvetica', 'normal');
+                // Auto-shrink police de 8 à 6.5 si nom trop long, pas de wrap (ligne fixe)
+                const fittedRow = pdfFitName(doc, formatStudentDisplay(c.id), nameW - 2, { baseSize: 8, minSize: 6.5, allowWrap: false });
+                doc.setFontSize(fittedRow.size);
+                doc.text(fittedRow.lines[0], tx, y + 5); tx += nameW;
+                doc.setFontSize(8); doc.setFont('helvetica', 'normal');
                 doc.text(fmt1(c.note), tx, y + 5); tx += noteW;
                 doc.setTextColor(...lv.color); doc.setFont('helvetica', 'bold');
                 doc.text(lv.code, tx, y + 5); tx += nivW;
@@ -3830,15 +3874,27 @@
             const topRowH = 40;
 
             // --- Gauche : nom + carte note colorée ---
-            doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
-            doc.text(pdfFit(doc, name, leftW - 22), M, y + 5);
-            if (classe) {
+            doc.setFont('helvetica', 'bold'); doc.setTextColor(...PDF_C.dark);
+            // Largeur dispo pour le nom : on laisse de la place à droite pour la classe
+            const classeText = classe ? `Classe ${classe}` : '';
+            doc.setFontSize(8.5);
+            const classeW = classeText ? doc.getTextWidth(classeText) + 4 : 0;
+            doc.setFont('helvetica', 'bold');
+            const nameMaxW = leftW - classeW;
+            const fittedName = pdfFitName(doc, name, nameMaxW, { baseSize: 13, minSize: 9.5, allowWrap: true });
+            doc.setFontSize(fittedName.size);
+            fittedName.lines.forEach((line, idx) => {
+                doc.text(line, M, y + 5 + idx * (fittedName.size * 0.42));
+            });
+            if (classeText) {
                 doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(110, 110, 110);
-                doc.text(`Classe ${classe}`, M + leftW, y + 5, { align: 'right' });
+                doc.text(classeText, M + leftW, y + 5, { align: 'right' });
             }
+            // Si nom sur 2 lignes, on décale légèrement la carte note pour ne pas se chevaucher
+            const extraY = fittedName.lines.length > 1 ? Math.round(fittedName.size * 0.42) : 0;
             // Carte note
-            const cardY = y + 8;
-            const cardH = topRowH - 8;
+            const cardY = y + 8 + extraY;
+            const cardH = topRowH - 8 - extraY;
             doc.setFillColor(...lv.color);
             doc.roundedRect(M, cardY, leftW, cardH, 2.8, 2.8, 'F');
             doc.setTextColor(255, 255, 255);
