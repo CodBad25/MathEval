@@ -563,6 +563,44 @@
         }
 
         /* === RESPONSE MAP === */
+        /* === COMPARATIF CLASSES === */
+        .class-compare-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 25px;
+        }
+        .class-compare-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+        @media (max-width: 900px) { .class-compare-grid { grid-template-columns: 1fr; } }
+        .class-compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .class-compare-table th, .class-compare-table td {
+            padding: 8px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .class-compare-table th {
+            background: var(--gray-100);
+            font-weight: 700;
+            color: var(--gray-700);
+            font-size: 0.82em;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .class-compare-table td:first-child, .class-compare-table th:first-child { text-align: left; font-weight: 600; }
+        .class-compare-table tr.global-row td { background: #fef3c7; font-weight: 700; }
+        .class-compare-table .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+        .class-compare-empty { color: var(--gray-500); text-align: center; padding: 30px; font-size: 0.95em; }
+
         .response-map-card {
             background: white;
             border-radius: var(--radius-lg);
@@ -1584,6 +1622,12 @@
             <h3 class="section-title"><span class="icon">📋</span> Détail par exercice</h3>
             <div class="exercise-grid" id="exerciseGrid"></div>
 
+            <!-- Comparatif inter-classes -->
+            <div id="classCompareSection" style="display:none">
+                <h3 class="section-title"><span class="icon">🏫</span> Comparatif des classes</h3>
+                <div class="class-compare-card" id="classCompareCard"></div>
+            </div>
+
             <!-- Carte des réponses -->
             <h3 class="section-title"><span class="icon">🗺️</span> Carte des réponses</h3>
             <div class="response-map-card" id="responseMapCard"></div>
@@ -2183,11 +2227,144 @@
             // Exercise cards
             renderExerciseCards(stats.exercisePerf);
 
+            // Comparatif des classes (si CSV élèves importé)
+            renderClassCompare(stats);
+
             // Response map
             renderResponseMap(stats);
 
             // Recommendations
             renderRecommendations(stats);
+        }
+
+        // Rendu du comparatif inter-classes : visible uniquement si la liste élèves est importée
+        // ET qu'on a au moins 2 classes différentes.
+        function renderClassCompare(stats) {
+            const section = document.getElementById('classCompareSection');
+            const card = document.getElementById('classCompareCard');
+            const list = getStudentsList();
+            if (!list) { section.style.display = 'none'; return; }
+
+            // Regrouper les notes par classe
+            const byClass = {};
+            stats.candidateNotes.forEach(c => {
+                const info = list[c.id];
+                if (!info || !info.classe) return;
+                if (!byClass[info.classe]) byClass[info.classe] = [];
+                byClass[info.classe].push(c.note);
+            });
+            const classNames = Object.keys(byClass).sort();
+            if (classNames.length < 2) { section.style.display = 'none'; return; }
+
+            // Stats par classe
+            const rows = classNames.map(cn => {
+                const notes = byClass[cn];
+                const n = notes.length;
+                const moy = notes.reduce((a, b) => a + b, 0) / n;
+                const sorted = [...notes].sort((a, b) => a - b);
+                const min = sorted[0], max = sorted[n - 1];
+                const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+                const aboveTen = notes.filter(x => x >= 10).length;
+                const tbm = notes.filter(x => x >= LEVEL_THRESHOLDS.TBM).length;
+                return { classe: cn, n, moy, min, max, median, aboveTen, tbm };
+            });
+            // Ligne globale (toutes classes confondues)
+            const allNotes = stats.candidateNotes.map(c => c.note);
+            const allN = allNotes.length;
+            const allSum = allNotes.reduce((a, b) => a + b, 0);
+            const allSorted = [...allNotes].sort((a, b) => a - b);
+            const globalRow = {
+                classe: 'Global',
+                n: allN,
+                moy: allSum / allN,
+                min: allSorted[0],
+                max: allSorted[allN - 1],
+                median: allN % 2 ? allSorted[(allN - 1) / 2] : (allSorted[allN / 2 - 1] + allSorted[allN / 2]) / 2,
+                aboveTen: allNotes.filter(x => x >= 10).length,
+                tbm: allNotes.filter(x => x >= LEVEL_THRESHOLDS.TBM).length
+            };
+
+            const fmtPct = (n, total) => total ? Math.round((n / total) * 100) + ' %' : '—';
+            const fmt1 = (x) => x.toFixed(1).replace('.', ',');
+
+            const tableRows = rows.map(r => `
+                <tr>
+                    <td>${escapeHtml(r.classe)}</td>
+                    <td class="num">${r.n}</td>
+                    <td class="num">${fmt1(r.moy)}</td>
+                    <td class="num">${fmt1(r.median)}</td>
+                    <td class="num">${fmt1(r.min)} – ${fmt1(r.max)}</td>
+                    <td class="num">${fmtPct(r.aboveTen, r.n)}</td>
+                    <td class="num">${fmtPct(r.tbm, r.n)}</td>
+                </tr>`).join('');
+            const globalRowHtml = `
+                <tr class="global-row">
+                    <td>${globalRow.classe}</td>
+                    <td class="num">${globalRow.n}</td>
+                    <td class="num">${fmt1(globalRow.moy)}</td>
+                    <td class="num">${fmt1(globalRow.median)}</td>
+                    <td class="num">${fmt1(globalRow.min)} – ${fmt1(globalRow.max)}</td>
+                    <td class="num">${fmtPct(globalRow.aboveTen, globalRow.n)}</td>
+                    <td class="num">${fmtPct(globalRow.tbm, globalRow.n)}</td>
+                </tr>`;
+
+            card.innerHTML = `
+                <div class="class-compare-grid">
+                    <div>
+                        <canvas id="classCompareChart" style="max-height:320px"></canvas>
+                    </div>
+                    <div>
+                        <table class="class-compare-table">
+                            <thead>
+                                <tr><th>Classe</th><th>N</th><th>Moy.</th><th>Médiane</th><th>Min–Max</th><th>≥ 10</th><th>TBM</th></tr>
+                            </thead>
+                            <tbody>${tableRows}${globalRowHtml}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            section.style.display = 'block';
+
+            // Bar chart Chart.js
+            const ctx = document.getElementById('classCompareChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: rows.map(r => r.classe),
+                    datasets: [{
+                        label: 'Moyenne /20',
+                        data: rows.map(r => Math.round(r.moy * 100) / 100),
+                        backgroundColor: rows.map((_, i) => EXERCISE_BAR_COLORS[i % EXERCISE_BAR_COLORS.length]),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (item) => ` Moy. ${fmt1(item.parsed.y)}/20`
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (v) => fmt1(v) + '/20'
+                        },
+                        title: {
+                            display: true,
+                            text: `Moyenne par classe (global : ${fmt1(globalRow.moy)}/20)`,
+                            font: { size: 13 }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 20, ticks: { stepSize: 5 } }
+                    }
+                }
+            });
+            chartInstances.push(chart);
         }
 
         function renderKPIs(stats) {
@@ -2521,7 +2698,7 @@
             sortedCandidates.forEach(cid => {
                 const candNote = candidateNotes.find(c => c.id === cid);
                 const noteDisplay = candNote ? candNote.note.toFixed(1) : '—';
-                let row = `<td class="cand-label">Candidat ${cid}</td>`;
+                let row = `<td class="cand-label">${escapeHtml(formatStudentDisplay(cid))}</td>`;
 
                 exNums.forEach((exNum, i) => {
                     const qs = exerciseQuestions[exNum] || [];
@@ -2538,7 +2715,7 @@
                         else { totalPP++; }
                         totalQuestions++;
                         const qLabel = (QUESTION_LABELS[exNum] && QUESTION_LABELS[exNum][qk]) || (parseInt(qk.replace('q',''))+1);
-                        row += `<td><span class="sq ${status}" title="Candidat ${cid} — ${EXERCISES[exNum].name} n°${qLabel} : ${statusLabels[status]}"></span></td>`;
+                        row += `<td><span class="sq ${status}" title="${escapeHtml(formatStudentDisplay(cid))} — ${EXERCISES[exNum].name} n°${qLabel} : ${statusLabels[status]}"></span></td>`;
                     });
                 });
 
@@ -2979,6 +3156,12 @@
                 zone.classList.remove('loaded');
                 status.textContent = 'Aucune liste importée — les élèves apparaîtront par leur numéro de candidat';
                 btnClear.style.display = 'none';
+            }
+            // Rafraîchir les sections qui affichent des noms / comparent les classes
+            const stats = window.__BILAN_STATS;
+            if (stats) {
+                try { renderClassCompare(stats); } catch (e) { console.warn(e); }
+                try { renderResponseMap(stats); } catch (e) { console.warn(e); }
             }
         }
 
