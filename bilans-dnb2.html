@@ -1510,11 +1510,11 @@
                 <h4>2. Export aligné pour fichier Excel du chef <span style="font-weight:400;color:var(--gray-500);font-size:0.85em">(facultatif)</span></h4>
                 <div class="chef-export" id="chefExport">
                     <div style="font-size:0.9em;color:var(--gray-700);margin-bottom:10px">
-                        Colle ici la colonne <strong>NOM – Prénom</strong> du fichier de ton chef (1 élève par ligne, dans l'ordre de son fichier). On aligne et on copie 2 colonnes <strong>Note&nbsp;/25</strong> + <strong>Note&nbsp;/20</strong> dans l'ordre exact pour coller dans Excel.
+                        Colle ici la colonne <strong>NOM – Prénom</strong> du fichier de ton chef (1 élève par ligne, dans l'ordre de son fichier). On aligne et on copie la colonne <strong>Note&nbsp;/20</strong> dans l'ordre exact pour coller dans Excel. Les élèves absents (introuvables dans tes notes) sont marqués <strong>Abs</strong>.
                     </div>
                     <textarea id="chefList" placeholder="Exemple :&#10;DUPONT Jean&#10;MARTIN Sophie&#10;..." rows="6" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-family:monospace;font-size:0.88em;resize:vertical"></textarea>
                     <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-                        <button class="btn-import-students" id="btnAlignChef" onclick="alignAndCopyChef()">📋 Aligner et copier (Note&nbsp;/25 + /20)</button>
+                        <button class="btn-import-students" id="btnAlignChef" onclick="alignAndCopyChef()">📋 Aligner et copier (Note&nbsp;/20)</button>
                         <button class="btn-import-students" onclick="document.getElementById('chefList').value='';document.getElementById('chefPreview').innerHTML='';document.getElementById('chefSummary').textContent=''">✖ Effacer</button>
                         <span id="chefSummary" style="font-size:0.88em;color:var(--gray-700);align-self:center"></span>
                     </div>
@@ -3276,30 +3276,26 @@
                 return { line, match: best, score: bestScore };
             });
 
-            // TSV : Note /25 \t Note /20 — élèves manquants → cellules vides
-            const tsv = results.map(r => {
-                if (!r.match) return '\t';
-                return `${fr2(r.match.totalBrut)}\t${fr2(r.match.note)}`;
-            }).join('\n');
+            // TSV : 1 colonne Note /20 — élèves introuvables (= absents) → "Abs"
+            const tsv = results.map(r => r.match ? fr2(r.match.note) : 'Abs').join('\n');
 
             // Aperçu
             const matched = results.filter(r => r.match).length;
-            const missing = results.length - matched;
+            const absents = results.length - matched;
             const inAppNotInChef = candidates.filter(c => !usedIds.has(c.id)).length;
             summary.innerHTML = `<strong>${matched}</strong> élèves alignés` +
-                (missing ? ` · <span style="color:#991b1b">${missing} manquants</span>` : '') +
+                (absents ? ` · <span style="color:#991b1b">${absents} absent${absents > 1 ? 's' : ''}</span>` : '') +
                 (inAppNotInChef ? ` · <span style="color:var(--gray-500)">${inAppNotInChef} dans tes notes mais absents du chef</span>` : '') +
                 (droppedHeaders ? ` · <span style="color:var(--gray-500)">${droppedHeaders} en-têtes nettoyés</span>` : '');
 
             const rowsHtml = results.map((r, i) => {
                 const cls = r.match ? 'matched' : 'unmatched';
-                const note25 = r.match ? fr2(r.match.totalBrut) : '—';
-                const note20 = r.match ? fr2(r.match.note) : '—';
-                const id = r.match ? `n°${r.match.id}` : '<em>introuvable</em>';
-                return `<tr class="${cls}"><td>${i + 1}</td><td>${escapeHtml(r.line)}</td><td>${id}</td><td class="num-cell">${note25}</td><td class="num-cell">${note20}</td></tr>`;
+                const note20 = r.match ? fr2(r.match.note) : 'Abs';
+                const id = r.match ? `n°${r.match.id}` : '<em>absent</em>';
+                return `<tr class="${cls}"><td>${i + 1}</td><td>${escapeHtml(r.line)}</td><td>${id}</td><td class="num-cell">${note20}</td></tr>`;
             }).join('');
             preview.innerHTML = `<table class="chef-preview-table">
-                <thead><tr><th>#</th><th>Ligne du chef</th><th>Candidat</th><th>Note /25</th><th>Note /20</th></tr></thead>
+                <thead><tr><th>#</th><th>Ligne du chef</th><th>Candidat</th><th>Note /20</th></tr></thead>
                 <tbody>${rowsHtml}</tbody></table>`;
 
             // Copie clipboard
