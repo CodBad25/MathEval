@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
         /* === BILANS DNB2 - DESIGN PREMIUM === */
         :root {
@@ -1464,7 +1465,7 @@
                     </div>
                     <input type="file" id="studentsFile" accept=".csv,.xlsx,.xls,.ods" style="display:none">
                     <div style="font-size:0.78em;color:var(--gray-500);margin-top:8px">
-                        Colonnes attendues (ordre libre, insensible à la casse) : <strong>numero</strong>, <strong>nom</strong>, <strong>prenom</strong>, <strong>classe</strong>
+                        Colonnes reconnues (ordre/casse libres) : <strong>N°</strong> ou <strong>numero</strong> · <strong>nom</strong> + <strong>prenom</strong> séparés <em>ou</em> colonne combinée type <strong>NOM – Prénom</strong> · <strong>classe</strong>. Plusieurs lignes d'en-têtes (titres fusionnés) sont gérées automatiquement.
                     </div>
                 </div>
 
@@ -1521,6 +1522,7 @@
                     <button class="pdf-btn pdf-btn-preview-indiv" onclick="showIndividualPreviewModal()">👁️ Aperçu bilan individuel</button>
                     <button class="pdf-btn pdf-btn-class" id="btnClassPDF" onclick="generateClassPDF()">🏫 PDF bilan classe</button>
                     <button class="pdf-btn pdf-btn-individual" id="btnIndivPDF" onclick="generateIndividualPDFs()">📄 PDFs individuels (ZIP)</button>
+                    <button class="pdf-btn pdf-btn-individual" id="btnMergedByClassPDF" onclick="generateMergedByClassPDFs()" title="Un seul PDF par classe avec tous les bilans dedans (idéal pour impression en série)">📚 PDFs fusionnés par classe (ZIP)</button>
                 </div>
 
                 <div class="pdf-progress" id="pdfProgress"></div>
@@ -2867,6 +2869,58 @@
         }
 
         // ---------- Import CSV/Excel élèves ----------
+        // Sépare une chaîne combinée "NOM Prénom" / "NOM – Prénom" en { nom, prenom }
+        function splitNomPrenom(combined) {
+            const s = String(combined || '').trim();
+            if (!s) return { nom: '', prenom: '' };
+            // 1) Séparateur explicite (tirets entourés d'espaces)
+            let m = s.match(/^(.+?)\s*[–—\-]\s+(.+)$/);
+            if (m) return { nom: m[1].trim().toUpperCase(), prenom: m[2].trim() };
+            // 2) Bloc en MAJUSCULES (avec espaces/tirets) suivi du prénom en Casse
+            m = s.match(/^([A-ZÀ-ÖØ-Ý][A-ZÀ-ÖØ-Ý'\- ]*?[A-ZÀ-ÖØ-Ý])\s+([A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'\- ].+)$/);
+            if (m) return { nom: m[1].trim().toUpperCase(), prenom: m[2].trim() };
+            // 3) Fallback : 1er mot = nom, le reste = prénom
+            const parts = s.split(/\s+/);
+            if (parts.length === 1) return { nom: parts[0].toUpperCase(), prenom: '' };
+            return { nom: parts[0].toUpperCase(), prenom: parts.slice(1).join(' ') };
+        }
+
+        // Parse un tableau de lignes XLSX en map { numero: { nom, prenom, classe } }
+        function parseStudentRows(rows) {
+            const normalize = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+            const students = {};
+            for (const row of rows) {
+                const norm = {};
+                for (const [k, v] of Object.entries(row)) {
+                    norm[normalize(k)] = String(v).trim();
+                }
+                const numero = norm['numero'] || norm['num'] || norm['n°'] || norm['no'] || norm['n']
+                    || norm['n. candidat'] || norm['numero candidat'] || norm['n candidat'];
+                if (!numero) continue;
+
+                let nom = (norm['nom'] || norm['nom de famille'] || '').toUpperCase();
+                let prenom = norm['prenom'] || '';
+
+                if (!nom && !prenom) {
+                    const combinedKey = Object.keys(norm).find(k =>
+                        /(nom.*prenom|prenom.*nom|nom et prenom|nom\s*[\-–—]\s*prenom|eleve|nom complet|identite)/.test(k));
+                    if (combinedKey && norm[combinedKey]) {
+                        const split = splitNomPrenom(norm[combinedKey]);
+                        nom = split.nom;
+                        prenom = split.prenom;
+                    }
+                }
+                if (!nom) continue;
+
+                students[numero] = {
+                    nom,
+                    prenom,
+                    classe: norm['classe'] || norm['class'] || norm['division'] || ''
+                };
+            }
+            return students;
+        }
+
         function loadStudentsCSV(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -2874,30 +2928,29 @@
                     const data = new Uint8Array(e.target.result);
                     const wb = XLSX.read(data, { type: 'array' });
                     const firstSheet = wb.Sheets[wb.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '', raw: false });
-                    if (!rows.length) throw new Error('Fichier vide');
-
-                    // Normalize headers : case-insensitive, accents-insensitive
-                    const normalize = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-                    const students = {};
-                    for (const row of rows) {
-                        const norm = {};
-                        for (const [k, v] of Object.entries(row)) {
-                            norm[normalize(k)] = String(v).trim();
+                    // Le fichier du chef peut avoir 1 ou 2 lignes d'en-têtes (titres fusionnés au-dessus
+                    // des "vrais" en-têtes). On essaie successivement plusieurs offsets.
+                    let students = null;
+                    let usedRange = 0;
+                    for (const range of [0, 1, 2]) {
+                        const opts = { defval: '', raw: false };
+                        if (range > 0) opts.range = range;
+                        let rows;
+                        try { rows = XLSX.utils.sheet_to_json(firstSheet, opts); } catch (e) { continue; }
+                        if (!rows || !rows.length) continue;
+                        const parsed = parseStudentRows(rows);
+                        if (Object.keys(parsed).length > 0) {
+                            students = parsed;
+                            usedRange = range;
+                            break;
                         }
-                        const numero = norm['numero'] || norm['num'] || norm['n°'] || norm['no'] || norm['n'];
-                        if (!numero) continue;
-                        students[numero] = {
-                            nom: (norm['nom'] || '').toUpperCase(),
-                            prenom: norm['prenom'] || norm['prénom'] || '',
-                            classe: norm['classe'] || norm['class'] || ''
-                        };
                     }
-                    if (Object.keys(students).length === 0) {
-                        throw new Error('Aucune ligne exploitable — vérifier la colonne "numero"');
+                    if (!students || Object.keys(students).length === 0) {
+                        throw new Error('Aucune ligne exploitable — il faut au moins une colonne pour le numéro candidat (N°, numero, num) et le nom (séparé ou combiné "NOM Prénom").');
                     }
                     localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
                     refreshStudentsImportUI();
+                    console.log(`Liste élèves importée : ${Object.keys(students).length} élèves (en-têtes lus à la ligne ${usedRange + 1}).`);
                 } catch (err) {
                     alert('Erreur de lecture du fichier : ' + err.message);
                 }
@@ -4277,6 +4330,126 @@
             URL.revokeObjectURL(url);
 
             progress.innerHTML = `✅ <strong>${candidates.length} bilans PDF</strong> générés et regroupés en ZIP.`;
+            btn.disabled = false;
+            setTimeout(() => progress.classList.remove('visible'), 6000);
+        }
+
+        // Génère un PDF unique par classe (toutes les pages des élèves d'une même classe fusionnées).
+        // Idéal pour impression en série : 1 fichier = 1 paquet à distribuer.
+        async function generateMergedByClassPDFs() {
+            const stats = window.__BILAN_STATS;
+            if (!stats) { alert('Aucune donnée chargée.'); return; }
+            if (!window.jspdf) { alert('jsPDF non chargé. Rechargez la page.'); return; }
+            if (typeof PDFLib === 'undefined') {
+                alert('Bibliothèque pdf-lib non chargée. Recharge la page (Cmd+Shift+R) puis réessaye.');
+                return;
+            }
+
+            const cfg = getPdfConfig();
+            const progress = document.getElementById('pdfProgress');
+            const btn = document.getElementById('btnMergedByClassPDF');
+            btn.disabled = true;
+            progress.classList.add('visible');
+
+            const candidates = stats.candidateNotes;
+            const classCache = {};
+            const collegeStats = computeClassStats(null);
+
+            // QR code
+            let qrDataUrl = null;
+            if (cfg.qrcode) {
+                if (typeof qrcode === 'function') {
+                    const qrUrl = (document.getElementById('qrUrl')?.value || '').trim()
+                        || 'https://dnb2-chaissac.vercel.app/correction-dnb2.pdf';
+                    try {
+                        const qr = qrcode(0, 'M');
+                        qr.addData(qrUrl);
+                        qr.make();
+                        qrDataUrl = qr.createDataURL(6, 0);
+                    } catch (e) { console.error('QR code échec', e); }
+                }
+            }
+
+            // Regrouper les candidats par classe (tri alphabétique de classe puis nom)
+            const byClass = {};
+            candidates.forEach(c => {
+                const classe = getStudentClass(c.id) || 'Sans_classe';
+                if (!byClass[classe]) byClass[classe] = [];
+                byClass[classe].push(c);
+            });
+            const classNames = Object.keys(byClass).sort();
+            // Tri élèves dans chaque classe (par nom puis prénom si dispo, sinon par id)
+            classNames.forEach(cn => {
+                byClass[cn].sort((a, b) => {
+                    const ia = getStudentInfo(a.id) || {};
+                    const ib = getStudentInfo(b.id) || {};
+                    const na = ((ia.nom || '') + ' ' + (ia.prenom || '')).trim() || a.id;
+                    const nb = ((ib.nom || '') + ' ' + (ib.prenom || '')).trim() || b.id;
+                    return na.localeCompare(nb, 'fr');
+                });
+            });
+
+            const zip = new JSZip();
+            const total = candidates.length;
+            let done = 0;
+
+            for (const classe of classNames) {
+                const classCands = byClass[classe];
+                progress.textContent = `⏳ Classe ${classe} — fusion des ${classCands.length} bilans...`;
+                await new Promise(r => setTimeout(r, 0));
+
+                // 1. Générer chaque bilan individuel comme PDF bytes
+                const pdfBytesList = [];
+                for (const c of classCands) {
+                    done++;
+                    progress.textContent = `⏳ ${done}/${total} — ${classe} — ${formatStudentName(c.id)}`;
+                    await new Promise(r => setTimeout(r, 0));
+
+                    let classStats;
+                    if (classe && classe !== 'Sans_classe') {
+                        if (!classCache[classe]) classCache[classe] = computeClassStats(classe);
+                        classStats = classCache[classe];
+                    } else {
+                        classStats = collegeStats;
+                    }
+
+                    try {
+                        const doc = buildIndividualBilanPDF(c.id, cfg, classStats, collegeStats, qrDataUrl);
+                        const ab = doc.output('arraybuffer');
+                        pdfBytesList.push(ab);
+                    } catch (err) {
+                        console.error('Erreur PDF pour', c.id, err);
+                    }
+                }
+
+                if (pdfBytesList.length === 0) continue;
+
+                // 2. Fusionner tous les PDFs de la classe avec pdf-lib
+                progress.textContent = `📎 Fusion classe ${classe}...`;
+                await new Promise(r => setTimeout(r, 0));
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                for (const ab of pdfBytesList) {
+                    const srcPdf = await PDFLib.PDFDocument.load(ab);
+                    const copied = await mergedPdf.copyPages(srcPdf, srcPdf.getPageIndices());
+                    copied.forEach(p => mergedPdf.addPage(p));
+                }
+                const mergedBytes = await mergedPdf.save();
+                const safeClass = classe.replace(/[^\w.\-]/g, '_');
+                zip.file(`bilans_${safeClass}.pdf`, mergedBytes);
+            }
+
+            progress.textContent = `📦 Création du ZIP...`;
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bilans_par_classe_DNB2_${new Date().toISOString().slice(0, 10)}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+
+            progress.innerHTML = `✅ <strong>${classNames.length} PDF</strong> (un par classe) regroupés en ZIP — ${candidates.length} bilans au total.`;
             btn.disabled = false;
             setTimeout(() => progress.classList.remove('visible'), 6000);
         }
