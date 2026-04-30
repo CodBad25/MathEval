@@ -130,8 +130,8 @@ On trace un carré ABCD avec le codage habituel :
 \end{itemize}
 
 \begin{itemize}[leftmargin=1cm, itemsep=1pt]
-  \item Le triangle \textbf{CDE} est équilatéral, E à l'intérieur du carré : ses trois côtés $[CD]$, $[DE]$ et $[EC]$ ont donc la même longueur, égale au côté du carré.
-  \item Le triangle \textbf{BCF} a la même taille que CDE (même côté) : $[BC]$, $[BF]$ et $[FC]$ sont aussi égaux au côté du carré. Comme tous les segments de la figure ont la même longueur, on les code d'un seul trait identique.
+  \item Le triangle \textbf{CDE} est équilatéral, E à l'intérieur du carré : ses trois côtés $[CD]$, $[DE]$ et $[EC]$ ont donc la même longueur, égale au côté du carré. On les code d'un \emph{trait simple}.
+  \item Le triangle \textbf{BCF} est isocèle en F, F à l'extérieur du carré : seuls les deux côtés \emph{issus du sommet F}, à savoir $[FB]$ et $[FC]$, sont égaux. Le côté $[BC]$ est la base du triangle (et reste un côté du carré). On code $[FB]$ et $[FC]$ d'un \emph{double trait} pour signaler une longueur différente du côté du carré.
 \end{itemize}
 
 % Figure indicative (schéma à main levée)
@@ -153,13 +153,17 @@ On trace un carré ABCD avec le codage habituel :
   \coordinate (E) at (1.5, {3*sin(60)});
   \draw (C)--(E)--(D);
 
-  % F extérieur : triangle équilatéral BCF (côté = 3 = côté du carré, même dimension que CDE)
-  \coordinate (F) at ({3 + 3*sin(60)},1.5);
+  % F extérieur : triangle isocèle en F (FB = FC, longueur ≠ côté du carré → schéma à main levée)
+  \coordinate (F) at (6, 1.5);
   \draw (B)--(F)--(C);
 
-  % Codage unique : un seul trait sur TOUS les segments (tous égaux au côté du carré)
-  \foreach \P/\Q in {A/B, B/C, C/D, D/A, C/E, E/D, B/F, F/C}{
+  % Codage trait simple : côtés du carré + côtés du triangle équilatéral CDE
+  \foreach \P/\Q in {A/B, B/C, C/D, D/A, C/E, E/D}{
     \path (\P)--(\Q) node[midway, sloped]{\tiny$|$};
+  }
+  % Codage double trait : les deux côtés égaux issus de F (triangle isocèle BCF)
+  \foreach \P/\Q in {B/F, F/C}{
+    \path (\P)--(\Q) node[midway, sloped]{\tiny$||$};
   }
 
   % Labels
@@ -172,7 +176,7 @@ On trace un carré ABCD avec le codage habituel :
 \end{tikzpicture}
 \end{center}
 
-\reponse{schéma avec codages des 4 côtés du carré (égaux), des angles droits, des 3 côtés du triangle équilatéral CDE, et des deux côtés égaux $[FB]$ et $[FC]$ du triangle isocèle BCF.}
+\reponse{schéma avec codages des 4 côtés du carré et des 3 côtés de CDE en \emph{trait simple} (tous égaux), des angles droits aux sommets du carré, et des deux côtés $[FB]$ et $[FC]$ du triangle isocèle BCF en \emph{double trait} (égaux entre eux mais d'une longueur différente du côté du carré).}
 
 \question{2}{1} Périmètre d'un cercle de rayon 3~cm.
 
