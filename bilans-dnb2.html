@@ -1509,14 +1509,26 @@
 
                 <h4>2. Export aligné pour fichier Excel du chef <span style="font-weight:400;color:var(--gray-500);font-size:0.85em">(facultatif)</span></h4>
                 <div class="chef-export" id="chefExport">
-                    <div style="font-size:0.9em;color:var(--gray-700);margin-bottom:10px">
-                        Colle ici la colonne <strong>NOM – Prénom</strong> du fichier de ton chef (1 élève par ligne, dans l'ordre de son fichier). On aligne et on copie la colonne <strong>Note&nbsp;/20</strong> dans l'ordre exact pour coller dans Excel. Les élèves absents (introuvables dans tes notes) sont marqués <strong>Abs</strong>.
-                    </div>
+                    <ol style="font-size:0.9em;color:var(--gray-700);margin:0 0 10px 18px;padding:0;line-height:1.6">
+                        <li>Dans le fichier Excel du chef, sélectionne et copie <strong>uniquement la colonne NOM – Prénom</strong> (sans en-tête)</li>
+                        <li>Colle-la dans le cadre ci-dessous (1 élève par ligne)</li>
+                        <li>Clique sur <strong>📋 Aligner et copier</strong> → la colonne <strong>Note /20</strong> est mise dans ton presse-papier</li>
+                        <li>Retourne dans Excel, clique sur la <strong>1<sup>re</sup> cellule note maths /20</strong>, fais <strong>Cmd+V</strong> (Mac) ou <strong>Ctrl+V</strong> (PC)</li>
+                    </ol>
+                    <div style="font-size:0.85em;color:var(--gray-500);margin-bottom:10px">Les élèves absents (introuvables dans tes notes) sont marqués <strong>Abs</strong> — la cellule reste alignée.</div>
                     <textarea id="chefList" placeholder="Exemple :&#10;DUPONT Jean&#10;MARTIN Sophie&#10;..." rows="6" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-family:monospace;font-size:0.88em;resize:vertical"></textarea>
                     <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
                         <button class="btn-import-students" id="btnAlignChef" onclick="alignAndCopyChef()">📋 Aligner et copier (Note&nbsp;/20)</button>
-                        <button class="btn-import-students" onclick="document.getElementById('chefList').value='';document.getElementById('chefPreview').innerHTML='';document.getElementById('chefSummary').textContent=''">✖ Effacer</button>
+                        <button class="btn-import-students" onclick="document.getElementById('chefList').value='';document.getElementById('chefPreview').innerHTML='';document.getElementById('chefSummary').textContent='';document.getElementById('chefCopyStatus').style.display='none'">✖ Effacer</button>
                         <span id="chefSummary" style="font-size:0.88em;color:var(--gray-700);align-self:center"></span>
+                    </div>
+                    <!-- Bandeau de confirmation persistant + bouton re-copie -->
+                    <div id="chefCopyStatus" style="display:none;margin-top:12px;padding:12px 16px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                        <div style="color:#065f46;font-size:0.92em;line-height:1.4">
+                            <strong>✓ Copié dans le presse-papier.</strong><br>
+                            Va dans Excel, clique sur la 1<sup>re</sup> cellule de la colonne <em>note maths /20</em>, et colle (<kbd>Cmd+V</kbd> / <kbd>Ctrl+V</kbd>).
+                        </div>
+                        <button class="btn-import-students" onclick="alignAndCopyChef()" style="white-space:nowrap">🔁 Re-copier</button>
                     </div>
                     <div id="chefPreview" style="margin-top:10px"></div>
                 </div>
@@ -3299,9 +3311,11 @@
                 <tbody>${rowsHtml}</tbody></table>`;
 
             // Copie clipboard
+            const status = document.getElementById('chefCopyStatus');
             navigator.clipboard.writeText(tsv).then(() => {
+                if (status) status.style.display = 'flex';
                 const old = btn.textContent;
-                btn.textContent = '✓ Copié dans le presse-papier !';
+                btn.textContent = '✓ Copié !';
                 btn.style.background = '#10b981';
                 btn.style.color = 'white';
                 setTimeout(() => {
@@ -3310,7 +3324,13 @@
                     btn.style.color = '';
                 }, 2500);
             }).catch(() => {
-                alert('Copie automatique impossible. Sélectionne et copie depuis le tableau ci-dessous.');
+                if (status) status.style.display = 'none';
+                // Fallback : afficher la zone TSV pour copie manuelle
+                preview.insertAdjacentHTML('afterbegin',
+                    `<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px;margin-bottom:10px;color:#92400e;font-size:0.88em">
+                        <strong>⚠️ Copie automatique refusée par le navigateur.</strong> Sélectionne le contenu ci-dessous et fais Cmd+C / Ctrl+C, puis colle dans Excel :
+                        <textarea readonly style="width:100%;margin-top:8px;padding:8px;font-family:monospace;font-size:0.85em;border:1px solid #fcd34d;border-radius:4px;height:140px">${escapeHtml(tsv)}</textarea>
+                    </div>`);
             });
         }
 
