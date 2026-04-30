@@ -961,6 +961,30 @@
         }
         .btn-import-students.danger { color: var(--danger); }
 
+        /* === EXPORT ALIGNÉ EXCEL CHEF === */
+        .chef-export {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .chef-preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            margin-top: 6px;
+        }
+        .chef-preview-table th, .chef-preview-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid var(--gray-200);
+            text-align: left;
+        }
+        .chef-preview-table th { background: var(--gray-100); font-weight: 600; }
+        .chef-preview-table tr.matched td { color: var(--gray-800); }
+        .chef-preview-table tr.unmatched td { background: #fef2f2; color: #991b1b; }
+        .chef-preview-table .num-cell { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+
         /* Config grid */
         .config-grid {
             display: grid;
@@ -1444,7 +1468,21 @@
                     </div>
                 </div>
 
-                <h4>2. Contenu du bilan individuel</h4>
+                <h4>2. Export aligné pour fichier Excel du chef <span style="font-weight:400;color:var(--gray-500);font-size:0.85em">(facultatif)</span></h4>
+                <div class="chef-export" id="chefExport">
+                    <div style="font-size:0.9em;color:var(--gray-700);margin-bottom:10px">
+                        Colle ici la colonne <strong>NOM – Prénom</strong> du fichier de ton chef (1 élève par ligne, dans l'ordre de son fichier). On aligne et on copie 2 colonnes <strong>Note&nbsp;/25</strong> + <strong>Note&nbsp;/20</strong> dans l'ordre exact pour coller dans Excel.
+                    </div>
+                    <textarea id="chefList" placeholder="Exemple :&#10;DUPONT Jean&#10;MARTIN Sophie&#10;..." rows="6" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-family:monospace;font-size:0.88em;resize:vertical"></textarea>
+                    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+                        <button class="btn-import-students" id="btnAlignChef" onclick="alignAndCopyChef()">📋 Aligner et copier (Note&nbsp;/25 + /20)</button>
+                        <button class="btn-import-students" onclick="document.getElementById('chefList').value='';document.getElementById('chefPreview').innerHTML='';document.getElementById('chefSummary').textContent=''">✖ Effacer</button>
+                        <span id="chefSummary" style="font-size:0.88em;color:var(--gray-700);align-self:center"></span>
+                    </div>
+                    <div id="chefPreview" style="margin-top:10px"></div>
+                </div>
+
+                <h4>3. Contenu du bilan individuel</h4>
                 <div class="config-grid" id="pdfConfigGrid">
                     <label class="config-item"><input type="checkbox" data-cfg="header" checked><span><span class="lbl">En-tête coloré (nom + note /20)</span><span class="desc">Bandeau du haut avec identifiant et note</span></span></label>
                     <label class="config-item"><input type="checkbox" data-cfg="apprec" checked><span><span class="lbl">Appréciation du professeur</span><span class="desc">Commentaire personnalisé en haut du bilan</span></span></label>
@@ -2900,6 +2938,152 @@
             const list = getStudentsList();
             if (!list || !list[id]) return null;
             return list[id];
+        }
+
+        // ========== EXPORT ALIGNÉ POUR FICHIER EXCEL DU CHEF ==========
+        // Pattern : l'utilisateur colle la colonne "NOM – Prénom" du fichier de son chef,
+        // l'app fait un matching tolérant et génère 2 colonnes TSV (Note /25, Note /20)
+        // dans l'ordre exact du collage.
+        const _ACCENT_RE = /[̀-ͯ]/g;
+        function nameTokens(s) {
+            return String(s || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(_ACCENT_RE, '')
+                .replace(/[–—-]/g, ' ')
+                .replace(/[^a-z0-9 ]/g, ' ')
+                .split(/\s+/)
+                .filter(t => t.length >= 2)
+                .sort();
+        }
+
+        function nameMatchScore(tokensA, tokensB) {
+            const setA = new Set(tokensA);
+            let common = 0;
+            for (const t of tokensB) if (setA.has(t)) common++;
+            return common;
+        }
+
+        // Lignes type "Note /25", "Trimestre 2", "Moyenne classe", etc.
+        function isLikelyHeader(line) {
+            const norm = String(line).toLowerCase().normalize('NFD').replace(_ACCENT_RE, '');
+            const headerWords = ['note', 'moyenne', 'classe', 'trimestre', 'eleves', 'numero', 'prenom', 'nom et prenom', 'd.n.b', 'dnb', 'svt', 'technologie', 'maths', 'francais', 'histoire', 'anglais', 'espagnol', 'physique'];
+            if (norm.length > 80) return true;
+            if (/^\s*$/.test(norm)) return true;
+            const tokens = nameTokens(line);
+            if (tokens.length === 0) return true;
+            // Si la ligne ne contient quasi que des mots-clés d'en-tête → header
+            const headerHits = tokens.filter(t => headerWords.some(h => t.includes(h)));
+            if (headerHits.length >= tokens.length / 2 && tokens.length <= 4) return true;
+            return false;
+        }
+
+        function fr2(n) {
+            return (Math.round(Number(n || 0) * 100) / 100).toFixed(2).replace('.', ',');
+        }
+
+        function alignAndCopyChef() {
+            const textarea = document.getElementById('chefList');
+            const summary = document.getElementById('chefSummary');
+            const preview = document.getElementById('chefPreview');
+            const btn = document.getElementById('btnAlignChef');
+
+            const stats = window.__BILAN_STATS;
+            if (!stats || !stats.candidateNotes) {
+                alert('Importe d\'abord les notes (JSON) avant d\'aligner.');
+                return;
+            }
+
+            const studentsList = getStudentsList();
+            if (!studentsList) {
+                alert('Importe d\'abord la liste des élèves (étape 1) pour pouvoir aligner sur les noms.');
+                return;
+            }
+
+            const raw = textarea.value || '';
+            const lines = raw.split('\n').map(l => l.trim());
+            const cleaned = [];
+            let droppedHeaders = 0;
+            lines.forEach(l => {
+                if (!l) return;
+                if (isLikelyHeader(l)) { droppedHeaders++; return; }
+                cleaned.push(l);
+            });
+
+            if (cleaned.length === 0) {
+                summary.textContent = 'Aucun nom exploitable dans le collage.';
+                preview.innerHTML = '';
+                return;
+            }
+
+            // Index candidats : tokens(nom + prenom) → infos
+            const candidates = stats.candidateNotes.map(c => {
+                const info = studentsList[c.id] || {};
+                const tokens = nameTokens((info.nom || '') + ' ' + (info.prenom || ''));
+                return { id: c.id, info, tokens, totalBrut: c.totalBrut, note: c.note };
+            }).filter(c => c.tokens.length >= 1);
+
+            // Pour chaque ligne du chef, trouver le meilleur match
+            const usedIds = new Set();
+            const results = cleaned.map(line => {
+                const tokens = nameTokens(line);
+                let best = null;
+                let bestScore = 0;
+                candidates.forEach(c => {
+                    if (usedIds.has(c.id)) return;
+                    const score = nameMatchScore(c.tokens, tokens);
+                    if (score > bestScore) { bestScore = score; best = c; }
+                });
+                const threshold = 2;
+                if (bestScore < threshold) best = null;
+                if (best) usedIds.add(best.id);
+                return { line, match: best, score: bestScore };
+            });
+
+            // TSV : Note /25 \t Note /20 — élèves manquants → cellules vides
+            const tsv = results.map(r => {
+                if (!r.match) return '\t';
+                return `${fr2(r.match.totalBrut)}\t${fr2(r.match.note)}`;
+            }).join('\n');
+
+            // Aperçu
+            const matched = results.filter(r => r.match).length;
+            const missing = results.length - matched;
+            const inAppNotInChef = candidates.filter(c => !usedIds.has(c.id)).length;
+            summary.innerHTML = `<strong>${matched}</strong> élèves alignés` +
+                (missing ? ` · <span style="color:#991b1b">${missing} manquants</span>` : '') +
+                (inAppNotInChef ? ` · <span style="color:var(--gray-500)">${inAppNotInChef} dans tes notes mais absents du chef</span>` : '') +
+                (droppedHeaders ? ` · <span style="color:var(--gray-500)">${droppedHeaders} en-têtes nettoyés</span>` : '');
+
+            const rowsHtml = results.map((r, i) => {
+                const cls = r.match ? 'matched' : 'unmatched';
+                const note25 = r.match ? fr2(r.match.totalBrut) : '—';
+                const note20 = r.match ? fr2(r.match.note) : '—';
+                const id = r.match ? `n°${r.match.id}` : '<em>introuvable</em>';
+                return `<tr class="${cls}"><td>${i + 1}</td><td>${escapeHtml(r.line)}</td><td>${id}</td><td class="num-cell">${note25}</td><td class="num-cell">${note20}</td></tr>`;
+            }).join('');
+            preview.innerHTML = `<table class="chef-preview-table">
+                <thead><tr><th>#</th><th>Ligne du chef</th><th>Candidat</th><th>Note /25</th><th>Note /20</th></tr></thead>
+                <tbody>${rowsHtml}</tbody></table>`;
+
+            // Copie clipboard
+            navigator.clipboard.writeText(tsv).then(() => {
+                const old = btn.textContent;
+                btn.textContent = '✓ Copié dans le presse-papier !';
+                btn.style.background = '#10b981';
+                btn.style.color = 'white';
+                setTimeout(() => {
+                    btn.textContent = old;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2500);
+            }).catch(() => {
+                alert('Copie automatique impossible. Sélectionne et copie depuis le tableau ci-dessous.');
+            });
+        }
+
+        function escapeHtml(s) {
+            return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
 
         // Liste de mathématicien(ne)s célèbres pour l'anonymat
