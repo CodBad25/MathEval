@@ -3178,8 +3178,8 @@
 
         // ========== EXPORT ALIGNÉ POUR FICHIER EXCEL DU CHEF ==========
         // Pattern : l'utilisateur colle la colonne "NOM – Prénom" du fichier de son chef,
-        // l'app fait un matching tolérant et génère 2 colonnes TSV (Note /25, Note /20)
-        // dans l'ordre exact du collage.
+        // l'app fait un matching tolérant et génère 1 colonne TSV (Note /20) dans l'ordre exact
+        // du collage. Élèves introuvables (= absents) → "Abs".
         const _ACCENT_RE = /[̀-ͯ]/g;
         function nameTokens(s) {
             return String(s || '')
@@ -3200,7 +3200,7 @@
             return common;
         }
 
-        // Lignes type "Note /25", "Trimestre 2", "Moyenne classe", etc.
+        // Lignes type "Note /20", "Trimestre 2", "Moyenne classe", etc.
         function isLikelyHeader(line) {
             const norm = String(line).toLowerCase().normalize('NFD').replace(_ACCENT_RE, '');
             const headerWords = ['note', 'moyenne', 'classe', 'trimestre', 'eleves', 'numero', 'prenom', 'nom et prenom', 'd.n.b', 'dnb', 'svt', 'technologie', 'maths', 'francais', 'histoire', 'anglais', 'espagnol', 'physique'];
