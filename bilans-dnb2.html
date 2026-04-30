@@ -3179,6 +3179,14 @@
             return `Candidat n°${id}`;
         }
 
+        // Variante avec numéro candidat conservé : utile pour croiser avec les copies physiques.
+        // Affichage : "NOM Prénom (n°123)" si CSV, "Pythagore (n°123)" si anonMath, "Candidat n°123" sinon.
+        function formatStudentDisplay(id) {
+            const base = formatStudentName(id);
+            if (base === `Candidat n°${id}`) return base;
+            return `${base} (n°${id})`;
+        }
+
         function getStudentClass(id) {
             const info = getStudentInfo(id);
             return info ? info.classe : null;
@@ -3673,7 +3681,7 @@
                 doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...PDF_C.dark);
                 doc.text(String(i + 1), tx, y + 5); tx += 6;
                 doc.setFont('helvetica', 'bold');
-                doc.text(pdfFit(doc, formatStudentName(c.id), nameW - 2), tx, y + 5); tx += nameW;
+                doc.text(pdfFit(doc, formatStudentDisplay(c.id), nameW - 2), tx, y + 5); tx += nameW;
                 doc.setFont('helvetica', 'normal');
                 doc.text(fmt1(c.note), tx, y + 5); tx += noteW;
                 doc.setTextColor(...lv.color); doc.setFont('helvetica', 'bold');
@@ -3738,7 +3746,7 @@
             const totalBrut = candidate.totalBrut;
             const totalMax = TOTAL_EXERCISES + PRESENTATION_MAX; // 26
             const lv = pdfLevelFromNote20(note);
-            const name = formatStudentName(candidateId);
+            const name = formatStudentDisplay(candidateId);
             const classe = getStudentClass(candidateId);
             const apprec = data.appState.candidateComments ? (data.appState.candidateComments[candidateId] || '') : '';
             const comp = computeStudentCompetences(candidateId);
@@ -4546,9 +4554,9 @@
             return (n % 1 === 0) ? String(n) : (Math.round(n * 10) / 10).toString().replace('.', ',');
         }
 
-        // Nom élève en fonction config (CSV, anonMath, fallback candidat)
+        // Nom élève en fonction config (CSV, anonMath, fallback candidat) — avec n° candidat
         function mvStudentName(id) {
-            return formatStudentName(id);
+            return formatStudentDisplay(id);
         }
 
         // ================== MODALE BILAN CLASSE ==================
