@@ -257,17 +257,6 @@
             background: rgba(6, 95, 70, 0.08);
             opacity: 1;
         }
-        .merge-duplicates {
-            background: #fef3c7;
-            border: 1px solid #fcd34d;
-            color: #92400e;
-            border-radius: var(--radius-lg);
-            padding: 12px 18px;
-            margin-bottom: 16px;
-            font-size: 0.9em;
-            line-height: 1.5;
-        }
-        .merge-duplicates strong { color: #78350f; }
 
         /* === CANDIDATE COUNT BADGE === */
         .candidate-badge {
@@ -1422,7 +1411,6 @@
                     <button class="merge-banner-btn ghost" onclick="hideMergeBanner()" title="Masquer">✖</button>
                 </div>
             </div>
-            <div id="mergeDuplicates" class="merge-duplicates" style="display:none"></div>
 
             <!-- KPI Cards -->
             <div class="kpi-grid" id="kpiGrid"></div>
@@ -1675,13 +1663,47 @@
             });
         }
 
-        // Fusionne plusieurs JSON par candidateId.
-        // - scores, presentationScores, validatedCandidates, quickButtonStates, candidateComments : merge par id
-        // - baremeConfig : conserve celui du 1er JSON (doit être identique partout)
-        // - En cas de doublon : priorité au candidat validé ; sinon dernier importé
-        // Retourne { merged, stats: { files, candidates, validated, duplicates: [{id, files}] } }
+        // Empreinte stable d'un JSON pour détecter les doublons exacts (re-import du même fichier).
+        function fingerprintJson(data) {
+            const scores = (data && data.appState && data.appState.scores) || {};
+            const ids = Object.keys(scores).sort();
+            return JSON.stringify(ids.map(id => [id, scores[id]]));
+        }
+
+        // Compte le nombre de questions réellement notées (statut posé) pour un candidat.
+        function countAnsweredQuestions(scoreObj) {
+            if (!scoreObj || typeof scoreObj !== 'object') return 0;
+            let count = 0;
+            Object.values(scoreObj).forEach(ex => {
+                if (ex && typeof ex === 'object') {
+                    Object.values(ex).forEach(q => {
+                        if (q && q.status) count++;
+                    });
+                }
+            });
+            return count;
+        }
+
+        // Fusionne plusieurs JSON par candidateId — silencieux, sans afficher les doublons.
+        // 1. Déduplication stricte : un JSON ré-importé (signature scores identique) est ignoré.
+        // 2. Pour chaque candidat dupliqué entre fichiers, on choisit le meilleur :
+        //    a) priorité au candidat validé,
+        //    b) sinon priorité au plus complet (plus de questions notées),
+        //    c) sinon on garde l'existant (stabilité).
+        // Retourne { merged, sources, stats: { files, candidates, validated } }
         function mergeJsonFiles(jsonList) {
-            const base = jsonList[0].data;
+            // Déduplication exacte (re-dépôt du même fichier renommé ou non)
+            const seen = new Set();
+            const uniqueJsons = [];
+            jsonList.forEach(j => {
+                const fp = fingerprintJson(j.data);
+                if (!seen.has(fp)) {
+                    seen.add(fp);
+                    uniqueJsons.push(j);
+                }
+            });
+
+            const base = uniqueJsons[0].data;
             const merged = JSON.parse(JSON.stringify(base));
             merged.appState.scores = {};
             merged.appState.presentationScores = {};
@@ -1689,10 +1711,7 @@
             merged.appState.quickButtonStates = {};
             merged.appState.candidateComments = {};
 
-            const sourceMap = {}; // candidateId → [fileName, ...]
-            const duplicates = [];
-
-            jsonList.forEach(({ name, data }) => {
+            uniqueJsons.forEach(({ data }) => {
                 const a = data.appState || {};
                 const scores = a.scores || {};
                 const presentation = a.presentationScores || {};
@@ -1706,18 +1725,17 @@
                         && merged.appState.validatedCandidates[id].validated === true;
                     const alreadyExists = merged.appState.scores[id] !== undefined;
 
-                    // Décider si on écrase l'existant
                     let overwrite = !alreadyExists;
                     if (alreadyExists) {
-                        // Doublon : on note la collision
-                        if (!sourceMap[id]) sourceMap[id] = [];
-                        if (!sourceMap[id].includes(name)) sourceMap[id].push(name);
-                        // Priorité au validé
                         if (incomingValidated && !existingValidated) overwrite = true;
                         else if (!incomingValidated && existingValidated) overwrite = false;
-                        else overwrite = true; // sinon dernier importé gagne
-                    } else {
-                        sourceMap[id] = [name];
+                        else {
+                            // Même statut de validation : le plus complet l'emporte
+                            const incomingCount = countAnsweredQuestions(scores[id]);
+                            const existingCount = countAnsweredQuestions(merged.appState.scores[id]);
+                            if (incomingCount > existingCount) overwrite = true;
+                            else overwrite = false;
+                        }
                     }
 
                     if (overwrite) {
@@ -1730,13 +1748,6 @@
                 });
             });
 
-            // Lister les vrais doublons (candidatId présent dans 2+ fichiers)
-            Object.keys(sourceMap).forEach(id => {
-                if (sourceMap[id].length > 1) {
-                    duplicates.push({ id, files: sourceMap[id] });
-                }
-            });
-
             const candidates = Object.keys(merged.appState.scores);
             const validatedCount = candidates.filter(id => {
                 const v = merged.appState.validatedCandidates[id];
@@ -1745,11 +1756,11 @@
 
             return {
                 merged,
+                sources: uniqueJsons,
                 stats: {
-                    files: jsonList.length,
+                    files: uniqueJsons.length,
                     candidates: candidates.length,
-                    validated: validatedCount,
-                    duplicates
+                    validated: validatedCount
                 }
             };
         }
@@ -1757,28 +1768,13 @@
         function showMergeBanner(stats) {
             const banner = document.getElementById('mergeBanner');
             const text = document.getElementById('mergeBannerText');
-            const dupBox = document.getElementById('mergeDuplicates');
             const fileWord = stats.files > 1 ? 'fichiers fusionnés' : 'fichier importé';
-            text.innerHTML = `<strong>${stats.files}</strong> ${fileWord} · <strong>${stats.candidates}</strong> candidats (${stats.validated} validés)` +
-                (stats.duplicates.length ? ` · <span style="color:#92400e">${stats.duplicates.length} doublon${stats.duplicates.length > 1 ? 's' : ''}</span>` : '');
+            text.innerHTML = `<strong>${stats.files}</strong> ${fileWord} · <strong>${stats.candidates}</strong> candidats (${stats.validated} validés)`;
             banner.style.display = 'flex';
-
-            if (stats.duplicates.length) {
-                const list = stats.duplicates.slice(0, 10).map(d =>
-                    `<li>Candidat <strong>${d.id}</strong> présent dans : ${d.files.join(', ')}</li>`
-                ).join('');
-                const more = stats.duplicates.length > 10
-                    ? `<li><em>… et ${stats.duplicates.length - 10} autres</em></li>` : '';
-                dupBox.innerHTML = `<strong>⚠️ Doublons détectés</strong> (priorité donnée au correcteur ayant validé) :<ul style="margin:6px 0 0 18px;padding:0">${list}${more}</ul>`;
-                dupBox.style.display = 'block';
-            } else {
-                dupBox.style.display = 'none';
-            }
         }
 
         function hideMergeBanner() {
             document.getElementById('mergeBanner').style.display = 'none';
-            document.getElementById('mergeDuplicates').style.display = 'none';
         }
 
         async function handleFiles(files) {
@@ -1793,8 +1789,8 @@
             try {
                 const newJsons = await Promise.all(fileArr.map(readJsonFile));
                 const allJsons = existing.concat(newJsons);
-                const { merged, stats } = mergeJsonFiles(allJsons);
-                window.__SOURCE_JSONS = allJsons;
+                const { merged, sources, stats } = mergeJsonFiles(allJsons);
+                window.__SOURCE_JSONS = sources; // dédupliqué
                 processData(merged);
                 showMergeBanner(stats);
             } catch (err) {
@@ -1839,10 +1835,10 @@
                 if (cachedSources) {
                     const sources = JSON.parse(cachedSources);
                     if (Array.isArray(sources) && sources.length) {
-                        const { merged, stats } = mergeJsonFiles(sources);
-                        window.__SOURCE_JSONS = sources;
-                        processData(merged);
-                        showMergeBanner(stats);
+                        const result = mergeJsonFiles(sources);
+                        window.__SOURCE_JSONS = result.sources;
+                        processData(result.merged);
+                        showMergeBanner(result.stats);
                         return;
                     }
                 }
