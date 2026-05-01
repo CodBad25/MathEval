@@ -27,11 +27,10 @@ Vanilla JS déférés via `<script defer>` dans `index.html` :
 - **Pattern commun** : IIFE, vérifie `location.search.includes('correction')`, utilise `window.__getExercises()` + `window.__getStudentList()`
 
 ## Supabase Config
-- **Project ID** : `ehxdbjgvqzpttuafwufh`
+- **Project ID** : `ehxdbjgvqzpttuafwufh` ⚠️ **mutualisé** avec `calcul-mental-prix` v1 et v2 (math-express). MathEval n'utilise que la table `evaluations` ; les tables `calcul_*` et `packs_actifs` appartiennent à l'autre app.
 - **URL** : `https://ehxdbjgvqzpttuafwufh.supabase.co`
-- **Table** : `evaluations` (id, user_id, name, data jsonb, created_at, updated_at)
-- **RLS** : activé sur `evaluations`, confirmation email désactivée
-- **⚠️ TODO (2026-03-23)** : alerte Supabase « Table publicly accessible » (`rls_disabled_in_public`). Une ou plusieurs tables n'ont pas le RLS activé. Vérifier dans le dashboard quelles tables sont concernées et activer RLS + policies (`auth.uid() = user_id`)
+- **Table MathEval** : `evaluations` (id, user_id, name, data jsonb, created_at, updated_at) — RLS activée avec policy `auth.uid() = user_id`
+- **Sécurité globale (2026-05-01)** : migration `005_security_hardening.sql` (dans repo calcul-mental-prix-v2) a activé RLS sur toutes les tables et remplacé les policies « always true » par des conditions non-tautologiques. Advisor Supabase au vert. Refonte plus restrictive (Edge Functions pour écritures élèves anon) prévue été 2026.
 - **Compte** : `mohamed.belhaj@ac-nantes.fr`
 - **17 clés localStorage** synchronisées via supabase-sync.js
 - **Trigger** : `on_auth_user_created` → ntfy.sh (notification push)
