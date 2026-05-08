@@ -94,6 +94,48 @@
     raisonner: 'Raisonner', communiquer: 'Communiquer', chercher: 'Chercher'
   };
 
+  function buildPreviewHTML(sorted, scores, comps, compHeaders, pronoteMap) {
+    const preview5 = sorted.slice(0, 5);
+    const ABSENT_SIGN = '×';
+    let html = '<div style="overflow-x:auto;border:1px solid #c8d6e5;border-radius:8px;background:#f4f6f9">';
+    html += '<table style="border-collapse:collapse;font-size:11px;font-family:monospace;white-space:nowrap;width:100%">';
+    // En-tête
+    html += '<thead><tr style="background:#dde4ed;color:#2c3e50">';
+    html += '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid #c8d6e5">Nom</th>';
+    html += '<th style="padding:4px 8px;text-align:center;border-bottom:1px solid #c8d6e5">Note</th>';
+    compHeaders.forEach((h, i) => {
+      const title = pronoteMap ? pronoteMap[i].code : h;
+      html += `<th style="padding:4px 6px;text-align:center;border-bottom:1px solid #c8d6e5" title="${title}">${h}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    // Lignes
+    preview5.forEach((s, i) => {
+      const bg = i % 2 === 0 ? 'white' : '#f9fafc';
+      const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
+      const corrected = isCorrected(s.id);
+      const g = globalScore(s.id);
+      const note = !corrected ? ABSENT_SIGN : g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '—';
+      html += `<tr style="background:${bg}">`;
+      html += `<td style="padding:3px 8px;color:#444;border-right:1px solid #e0e7ef">${nom}</td>`;
+      html += `<td style="padding:3px 6px;text-align:center;font-weight:bold;border-right:1px solid #e0e7ef">${note}</td>`;
+      const sc = scores[s.id];
+      comps.forEach((_, idx) => {
+        let cell;
+        if (!corrected) {
+          cell = `<span style="color:#aaa">${ABSENT_SIGN}</span>`;
+        } else {
+          const s2 = sc?.[idx];
+          if (s2) { const l = levelToLetter(s2.pct); cell = `<span style="font-weight:bold;color:${levelToColor(l)}">${l}</span>`; }
+          else cell = '<span style="color:#ccc">—</span>';
+        }
+        html += `<td style="padding:3px 5px;text-align:center">${cell}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    return html;
+  }
+
   function showPronoteModal() {
     const students = getStudents();
     if (!students.length) { alert('Aucun élève trouvé.'); return; }
@@ -210,10 +252,13 @@
         <h2 style="margin:0;font-size:18px;color:#2c3e50">📊 Export Pronote — ${pronoteMap ? '20 compétences' : 'Compétences'}</h2>
         <button id="pronote-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;padding:4px 8px">&times;</button>
       </div>
-      <p style="margin:0 0 12px;color:#666;font-size:13px">
-        Survolez les en-têtes de colonnes pour voir le nom complet de chaque compétence.
-        Le bouton <b>Copier</b> produit les niveaux A/B/C/D à coller directement dans Pronote.
+      <p style="margin:0 0 10px;color:#666;font-size:13px">
+        Survolez les en-têtes pour voir le nom complet de chaque compétence. Les absents sont marqués <b>×</b> (format Pronote).
       </p>
+      <div style="margin-bottom:14px">
+        <p style="margin:0 0 5px;font-size:12px;font-weight:600;color:#555">👁 Aperçu — ce qui sera collé dans Pronote (5 premiers élèves)</p>
+        ${buildPreviewHTML(sorted, scores, comps, compHeaders, pronoteMap)}
+      </div>
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
         <button id="pronote-copy-comps" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">
           📋 Copier notes + compétences
@@ -237,7 +282,7 @@
       const lines = [];
       sorted.forEach(s => {
         const corrected = isCorrected(s.id);
-        if (!corrected) { lines.push(['ABS', ...comps.map(() => 'ABS')].join('\t')); return; }
+        if (!corrected) { lines.push(['×', ...comps.map(() => '×')].join('\t')); return; }
         const g = globalScore(s.id);
         const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
         const sc = scores[s.id];
@@ -253,7 +298,7 @@
       sorted.forEach(s => {
         const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
         const corrected = isCorrected(s.id);
-        if (!corrected) { lines.push([nom, classe, 'ABS', ...comps.map(() => 'ABS')].join('\t')); return; }
+        if (!corrected) { lines.push([nom, classe, '×', ...comps.map(() => '×')].join('\t')); return; }
         const g = globalScore(s.id);
         const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
         const sc = scores[s.id];
@@ -270,7 +315,7 @@
       sorted.forEach(s => {
         const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
         const corrected = isCorrected(s.id);
-        if (!corrected) { lines.push([nom, classe, 'ABS', ...comps.map(() => 'ABS')].join(sep)); return; }
+        if (!corrected) { lines.push([nom, classe, '×', ...comps.map(() => '×')].join(sep)); return; }
         const g = globalScore(s.id);
         const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
         const sc = scores[s.id];
