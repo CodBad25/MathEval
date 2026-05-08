@@ -103,8 +103,48 @@ const evaluationData = [
   }
 ];
 
+// Mapping compétences Pronote → questions spécifiques du DNB Blanc 2
+// Validé par Mélodie le 2026-05-08
+const pronoteCompetencesMapping = [
+  { code: "1 : Chercher",    normKey: "chercher" },
+  { code: "2 : Modéliser",   normKey: "modeliser" },
+  { code: "3 : Représenter", normKey: "representer" },
+  { code: "4 : Raisonner",   normKey: "raisonner" },
+  { code: "5 : Calculer",    normKey: "calculer" },
+  { code: "6 : Communiquer", normKey: "communiquer" },
+  { code: "7.18 : 3e - Utiliser des diviseurs, multiples et des nombres premiers.",
+    questions: [{ex: 1, q: 0}, {ex: 1, q: 2}, {ex: 1, q: 3}] },
+  { code: "7.19 : 3e - Décomposer en produit de facteurs premiers et rendre une fraction irréductible.",
+    questions: [{ex: 1, q: 1}] },
+  { code: "8.9 : 3e - Produire et utiliser une expression littérale.",
+    questions: [{ex: 2, q: 1}] },
+  { code: "8.10 : 3e - Connaître et utiliser la double distributivité et les identités remarquables.",
+    questions: [{ex: 2, q: 2}, {ex: 5, q: 2}] },
+  { code: "8.16 : 3e - Déterminer une image ou un antécédent par une fonction.",
+    questions: [{ex: 5, q: 3}, {ex: 5, q: 4}] },
+  { code: "9.14 : 4e - Calculer une longueur avec le théorème de Pythagore.",
+    questions: [{ex: 3, q: 1}] },
+  { code: "9.22 : 3e - Calculer une longueur avec le théorème de Thalès.",
+    questions: [{ex: 3, q: 4}] },
+  { code: "9.24 : 3e - Connaître les formules trigonométriques.",
+    questions: [{ex: 3, q: 2}] },
+  { code: "9.26 : 3e - Déterminer un angle avec la trigonométrie.",
+    questions: [{ex: 3, q: 2}] },
+  { code: "11.13 : 4e - Étudier les caractéristiques d'une série de données.",
+    questions: [{ex: 4, q: 0}, {ex: 4, q: 3}] },
+  { code: "11.14 : 4e - Étudier des données à l'aide d'un tableur.",
+    questions: [{ex: 4, q: 1}, {ex: 5, q: 5}] },
+  { code: "11.18 : 3e - Manipuler des grandeurs produits et des grandeurs quotients.",
+    questions: [{ex: 0, q: 4}, {ex: 3, q: 5}] },
+  { code: "11.21 : 3e - Étudier des données statistiques regroupées par effectifs.",
+    questions: [{ex: 4, q: 1}, {ex: 4, q: 2}] },
+  { code: "12.1 : 5e - Utiliser des variables et des boucles.",
+    questions: [{ex: 0, q: 5}, {ex: 2, q: 4}] },
+];
+
 // Injection dans localStorage
 localStorage.setItem('evaluationData', JSON.stringify(evaluationData));
+localStorage.setItem('pronoteCompetencesMapping', JSON.stringify(pronoteCompetencesMapping));
 localStorage.setItem('evaluationConfig', JSON.stringify({
   modeEvaluation: 'mixte',
   seuilTBM: 90,

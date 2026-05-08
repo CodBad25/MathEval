@@ -2,18 +2,14 @@
 (function () {
   'use strict';
 
-  // --- Helpers (mêmes que bilan-pdf.js) ---
   function getCorr() { try { return JSON.parse(localStorage.getItem('studentCorrections')||'{}'); } catch { return {}; } }
   function getCW() { try { return JSON.parse(localStorage.getItem('competencyWeights')||'null'); } catch { return null; } }
   function getExercises() { return window.__getExercises ? window.__getExercises() : []; }
   function getStudents() { return window.__getStudentList ? window.__getStudentList() : []; }
-  function normalizeComp(n) { return n ? n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : n; }
+  function normalizeComp(n) { return n ? n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim() : n; }
+  function getBilanConfig() { try { return JSON.parse(localStorage.getItem('bilanPdfConfig') || '{}'); } catch { return {}; } }
+  function getPronoteMapping() { try { return JSON.parse(localStorage.getItem('pronoteCompetencesMapping') || 'null'); } catch { return null; } }
 
-  function getBilanConfig() {
-    try { return JSON.parse(localStorage.getItem('bilanPdfConfig') || '{}'); } catch { return {}; }
-  }
-
-  // Seuils de maîtrise
   const SEUIL_TBM = 75, SEUIL_MS = 50, SEUIL_MF = 25;
 
   function levelToLetter(pct) {
@@ -27,7 +23,7 @@
     return { A: '#28a745', B: '#17a2b8', C: '#ffc107', D: '#dc3545' }[letter] || '#6c757d';
   }
 
-  // Calcul des scores par compétence pour un élève
+  // Score par compétence transversale (6 verbes)
   function compScores(sid) {
     const corr = getCorr()[sid], exs = getExercises(), cw = getCW(), we = {};
     if (!corr) return {};
@@ -55,6 +51,25 @@
     return r;
   }
 
+  // Score par questions spécifiques (compétences Pronote détaillées)
+  function pronoteQScore(sid, questions) {
+    const corr = getCorr()[sid], exs = getExercises();
+    if (!corr) return null;
+    let earned = 0, total = 0;
+    questions.forEach(({ ex: exIdx, q: qIdx }) => {
+      const exercise = exs.find(e => e.exerciceIndex === exIdx);
+      if (!exercise) return;
+      const question = exercise.questions.find(q => q.questionIndex === qIdx);
+      if (!question) return;
+      const d = corr[exIdx]?.[qIdx];
+      total += question.points || 1;
+      if (d?.pointsObtenus !== undefined) earned += d.pointsObtenus;
+      else if (d?.status === 'TB') earned += question.points || 1;
+      else if (d?.status === 'TB-') earned += (question.points || 1) / 2;
+    });
+    return total > 0 ? { pct: earned / total * 100 } : null;
+  }
+
   function globalScore(sid) {
     const corr = getCorr()[sid], exs = getExercises();
     if (!corr) return { correct: 0, total: 0 };
@@ -79,44 +94,65 @@
     raisonner: 'Raisonner', communiquer: 'Communiquer', chercher: 'Chercher'
   };
 
-  // --- Modale avec tableau ---
   function showPronoteModal() {
     const students = getStudents();
     if (!students.length) { alert('Aucun élève trouvé.'); return; }
 
-    // Compétences évaluées
-    const allComps = new Set();
-    students.forEach(s => {
-      if (!isCorrected(s.id)) return;
-      const sc = compScores(s.id);
-      Object.keys(sc).forEach(k => allComps.add(k));
-    });
-
-    if (!allComps.size) { alert('Aucune correction trouvée.'); return; }
-
-    const compOrder = ['chercher', 'modeliser', 'representer', 'raisonner', 'calculer', 'communiquer'];
-    const comps = compOrder.filter(c => allComps.has(c));
-    allComps.forEach(c => { if (!comps.includes(c)) comps.push(c); });
-
-    // Classe depuis la config bilan-pdf
     const cfg = getBilanConfig();
     const classe = cfg.classe || '';
+    const pronoteMap = getPronoteMapping();
 
-    // Ne garder que les vrais élèves (qui ont un nom ou un prénom), triés par nom
+    // Colonnes compétences
+    let comps, compHeaders, getScore;
+    if (pronoteMap) {
+      comps = pronoteMap.map(m => m.code);
+      // En-têtes courts : juste le code numérique (ex: "7.18") ou le verbe pour les transversales
+      compHeaders = pronoteMap.map(m => {
+        if (m.normKey) return COMP_LABELS[m.normKey] || m.code;
+        return m.code.split(' : ')[0]; // ex: "7.18"
+      });
+      getScore = (sid, idx) => {
+        const m = pronoteMap[idx];
+        if (m.normKey) return compScores(sid)[m.normKey] || null;
+        return pronoteQScore(sid, m.questions);
+      };
+    } else {
+      // Fallback : 6 transversales
+      const allComps = new Set();
+      students.forEach(s => {
+        if (!isCorrected(s.id)) return;
+        Object.keys(compScores(s.id)).forEach(k => allComps.add(k));
+      });
+      if (!allComps.size) { alert('Aucune correction trouvée.'); return; }
+      const compOrder = ['chercher', 'modeliser', 'representer', 'raisonner', 'calculer', 'communiquer'];
+      comps = compOrder.filter(c => allComps.has(c));
+      allComps.forEach(c => { if (!comps.includes(c)) comps.push(c); });
+      compHeaders = comps.map(c => COMP_LABELS[c] || c.charAt(0).toUpperCase() + c.slice(1));
+      getScore = (sid, idx) => compScores(sid)[comps[idx]] || null;
+    }
+
+    if (!pronoteMap && !comps.length) { alert('Aucune correction trouvée.'); return; }
+
     const sorted = [...students]
       .filter(s => (s.nom && s.nom.trim()) || (s.prenom && s.prenom.trim()))
       .sort((a, b) => (a.nom || '').toUpperCase().localeCompare((b.nom || '').toUpperCase(), 'fr'));
 
-    // Construire le tableau
-    const compHeaders = comps.map(c => COMP_LABELS[c] || c.charAt(0).toUpperCase() + c.slice(1));
+    // Pré-calcul des scores
+    const scores = {};
+    sorted.forEach(s => {
+      if (!isCorrected(s.id)) { scores[s.id] = null; return; }
+      scores[s.id] = comps.map((_, idx) => getScore(s.id, idx));
+    });
 
-    let tableHTML = '<table id="pronote-table" style="border-collapse:collapse;width:100%;font-size:14px;font-family:Arial,sans-serif">';
+    // Construction du tableau HTML
+    let tableHTML = '<table id="pronote-table" style="border-collapse:collapse;width:100%;font-size:13px;font-family:Arial,sans-serif">';
     tableHTML += '<thead><tr style="background:#2c3e50;color:white">';
-    tableHTML += '<th style="padding:8px 12px;text-align:left;border:1px solid #34495e">Nom</th>';
-    tableHTML += '<th style="padding:8px 12px;text-align:center;border:1px solid #34495e">Classe</th>';
-    tableHTML += '<th style="padding:8px 12px;text-align:center;border:1px solid #34495e">Note</th>';
-    compHeaders.forEach(h => {
-      tableHTML += `<th style="padding:8px 12px;text-align:center;border:1px solid #34495e">${h}</th>`;
+    tableHTML += '<th style="padding:6px 10px;text-align:left;border:1px solid #34495e;white-space:nowrap">Nom</th>';
+    tableHTML += '<th style="padding:6px 10px;text-align:center;border:1px solid #34495e">Classe</th>';
+    tableHTML += '<th style="padding:6px 10px;text-align:center;border:1px solid #34495e">Note</th>';
+    compHeaders.forEach((h, i) => {
+      const title = pronoteMap ? pronoteMap[i].code : h;
+      tableHTML += `<th style="padding:6px 8px;text-align:center;border:1px solid #34495e;white-space:nowrap" title="${title}">${h}</th>`;
     });
     tableHTML += '</tr></thead><tbody>';
 
@@ -126,66 +162,59 @@
       const corrected = isCorrected(s.id);
       const g = globalScore(s.id);
       let noteText = '';
-      if (!corrected) {
-        noteText = '<span style="color:#999">ABS</span>';
-      } else if (g.total > 0) {
-        const note = Math.round(g.correct * 10) / 10;
-        noteText = note.toString().replace('.', ',');
-      }
+      if (!corrected) noteText = '<span style="color:#999">ABS</span>';
+      else if (g.total > 0) noteText = `<span style="font-weight:600">${(Math.round(g.correct * 10) / 10).toString().replace('.', ',')}</span>`;
 
       tableHTML += `<tr style="background:${bg}">`;
-      tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;font-weight:500">${nom}</td>`;
-      tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center">${classe}</td>`;
-      tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;font-weight:600">${noteText}</td>`;
+      tableHTML += `<td style="padding:5px 8px;border:1px solid #dee2e6;font-weight:500;white-space:nowrap">${nom}</td>`;
+      tableHTML += `<td style="padding:5px 8px;border:1px solid #dee2e6;text-align:center">${classe}</td>`;
+      tableHTML += `<td style="padding:5px 8px;border:1px solid #dee2e6;text-align:center">${noteText}</td>`;
 
-      if (corrected) {
-        const sc = compScores(s.id);
-        comps.forEach(c => {
-          if (sc[c]) {
-            const letter = levelToLetter(sc[c].pct);
+      const sc = scores[s.id];
+      comps.forEach((_, idx) => {
+        if (!corrected) {
+          tableHTML += '<td style="padding:5px 8px;border:1px solid #dee2e6;text-align:center;color:#999">ABS</td>';
+        } else {
+          const s2 = sc?.[idx];
+          if (s2) {
+            const letter = levelToLetter(s2.pct);
             const color = levelToColor(letter);
-            tableHTML += `<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;font-weight:bold;color:${color}">${letter}</td>`;
+            tableHTML += `<td style="padding:5px 8px;border:1px solid #dee2e6;text-align:center;font-weight:bold;color:${color}">${letter}</td>`;
           } else {
-            tableHTML += '<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center"></td>';
+            tableHTML += '<td style="padding:5px 8px;border:1px solid #dee2e6;text-align:center;color:#bbb">—</td>';
           }
-        });
-      } else {
-        comps.forEach(() => {
-          tableHTML += '<td style="padding:6px 10px;border:1px solid #dee2e6;text-align:center;color:#999">ABS</td>';
-        });
-      }
+        }
+      });
       tableHTML += '</tr>';
     });
-
     tableHTML += '</tbody></table>';
 
-    // Légende
     const legend = `<div style="margin-top:12px;font-size:12px;color:#666;display:flex;gap:16px;flex-wrap:wrap">
-      <span><b style="color:#28a745">A</b> = Très bonne maîtrise (≥75%)</span>
-      <span><b style="color:#17a2b8">B</b> = Maîtrise satisfaisante (≥50%)</span>
-      <span><b style="color:#ffc107">C</b> = Maîtrise fragile (≥25%)</span>
-      <span><b style="color:#dc3545">D</b> = Maîtrise insuffisante (<25%)</span>
+      <span><b style="color:#28a745">A</b> ≥ 75%</span>
+      <span><b style="color:#17a2b8">B</b> ≥ 50%</span>
+      <span><b style="color:#ffc107">C</b> ≥ 25%</span>
+      <span><b style="color:#dc3545">D</b> &lt; 25%</span>
+      <span style="color:#bbb">— = question non évaluée</span>
     </div>`;
 
-    // Modale
     const overlay = document.createElement('div');
     overlay.id = 'pronote-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'background:white;border-radius:12px;padding:24px;max-width:90vw;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+    modal.style.cssText = 'background:white;border-radius:12px;padding:24px;max-width:95vw;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
 
     modal.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h2 style="margin:0;font-size:20px;color:#2c3e50">📊 Export Pronote — Compétences</h2>
+        <h2 style="margin:0;font-size:18px;color:#2c3e50">📊 Export Pronote — ${pronoteMap ? '20 compétences' : 'Compétences'}</h2>
         <button id="pronote-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;padding:4px 8px">&times;</button>
       </div>
       <p style="margin:0 0 12px;color:#666;font-size:13px">
-        Sélectionnez les cellules du tableau ci-dessous et collez-les directement dans Pronote.
-        Le bouton <b>Copier</b> copie les notes et les compétences (A/B/C/D).
+        Survolez les en-têtes de colonnes pour voir le nom complet de chaque compétence.
+        Le bouton <b>Copier</b> produit les niveaux A/B/C/D à coller directement dans Pronote.
       </p>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
         <button id="pronote-copy-comps" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">
           📋 Copier notes + compétences
         </button>
@@ -202,54 +231,38 @@
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-
-    // Fermer
     document.getElementById('pronote-close').addEventListener('click', () => overlay.remove());
 
-    // Copier notes + compétences (A/B/C/D) — tab-separated pour coller dans un tableur
     document.getElementById('pronote-copy-comps').addEventListener('click', () => {
       const lines = [];
-      // Données uniquement (sans en-tête, pour coller directement dans Pronote)
       sorted.forEach(s => {
         const corrected = isCorrected(s.id);
-        if (!corrected) {
-          lines.push(['ABS', ...comps.map(() => 'ABS')].join('\t'));
-          return;
-        }
+        if (!corrected) { lines.push(['ABS', ...comps.map(() => 'ABS')].join('\t')); return; }
         const g = globalScore(s.id);
         const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
-        const sc = compScores(s.id);
-        const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
+        const sc = scores[s.id];
+        const levels = comps.map((_, idx) => { const s2 = sc?.[idx]; return s2 ? levelToLetter(s2.pct) : ''; });
         lines.push([note, ...levels].join('\t'));
       });
-      navigator.clipboard.writeText(lines.join('\n')).then(() => {
-        showCopyFeedback('pronote-copy-comps', 'Notes + compétences copiées !');
-      });
+      navigator.clipboard.writeText(lines.join('\n')).then(() => showCopyFeedback('pronote-copy-comps', 'Notes + compétences copiées !'));
     });
 
-    // Copier tout le tableau
     document.getElementById('pronote-copy-all').addEventListener('click', () => {
       const lines = [];
       lines.push(['Nom', 'Classe', 'Note', ...compHeaders].join('\t'));
       sorted.forEach(s => {
         const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
         const corrected = isCorrected(s.id);
-        if (!corrected) {
-          lines.push([nom, classe, 'ABS', ...comps.map(() => 'ABS')].join('\t'));
-          return;
-        }
+        if (!corrected) { lines.push([nom, classe, 'ABS', ...comps.map(() => 'ABS')].join('\t')); return; }
         const g = globalScore(s.id);
         const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
-        const sc = compScores(s.id);
-        const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
+        const sc = scores[s.id];
+        const levels = comps.map((_, idx) => { const s2 = sc?.[idx]; return s2 ? levelToLetter(s2.pct) : ''; });
         lines.push([nom, classe, note, ...levels].join('\t'));
       });
-      navigator.clipboard.writeText(lines.join('\n')).then(() => {
-        showCopyFeedback('pronote-copy-all', 'Tableau copié !');
-      });
+      navigator.clipboard.writeText(lines.join('\n')).then(() => showCopyFeedback('pronote-copy-all', 'Tableau copié !'));
     });
 
-    // Télécharger CSV
     document.getElementById('pronote-download').addEventListener('click', () => {
       const sep = ';';
       const lines = [];
@@ -257,18 +270,14 @@
       sorted.forEach(s => {
         const nom = `${(s.nom || '').toUpperCase()} ${s.prenom || ''}`.trim();
         const corrected = isCorrected(s.id);
-        if (!corrected) {
-          lines.push([nom, classe, 'ABS', ...comps.map(() => 'ABS')].join(sep));
-          return;
-        }
+        if (!corrected) { lines.push([nom, classe, 'ABS', ...comps.map(() => 'ABS')].join(sep)); return; }
         const g = globalScore(s.id);
         const note = g.total > 0 ? (Math.round(g.correct * 10) / 10).toString().replace('.', ',') : '';
-        const sc = compScores(s.id);
-        const levels = comps.map(c => sc[c] ? levelToLetter(sc[c].pct) : '');
+        const sc = scores[s.id];
+        const levels = comps.map((_, idx) => { const s2 = sc?.[idx]; return s2 ? levelToLetter(s2.pct) : ''; });
         lines.push([nom, classe, note, ...levels].join(sep));
       });
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'export_pronote_competences.csv';
@@ -279,21 +288,19 @@
 
   function showCopyFeedback(btnId, msg) {
     const btn = document.getElementById(btnId);
+    if (!btn) return;
     const original = btn.innerHTML;
     btn.innerHTML = `✅ ${msg}`;
     btn.style.background = '#27ae60';
     setTimeout(() => { btn.innerHTML = original; btn.style.background = ''; }, 2000);
   }
 
-  // Exposer globalement
   window.__exportCSVPronote = showPronoteModal;
 
-  // --- Injection bouton ---
   let pronoteButtonInjected = false;
 
   function injectPronoteButton() {
     if (pronoteButtonInjected) return;
-    // Chercher un bouton d'ancrage : "Bilans PDF", "Bilan classe", ou "Exporter JSON"
     const anchors = ['Bilans PDF', 'Bilan classe', 'Exporter JSON'];
     let anchorBtn = null;
     for (const text of anchors) {
@@ -303,8 +310,6 @@
       if (anchorBtn) break;
     }
     if (!anchorBtn || !anchorBtn.parentElement) return;
-
-    // Vérifier qu'on n'a pas déjà injecté
     const existing = anchorBtn.parentElement.querySelector('[data-pronote-btn]');
     if (existing) { pronoteButtonInjected = true; return; }
 
@@ -315,9 +320,7 @@
     b.style.cssText = anchorBtn.style.cssText;
     b.setAttribute('data-pronote-btn', '1');
     b.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showPronoteModal(); });
-    // Insérer après le dernier bouton du groupe
-    const parent = anchorBtn.parentElement;
-    parent.appendChild(b);
+    anchorBtn.parentElement.appendChild(b);
     pronoteButtonInjected = true;
     console.log('✅ Bouton Export Pronote injecté');
   }
@@ -327,7 +330,6 @@
     const app = document.getElementById('app') || document.getElementById('appMathalea');
     if (!app) { setTimeout(init, 200); return; }
     obs.observe(app, { childList: true, subtree: true });
-    // Essayer plusieurs fois avec des délais croissants
     setTimeout(injectPronoteButton, 1500);
     setTimeout(injectPronoteButton, 3000);
     setTimeout(injectPronoteButton, 5000);
