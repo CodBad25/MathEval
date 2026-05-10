@@ -6,6 +6,262 @@
 //             et chargé avant ce fichier dans index.html
 //
 
+// === MODE FOCUS (plein écran + masquage éléments inutiles) ===
+function toggleFocusMode() {
+    const isActive = document.body.classList.contains('focus-mode');
+    if (isActive) {
+        // Désactiver : sortir du plein écran + retirer la classe
+        document.body.classList.remove('focus-mode');
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+        updateFocusModeButton(false);
+    } else {
+        // Activer : classe + plein écran navigateur (geste user requis)
+        document.body.classList.add('focus-mode');
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch((err) => {
+                console.warn('Fullscreen refusé :', err);
+            });
+        }
+        updateFocusModeButton(true);
+    }
+}
+
+function updateFocusModeButton(isActive) {
+    const btn = document.getElementById('focusModeBtn');
+    if (!btn) return;
+    btn.classList.toggle('active', isActive);
+    const label = btn.querySelector('.focus-label');
+    if (label) label.textContent = isActive ? 'Quitter Focus' : 'Focus';
+}
+
+// Écouter la sortie du plein écran (ex: touche ESC du navigateur)
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('focus-mode')) {
+        document.body.classList.remove('focus-mode');
+        updateFocusModeButton(false);
+    }
+});
+
+// Raccourci clavier F (mais pas dans un champ texte)
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'F' && e.key !== 'f') return;
+    // Ignorer si on tape dans un input/textarea
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    // N'activer que sur la page de correction
+    const mainPage = document.getElementById('mainPage');
+    if (!mainPage || !mainPage.classList.contains('active')) return;
+    e.preventDefault();
+    toggleFocusMode();
+});
+
+// === CONSTANTES RÉDACTION / JUSTIFICATIONS ===
+// Note attribuée globalement à la copie (présentation, clarté, justifications)
+// Valeurs possibles : 0 / 0.5 / 1 / 1.5 / 2 (ou null si non attribué)
+const REDACTION_MAX_POINTS = 2;
+const REDACTION_STEPS = [0, 0.5, 1, 1.5, 2];
+
+// Lit le score de rédaction d'un candidat (null si non attribué)
+function getPresentationScore(candidateNumber) {
+    if (!appState.presentationScores) return null;
+    const v = appState.presentationScores[candidateNumber];
+    return (typeof v === 'number') ? v : null;
+}
+
+// Définit le score de rédaction d'un candidat et sauvegarde
+function setPresentationScore(candidateNumber, value) {
+    if (!appState.presentationScores) appState.presentationScores = {};
+    if (value === null || value === undefined) {
+        delete appState.presentationScores[candidateNumber];
+    } else {
+        appState.presentationScores[candidateNumber] = Number(value);
+    }
+    saveData();
+}
+
+// Snap une valeur continue (0..1) à l'un des 5 paliers REDACTION_STEPS
+function snapRedactionValue(percentage) {
+    const exactValue = percentage * REDACTION_MAX_POINTS; // 0 à 2
+    // Trouver le palier le plus proche
+    let closest = REDACTION_STEPS[0];
+    let minDiff = Math.abs(exactValue - closest);
+    REDACTION_STEPS.forEach(step => {
+        const diff = Math.abs(exactValue - step);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = step;
+        }
+    });
+    return closest;
+}
+
+// Met à jour l'affichage du curseur (thumb, fill, valeur, couleur)
+function updateRedactionSliderUI(value) {
+    const thumb = document.getElementById('redactionSliderThumb');
+    const fill = document.getElementById('redactionSliderFill');
+    const valueDisplay = document.getElementById('redactionSliderValue');
+    if (!thumb || !fill || !valueDisplay) return;
+
+    const levels = ['0', '0.5', '1', '1.5', '2'];
+    // Reset classes
+    levels.forEach(l => {
+        thumb.classList.remove(`level-${l}`);
+        fill.classList.remove(`level-${l}`);
+        valueDisplay.classList.remove(`level-${l}`);
+    });
+
+    if (value === null || value === undefined) {
+        // Non attribué
+        thumb.classList.add('unset');
+        fill.style.width = '0%';
+        valueDisplay.textContent = '— / 2';
+        return;
+    }
+
+    thumb.classList.remove('unset');
+    const pct = (value / REDACTION_MAX_POINTS) * 100;
+    thumb.style.left = `${pct}%`;
+    fill.style.width = `${pct}%`;
+
+    const lvlClass = `level-${value}`;
+    thumb.classList.add(lvlClass);
+    fill.classList.add(lvlClass);
+    valueDisplay.classList.add(lvlClass);
+
+    // Formatage : 0, 0,5, 1, 1,5, 2
+    const formatted = value.toString().replace('.', ',');
+    valueDisplay.textContent = `${formatted} / 2`;
+}
+
+// Candidat actuellement ciblé par le curseur (mis à jour à chaque ouverture de modale)
+let _redactionSliderCurrentCandidate = null;
+
+// Initialise le curseur pour un candidat donné (appelé à chaque ouverture de modale)
+function initRedactionSlider(candidateNumber) {
+    const track = document.getElementById('redactionSliderTrack');
+    if (!track) return;
+
+    // Mémoriser le candidat courant (utilisé par les handlers attachés une seule fois)
+    _redactionSliderCurrentCandidate = candidateNumber;
+
+    // Valeur actuelle pour ce candidat (null = non attribué → boutons validation grisés)
+    const current = getPresentationScore(candidateNumber);
+    updateRedactionSliderUI(current);
+    updateValidationButtonsState(candidateNumber);
+
+    // Attacher les listeners une seule fois (flag sur le track lui-même)
+    if (track.dataset.sliderInit === 'true') return;
+    track.dataset.sliderInit = 'true';
+
+    const handlePointer = (clientX) => {
+        const candNum = _redactionSliderCurrentCandidate;
+        if (candNum === null) return;
+        const rect = track.getBoundingClientRect();
+        const rel = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const snapped = snapRedactionValue(rel);
+        setPresentationScore(candNum, snapped);
+        updateRedactionSliderUI(snapped);
+        refreshValidationModalScores(candNum);
+    };
+
+    // Mousedown + drag
+    track.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('redaction-slider-mark')) return;
+        e.preventDefault();
+        handlePointer(e.clientX);
+
+        const onMove = (ev) => handlePointer(ev.clientX);
+        const onUp = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+
+    // Tactile
+    track.addEventListener('touchstart', (e) => {
+        if (e.target.classList.contains('redaction-slider-mark')) return;
+        handlePointer(e.touches[0].clientX);
+    }, { passive: true });
+    track.addEventListener('touchmove', (e) => {
+        handlePointer(e.touches[0].clientX);
+    }, { passive: true });
+
+    // Clics directs sur les marques (0, ½, 1, 1½, 2)
+    track.querySelectorAll('.redaction-slider-mark').forEach(mark => {
+        mark.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const candNum = _redactionSliderCurrentCandidate;
+            if (candNum === null) return;
+            const v = parseFloat(mark.getAttribute('data-value'));
+            setPresentationScore(candNum, v);
+            updateRedactionSliderUI(v);
+            refreshValidationModalScores(candNum);
+        });
+    });
+}
+
+// Rafraîchit le badge note effective + note réelle dans la modale en cours
+function refreshValidationModalScores(candidateNumber) {
+    const details = calculateCandidateDetails(candidateNumber);
+    const mainScoreEl = document.getElementById('validationMainScore');
+    const rawScoreEl = document.getElementById('validationRawScore');
+    if (!mainScoreEl || !rawScoreEl) return;
+
+    const noteEffFormatted = details.noteEffective.toString().replace('.', ',');
+    mainScoreEl.textContent = `${noteEffFormatted}/20`;
+
+    const rawFormatted = details.rawScore.toString().replace('.', ',');
+    const rawPctFormatted = details.rawPercentage.toString().replace('.', ',');
+    rawScoreEl.textContent = `Note réelle : ${rawFormatted}/${details.rawMax} (${rawPctFormatted} %)`;
+
+    // Appliquer la couleur selon le niveau de maîtrise basé sur la note effective
+    mainScoreEl.style.background = getMasteryLevel(details.effectivePercentage).gradient;
+
+    // Mettre à jour l'état des boutons de validation selon l'attribution de Rédaction
+    updateValidationButtonsState(candidateNumber);
+}
+
+// Désactive les boutons de validation tant que le score de Rédaction n'est pas attribué
+function updateValidationButtonsState(candidateNumber) {
+    const redactionScore = getPresentationScore(candidateNumber);
+    const isAttributed = (redactionScore !== null && redactionScore !== undefined);
+
+    const btnValidateNext = document.getElementById('btnValidateNext');
+    const btnValidateReturn = document.querySelector('.btn-validate');
+    const sliderContainer = document.getElementById('redactionSliderContainer');
+
+    // Tooltip d'explication
+    const disabledTitle = '⚠️ Veuillez d\'abord attribuer les points de Rédaction / Justifications';
+
+    if (!isAttributed) {
+        // Griser les 2 boutons de validation
+        if (btnValidateNext) {
+            btnValidateNext.classList.add('disabled-pending-redaction');
+            btnValidateNext.title = disabledTitle;
+        }
+        if (btnValidateReturn) {
+            btnValidateReturn.classList.add('disabled-pending-redaction');
+            btnValidateReturn.title = disabledTitle;
+        }
+        // Highlight visuel du curseur Rédaction pour attirer l'œil
+        if (sliderContainer) sliderContainer.classList.add('needs-attribution');
+    } else {
+        if (btnValidateNext) {
+            btnValidateNext.classList.remove('disabled-pending-redaction');
+            btnValidateNext.title = '';
+        }
+        if (btnValidateReturn) {
+            btnValidateReturn.classList.remove('disabled-pending-redaction');
+            btnValidateReturn.title = '';
+        }
+        if (sliderContainer) sliderContainer.classList.remove('needs-attribution');
+    }
+}
+
 // === SYSTÈME DE NAVIGATION ENTRE PAGES ===
 // Fonction utilitaire pour gérer l'affichage des pages de manière cohérente
 function showPage(pageId) {
@@ -1525,7 +1781,9 @@ async function continueToSetup() {
         
         // Initialiser le barème pour tous les exercices (1-5)
         appState.baremeConfig.exercises = {};
-        appState.baremeConfig.totalMax = 20; // DNB 2025 est sur 20 points
+        // DNB 2025 est sur 20 points par défaut, configurable via ?totalMax=23 dans l'URL
+        const urlTotalMax = new URLSearchParams(window.location.search).get('totalMax');
+        appState.baremeConfig.totalMax = urlTotalMax ? parseInt(urlTotalMax) : 20;
         
         // Ex1 (Automatismes) : totalPoints = nombre de questions, 1 pt/question par défaut
         if (exercisesData[1]) {
@@ -3204,7 +3462,7 @@ function calculateTotalPoints() {
             let html = `
                 <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                     <div style="font-size: 1.1em; font-weight: bold; color: #2c3e50;">
-                        Total: <span style="color: ${total === 20 ? '#28a745' : (total > 20 ? '#dc3545' : '#2196f3')}">${total.toFixed(1)}</span> / 20 pts
+                        Total: <span style="color: ${total === appState.baremeConfig.totalMax ? '#28a745' : (total > appState.baremeConfig.totalMax ? '#dc3545' : '#2196f3')}">${total.toFixed(1)}</span> / ${appState.baremeConfig.totalMax} pts
                     </div>
                     <div style="flex: 1; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
             `;
@@ -3234,22 +3492,23 @@ function calculateTotalPoints() {
             detailsDiv.innerHTML = html;
         }
 
-        if (total > 20) {
+        const totalMax = appState.baremeConfig.totalMax || 20;
+        if (total > totalMax) {
             totalSpan.style.color = '#dc3545';
             if (warningDiv) {
                 warningDiv.style.display = 'block';
-                warningDiv.innerHTML = '⚠️ Le total dépasse 20 points';
+                warningDiv.innerHTML = `⚠️ Le total dépasse ${totalMax} points`;
             }
             if (btnContinue) btnContinue.disabled = true;
         } else if (total === 0) {
             totalSpan.style.color = '#6c757d';
             if (warningDiv) warningDiv.style.display = 'none';
             if (btnContinue) btnContinue.disabled = true;
-        } else if (total < 20) {
+        } else if (total < totalMax) {
             totalSpan.style.color = '#2196f3';
             if (warningDiv) {
                 warningDiv.style.display = 'block';
-                warningDiv.innerHTML = `ℹ️ Reste ${(20 - total).toFixed(1)} points à attribuer`;
+                warningDiv.innerHTML = `ℹ️ Reste ${(totalMax - total).toFixed(1)} points à attribuer`;
                 warningDiv.style.background = '#e3f2fd';
                 warningDiv.style.borderColor = '#2196f3';
                 warningDiv.style.color = '#1565c0';
@@ -3288,8 +3547,9 @@ function continueToCandidates() {
     if (hasError) return;
 
     const total = Object.values(appState.baremeConfig.exercises).reduce((sum, ex) => sum + ex.totalPoints, 0);
-    if (total > 20) {
-        alert('⚠️ Le total dépasse 20 points (nouveau barème DNB 2025)');
+    const totalMax = appState.baremeConfig.totalMax || 20;
+    if (total > totalMax) {
+        alert(`⚠️ Le total dépasse ${totalMax} points`);
         return;
     }
     
@@ -4212,36 +4472,53 @@ function renderExerciseTabs() {
     
     tabsContainer.innerHTML = '';
     
-    // Icônes par défaut pour les exercices
-    const defaultIcons = ['📝', '📐', '🔢', '💻', '📊', '🎯', '📈', '🧮'];
-    
+    // Icônes thématiques pour les exercices (basées sur le contenu)
+    const themeIcons = {
+        'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+        'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+        'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+        'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+        'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️'
+    };
+
+    function getExerciseIcon(title) {
+        const lower = (title || '').toLowerCase();
+        for (const [keyword, icon] of Object.entries(themeIcons)) {
+            if (lower.includes(keyword)) return icon;
+        }
+        return '📝';
+    }
+
     Object.keys(exercisesData).forEach((exerciseNum, index) => {
         const exercise = exercisesData[exerciseNum];
-        const icon = defaultIcons[index] || '📝';
+        const icon = getExerciseIcon(exercise.title);
         const isFirst = index === 0;
-        
+
         const button = document.createElement('button');
         button.className = `main-tab ${isFirst ? 'active' : ''}`;
+        // data-tab attribute pour identifier l'onglet sans avoir à parser l'onclick
+        button.dataset.tab = `exercise${exerciseNum}`;
         button.onclick = () => showTab(`exercise${exerciseNum}`);
-        
-        // Extraire juste le numéro et le thème du titre
-        let displayTitle = `Ex ${exerciseNum}`;
+
+        // Extraire le titre court pour le tooltip au survol (Option C — onglets compacts)
+        let shortTitle = '';
         if (exercise.title) {
-            // Si le titre contient ":", prendre ce qui est après
             const parts = exercise.title.split(':');
             if (parts.length > 1) {
-                displayTitle = parts[1].trim();
+                shortTitle = parts[1].trim();
             } else {
-                // Sinon, garder le titre complet sauf "Exercice X -"
-                displayTitle = exercise.title.replace(/^Exercice \d+ -?\s*/, '');
+                shortTitle = exercise.title.replace(/^Exercice \d+ -?\s*/, '');
             }
         }
-        
+        // Tooltip natif au survol : affiche le titre complet de l'exercice
+        button.title = shortTitle ? `Exercice ${exerciseNum} : ${shortTitle}` : `Exercice ${exerciseNum}`;
+
+        // Affichage compact et uniforme : juste icône + "Ex N"
         button.innerHTML = `
             <span class="tab-icon">${icon}</span>
-            <span>${displayTitle}</span>
+            <span>Ex${exerciseNum}</span>
         `;
-        
+
         tabsContainer.appendChild(button);
     });
 }
@@ -4351,6 +4628,7 @@ function generateCandidates() {
 
     renderCandidatesGrid();
     updateCandidatesStats();
+    saveData(); // 💾 Persister immédiatement les candidats générés
 
     // Afficher la page de validation des candidats (pas encore l'étape 5)
     showPage('candidatesPage');
@@ -4380,6 +4658,7 @@ function toggleCandidate(number) {
         candidate.active = !candidate.active;
         renderCandidatesGrid();
         updateCandidatesStats();
+        saveData(); // 💾 Persister l'état actif/éliminé
     }
 }
 
@@ -4397,6 +4676,7 @@ function updateCandidatesStats() {
 
 function startCorrection() {
     appState.activeCandidates = appState.candidates.filter(c => c.active);
+    saveData(); // 💾 Persister la liste active
 
     if (appState.activeCandidates.length === 0) {
         alert('Aucun candidat actif sélectionné !');
@@ -4404,9 +4684,14 @@ function startCorrection() {
     }
 
     // 🔧 Générer exercisesData depuis le barème et les exercices parsés
-    console.log('🎯 Génération de exercisesData avant la correction...');
-    exercisesData = generateExercisesDataFromSelection();
-    console.log('✅ exercisesData généré:', exercisesData);
+    // Si config importée via ?config=, exercisesData est déjà rempli — ne pas écraser
+    if (!appState._configImported) {
+        console.log('🎯 Génération de exercisesData avant la correction...');
+        exercisesData = generateExercisesDataFromSelection();
+        console.log('✅ exercisesData généré:', exercisesData);
+    } else {
+        console.log('📦 exercisesData déjà chargé depuis config importée, skip génération');
+    }
 
     // 🎯 Sélectionner automatiquement le mode "Par candidat" par défaut
     appState.correctionMode = 'candidate';
@@ -4469,15 +4754,11 @@ function showTab(tabName) {
     // Réinitialiser la compétence en cours quand on change d'exercice
     currentlyEditingCompetence = null;
     
-    // Mise à jour des onglets - méthode compatible avec les onglets dynamiques
+    // Mise à jour des onglets : utilisation du data-tab attribute (plus fiable)
     document.querySelectorAll('.main-tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    
-    // Trouver l'onglet correspondant par son onclick
-    const targetTab = Array.from(document.querySelectorAll('.main-tab')).find(tab => {
-        return tab.onclick && tab.onclick.toString().includes(`showTab('${tabName}')`);
-    });
+    const targetTab = document.querySelector(`.main-tab[data-tab="${tabName}"]`);
     if (targetTab) {
         targetTab.classList.add('active');
     }
@@ -4970,7 +5251,7 @@ function autoNavigateAfterQuickButton() {
             nextCandidate();
         } else {
             // Dernier candidat : passer à l'exercice suivant, candidat 1
-            if (appState.currentExerciseIndex < 5) {
+            if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
                 appState.currentCandidateIndex = 0; // Retour au premier candidat
                 nextExercise();
             } else {
@@ -4981,22 +5262,12 @@ function autoNavigateAfterQuickButton() {
     } else if (appState.correctionMode === 'candidate') {
         // Mode par candidat : corriger tous les exercices pour le même candidat
         // → passer à l'exercice suivant (même candidat)
-        if (appState.currentExerciseIndex < 5) {
+        if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
             // Passer à l'exercice suivant pour le même candidat
             nextExercise();
         } else {
-            // Dernier exercice : candidat terminé, proposer validation
-            const candidate = appState.activeCandidates[appState.currentCandidateIndex];
-            if (confirm('🎉 Candidat terminé ! Voulez-vous valider la correction maintenant ?')) {
-                validateCorrection();
-            } else {
-                // Passer au candidat suivant, exercice 1
-                if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
-                    appState.currentExerciseIndex = 1;
-                    nextCandidate();
-                    showTab('exercise1');
-                }
-            }
+            // Dernier exercice : ouvrir directement la modale de validation (stylée)
+            validateCorrection();
         }
     }
 }
@@ -5066,7 +5337,7 @@ function autoNavigateAfterCompetenceCorrection(originalExerciseNumber, questionI
         if (exerciseState === 'completed' || exerciseState === 'perfect') {
             // TOUT l'exercice est terminé → passer à l'exercice suivant
             console.log('✅ NAVIGATION AUTOMATIQUE DÉCLENCHÉE !');
-            if (appState.currentExerciseIndex < 5) {
+            if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
                 console.log(`📍 Passage de l'exercice ${appState.currentExerciseIndex} vers ${appState.currentExerciseIndex + 1}`);
                 nextExercise();
             } else {
@@ -5603,7 +5874,7 @@ function renderExerciseContent(exerciseNumber) {
                 <div class="exercise-score-badge" id="exerciseScore${exerciseNumber}">0 / ${exercise.totalPoints} pts</div>
             </div>
             <div class="exercise-actions">
-                <div class="exercise-quick-buttons">
+                <div class="exercise-quick-buttons" data-tour="exercise-quickbtns">
                     <button class="quick-btn tb" onclick="setExerciseScoreWithNavigation(${exerciseNumber}, 'tb')">TB</button>
                     <button class="quick-btn tf" onclick="setExerciseScoreWithNavigation(${exerciseNumber}, 'tf')">TF</button>
                     <button class="quick-btn nr" onclick="setExerciseScoreWithNavigation(${exerciseNumber}, 'nr')">NR</button>
@@ -5658,7 +5929,7 @@ function renderExerciseContent(exerciseNumber) {
         
         html += `
             <div class="question-card" data-question-id="${question.id}">
-                <div class="question-progress-indicator progress-indicator ${questionProgressState}"></div>
+                <div class="question-progress-indicator progress-indicator ${questionProgressState}" data-tour="progress-indicator"></div>
                 <div class="question-header">
                     <div class="question-title-section">
                         <div class="question-title">${question.title} (${question.points} pts)</div>
@@ -5666,7 +5937,14 @@ function renderExerciseContent(exerciseNumber) {
                 </div>
                 
                 <div class="question-text">${question.statement}</div>
-                
+
+                ${question.notationGuide ? `
+                    <div class="notation-guide" data-tour="notation-guide">
+                        <div class="notation-guide-header">📋 Guide de notation</div>
+                        <div class="notation-guide-body">${question.notationGuide}</div>
+                    </div>
+                ` : ''}
+
                 <div class="answer-section">
                     <div class="answer-label">Réponse attendue :</div>
                     <div class="answer-content">
@@ -5695,7 +5973,7 @@ function renderExerciseContent(exerciseNumber) {
                             const competenceProgressState = getCompetenceProgressState(candidate.number, exerciseNumber, question.id, competence.name);
                             const buttonId = `comp_${exerciseNumber}_${question.id}_${competence.name.replace(/\s/g, '_')}`;
                             return `
-                                <button id="${buttonId}" class="competence-btn ${isActive ? 'active' : ''}"
+                                <button id="${buttonId}" class="competence-btn ${isActive ? 'active' : ''}" data-tour="competence-btn"
                                         style="border-color: ${competence.color}; color: ${isActive ? competence.color : competence.color}; background: ${isActive ? competence.color : 'white'}; opacity: 1;"
                                         onmouseenter="showDescriptionTooltip(event, '${description.replace(/'/g, "\\'")}', '${tooltipId}')"
                                         onmouseleave="hideDescriptionTooltip('${tooltipId}'); handleCompetenceButtonPress(${exerciseNumber}, '${question.id}', '${competence.name}', ${question.points}, event, 'cancel');"
@@ -5719,7 +5997,7 @@ function renderExerciseContent(exerciseNumber) {
                 
                 <div class="quick-actions">
                     <div class="quick-buttons-container">
-                        <div class="quick-buttons-main">
+                        <div class="quick-buttons-main" data-tour="question-quickbtns">
                             <button class="quick-btn-main tb ${quickButtonState === 'tb' ? 'active' : ''}" 
                                     onclick="setQuestionScoreWithNavigation(${exerciseNumber}, '${question.id}', 'tb')">
                                 <span class="btn-icon">✓</span>
@@ -5740,7 +6018,7 @@ function renderExerciseContent(exerciseNumber) {
                             <span class="btn-icon">↻</span>
                         </button>
                     </div>
-                    <div class="score-display" id="score_${exerciseNumber}_${question.id}">
+                    <div class="score-display" id="score_${exerciseNumber}_${question.id}" data-tour="score-display">
                         ${candidateScore} / ${question.points} pts
                     </div>
                 </div>
@@ -5921,7 +6199,7 @@ function previousExercise() {
         // Si on est au premier exercice, passer au candidat précédent et au dernier exercice
         if (appState.currentCandidateIndex > 0) {
             appState.currentCandidateIndex--;
-            appState.currentExerciseIndex = 5;
+            appState.currentExerciseIndex = Object.keys(exercisesData).length;
             loadCurrentCandidate();
             showTab(`exercise${appState.currentExerciseIndex}`);
         }
@@ -5929,7 +6207,7 @@ function previousExercise() {
 }
 
 function nextExercise() {
-    if (appState.currentExerciseIndex < 5) {
+    if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
         appState.currentExerciseIndex++;
         showTab(`exercise${appState.currentExerciseIndex}`);
     } else {
@@ -6007,7 +6285,7 @@ function updateNavigationButtons() {
     } else {
         // Mode par exercice
         const isFirstExerciseFirstCandidate = appState.currentExerciseIndex === 1 && appState.currentCandidateIndex === 0;
-        const isLastExerciseLastCandidate = appState.currentExerciseIndex === 5 && appState.currentCandidateIndex === appState.activeCandidates.length - 1;
+        const isLastExerciseLastCandidate = appState.currentExerciseIndex === Object.keys(exercisesData).length && appState.currentCandidateIndex === appState.activeCandidates.length - 1;
         
         prevBtn.disabled = isFirstExerciseFirstCandidate;
         nextBtn.disabled = isLastExerciseLastCandidate;
@@ -6020,6 +6298,35 @@ function updateNavigationButtons() {
         if (validateBtn) {
             validateBtn.style.display = 'none';
         }
+    }
+}
+
+// === SEUILS DE MAÎTRISE (alignés sur alea/assets/bilan-pdf.js & bilan-classe.js) ===
+// Lus depuis localStorage['evaluationConfig'], défauts 90/70/30 (pourcentages)
+function getMasteryThresholds() {
+    try {
+        const c = JSON.parse(localStorage.getItem('evaluationConfig') || '{}');
+        return {
+            tbm: c.seuilTBM ?? 90,
+            ms: c.seuilMS ?? 70,
+            mf: c.seuilMF ?? 30
+        };
+    } catch (e) {
+        return { tbm: 90, ms: 70, mf: 30 };
+    }
+}
+
+// Retourne le niveau de maîtrise depuis un pourcentage (0-100)
+function getMasteryLevel(percentage) {
+    const t = getMasteryThresholds();
+    if (percentage >= t.tbm) {
+        return { level: 'TBM', color: '#28a745', gradient: 'linear-gradient(135deg, #28a745, #20c997)' };
+    } else if (percentage >= t.ms) {
+        return { level: 'MS', color: '#17a2b8', gradient: 'linear-gradient(135deg, #17a2b8, #007bff)' };
+    } else if (percentage >= t.mf) {
+        return { level: 'MF', color: '#ffc107', gradient: 'linear-gradient(135deg, #ffc107, #fd7e14)' };
+    } else {
+        return { level: 'MI', color: '#dc3545', gradient: 'linear-gradient(135deg, #dc3545, #c82333)' };
     }
 }
 
@@ -6062,17 +6369,9 @@ function getExerciseScoreColor(exerciseScore, exerciseNumber, candidateNumber) {
         return hasAttempted ? '#dc3545' : '#6c757d';
     }
     
-    // Scores normaux selon les niveaux de maîtrise
+    // Scores normaux selon les niveaux de maîtrise (seuils lus depuis evaluationConfig)
     const percentage = exerciseScore.maxScore > 0 ? Math.round((exerciseScore.score / exerciseScore.maxScore) * 100) : 0;
-    if (percentage >= 75) {
-        return '#28a745'; // Vert TBM
-    } else if (percentage >= 50) {
-        return '#17a2b8'; // Bleu MS
-    } else if (percentage >= 25) {
-        return '#ffc107'; // Orange MF
-    } else {
-        return '#dc3545'; // Rouge MI
-    }
+    return getMasteryLevel(percentage).color;
 }
 
 // === RENDU VUE D'ENSEMBLE ===
@@ -6130,30 +6429,43 @@ function renderCandidatesOverview() {
             mainScoreText = 'Pas commencée';
             mainScoreClass = 'not-started';
         } else if (details.status === 'completed') {
-            mainScoreText = `${details.noteOn20}/20`;
-            // Niveaux de maîtrise selon la note sur 20 (barème DNB 2025)
-            if (details.noteOn20 >= 15) {
-                mainScoreClass = details.isValidated ? 'validated tbm' : 'tbm'; // Très bonne maîtrise (≥15/20)
-            } else if (details.noteOn20 >= 10) {
-                mainScoreClass = details.isValidated ? 'validated ms' : 'ms'; // Maîtrise satisfaisante (≥10/20)
-            } else if (details.noteOn20 >= 5) {
-                mainScoreClass = details.isValidated ? 'validated mf' : 'mf'; // Maîtrise fragile (≥5/20)
-            } else {
-                mainScoreClass = details.isValidated ? 'validated mi' : 'mi'; // Maîtrise insuffisante (<5/20)
-            }
+            // Affichage : uniquement la note effective (jamais la note réelle sur la carte)
+            const noteFormatted = details.noteEffective.toString().replace('.', ',');
+            mainScoreText = `${noteFormatted}/20`;
+            // Niveau de maîtrise basé sur la note effective (cohérent avec la modale)
+            const masteryClass = getMasteryLevel(details.effectivePercentage).level.toLowerCase();
+            mainScoreClass = details.isValidated ? `validated ${masteryClass}` : masteryClass;
         } else {
-            mainScoreText = `${details.totalScore}/${details.maxScore}`;
+            // En cours : afficher le score brut total (pas la note sur 20 qui n'a pas de sens)
+            const inProgFormatted = details.rawScore.toString().replace('.', ',');
+            mainScoreText = `${inProgFormatted}/${details.rawMax}`;
             mainScoreClass = 'in-progress';
         }
         
-        // Génération des scores par exercice avec couleurs et noms
-        const exerciseNames = ['🎲', '📐', '☐', '💻', '📈']; // Icônes des exercices
-        const exerciseScoresHtml = details.exerciseScores.map((ex, index) => {
+        // Génération des scores par exercice avec couleurs et icônes thématiques
+        const themeIconsCard = {
+            'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+            'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+            'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+            'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+            'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️',
+            'probabilité': '🎲', 'qcm': '☐', 'algorithme': '💻'
+        };
+        const getCardIcon = (title) => {
+            const lower = (title || '').toLowerCase();
+            for (const [k, v] of Object.entries(themeIconsCard)) {
+                if (lower.includes(k)) return v;
+            }
+            return '📝';
+        };
+        const exerciseScoresHtml = details.exerciseScores.map((ex) => {
             const scoreColor = getExerciseScoreColor(ex, ex.exerciseNumber, candidate.number);
-            
+            const exercise = exercisesData[ex.exerciseNumber];
+            const icon = getCardIcon(exercise?.title);
+
             return `
                 <div class="exercise-score-container">
-                    <div class="exercise-icon">${exerciseNames[index]}</div>
+                    <div class="exercise-icon">${icon}</div>
                     <div class="exercise-score" style="background: ${scoreColor} !important; color: white !important;">${ex.score}/${ex.maxScore}</div>
                 </div>
             `;
@@ -6281,13 +6593,35 @@ function calculateCandidateProgress(candidateNumber) {
 }
 
 function calculateCandidateDetails(candidateNumber) {
-    const totalScore = calculateCandidateTotal(candidateNumber);
-    const maxScore = calculateMaxScore();
+    // Points bruts des exercices uniquement (sans rédaction)
+    const exercisesScore = calculateCandidateTotal(candidateNumber);
+    const exercisesMax = calculateMaxScore();
+
+    // Points de rédaction / justifications (curseur 0-2, null si non attribué)
+    const redactionScore = getPresentationScore(candidateNumber);
+    const redactionMax = REDACTION_MAX_POINTS;
+
+    // Total brut (note réelle) = exercices + rédaction, sur 24 + 2 = 26
+    const rawScore = exercisesScore + (redactionScore || 0);
+    const rawMax = exercisesMax + redactionMax;
+
+    // Note effective (sur 20) : plafonnée, c'est la note qui va sur la copie
+    // Principe "rattrapage" : au-delà de 20 pts bruts, on plafonne
+    const noteEffective = Math.min(20, Math.round(rawScore * 10) / 10);
+
+    // Pourcentage pour le niveau de maîtrise : basé sur la note effective /20
+    const effectivePercentage = (noteEffective / 20) * 100;
+    // Pourcentage brut (transparence correcteur uniquement)
+    const rawPercentage = rawMax > 0 ? Math.round((rawScore / rawMax) * 100 * 10) / 10 : 0;
+
     const { questionsAnswered, totalQuestions } = calculateCandidateProgress(candidateNumber);
 
-    // Calculer la note sur 20 (nouveau barème DNB 2025)
-    const noteOn20 = Math.round((totalScore / maxScore) * 20 * 10) / 10; // Note avec 1 décimale
-    
+    // Aliases pour compatibilité avec le code existant
+    const totalScore = rawScore;
+    const maxScore = rawMax;
+    const noteOn20 = noteEffective;
+
+
     // Compter les questions NR
     let nrCount = 0;
     let exerciseScores = [];
@@ -6329,9 +6663,21 @@ function calculateCandidateDetails(candidateNumber) {
     }
     
     return {
+        // Valeurs historiques (aliases pour compat)
         totalScore,
         maxScore,
         noteOn20,
+        // Nouvelles valeurs détaillées
+        exercisesScore,     // Points bruts des exercices seuls (hors rédaction)
+        exercisesMax,       // Max des exercices (24)
+        redactionScore,     // Valeur du curseur (null si non attribué)
+        redactionMax,       // 2
+        rawScore,           // = exercisesScore + (redactionScore || 0)
+        rawMax,             // = exercisesMax + redactionMax = 26
+        noteEffective,      // = min(20, rawScore) — la note sur la copie
+        effectivePercentage, // Pourcentage basé sur noteEffective/20 (pour le niveau de maîtrise)
+        rawPercentage,      // Pourcentage brut rawScore/rawMax (transparence correcteur uniquement)
+        // Autres infos
         questionsAnswered,
         totalQuestions,
         nrCount,
@@ -6402,9 +6748,16 @@ function startCorrectionFromOverview() {
 
     showPage('mainPage');
 
-    // Initialiser le sélecteur de mode (vide par défaut)
-    document.getElementById('correctionMode').value = appState.correctionMode;
-    updateCorrectionMode();
+    // Générer les onglets d'exercices dynamiquement
+    renderExerciseTabs();
+    renderExerciseTabContents();
+
+    // Initialiser le sélecteur de mode
+    const modeSelect = document.getElementById('correctionMode');
+    if (modeSelect) {
+        modeSelect.value = appState.correctionMode;
+        updateCorrectionMode();
+    }
 
     loadCurrentCandidate();
     renderAdminContent();
@@ -6625,38 +6978,44 @@ function validateCorrection() {
     
     // Calculer les scores par compétence
     const competencesScores = calculateCompetencesScores(candidate.number);
-    
+
     // Remplir la modale avec les informations du candidat
     document.getElementById('validationCandidateNumber').textContent = candidate.number;
-    document.getElementById('validationMainScore').textContent = `${details.noteOn20}/20`;
 
-    // Appliquer la couleur selon le niveau de maîtrise (barème DNB 2025)
+    // Note effective (sur 20, plafonnée) — c'est la note qui va sur la copie
     const mainScoreElement = document.getElementById('validationMainScore');
     mainScoreElement.className = 'main-score-badge';
-    if (details.noteOn20 >= 15) {
-        mainScoreElement.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-    } else if (details.noteOn20 >= 10) {
-        mainScoreElement.style.background = 'linear-gradient(135deg, #17a2b8, #007bff)';
-    } else if (details.noteOn20 >= 5) {
-        mainScoreElement.style.background = 'linear-gradient(135deg, #ffc107, #fd7e14)';
-    } else {
-        mainScoreElement.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+    const noteEffFormatted = details.noteEffective.toString().replace('.', ',');
+    mainScoreElement.textContent = `${noteEffFormatted}/20`;
+    // Couleur selon le niveau de maîtrise basé sur la note effective / 20
+    mainScoreElement.style.background = getMasteryLevel(details.effectivePercentage).gradient;
+
+    // Note réelle (transparence correcteur) : ex. "Note réelle : 14,5/26 (55,8 %)"
+    const rawScoreEl = document.getElementById('validationRawScore');
+    if (rawScoreEl) {
+        const rawFormatted = details.rawScore.toString().replace('.', ',');
+        const rawPctFormatted = details.rawPercentage.toString().replace('.', ',');
+        rawScoreEl.textContent = `Note réelle : ${rawFormatted}/${details.rawMax} (${rawPctFormatted} %)`;
     }
-    
+
     if (details.nrCount > 0) {
         document.getElementById('validationNR').textContent = ` • ${details.nrCount} question${details.nrCount > 1 ? 's' : ''} non rendue${details.nrCount > 1 ? 's' : ''}`;
         document.getElementById('validationNR').style.color = '#dc3545';
     } else {
         document.getElementById('validationNR').textContent = '';
     }
-    
+
     // Charger le commentaire existant
     const existingComment = appState.candidateComments[candidate.number] || '';
     document.getElementById('validationComment').value = existingComment;
-    
-    // Générer les grilles des exercices et compétences
+
+    // Générer les grilles des exercices, compétences et la grille NR
     renderExercisesValidation(candidate.number);
     renderCompetencesValidation(competencesScores);
+    renderNRGrid(candidate.number);
+
+    // Initialiser le curseur Rédaction / Justifications pour ce candidat
+    initRedactionSlider(candidate.number);
     
     // Gérer l'affichage du bouton "candidat suivant"
     const btnValidateNext = document.getElementById('btnValidateNext');
@@ -6737,36 +7096,180 @@ function calculateCompetencesScores(candidateNumber) {
 function renderExercisesValidation(candidateNumber) {
     const container = document.getElementById('exercisesValidationGrid');
     container.innerHTML = '';
-    
+
     // Récupérer les scores par exercice depuis calculateCandidateDetails
     const details = calculateCandidateDetails(candidateNumber);
-    
-    const exercisesInfo = [
-        { name: 'Probabilités', icon: '🎲' },
-        { name: 'Géométrie', icon: '📐' },
-        { name: 'QCM', icon: '☐' },
-        { name: 'Algorithmes', icon: '💻' },
-        { name: 'Fonctions', icon: '📈' }
-    ];
-    
-    details.exerciseScores.forEach((exerciseScore, index) => {
-        const exerciseInfo = exercisesInfo[index];
-        
+
+    // Icônes thématiques basées sur le titre de l'exercice (même logique que renderExerciseTabs)
+    const themeIcons = {
+        'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+        'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+        'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+        'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+        'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️',
+        'probabilité': '🎲', 'qcm': '☐', 'algorithme': '💻'
+    };
+    function getExerciseIcon(title) {
+        const lower = (title || '').toLowerCase();
+        for (const [keyword, icon] of Object.entries(themeIcons)) {
+            if (lower.includes(keyword)) return icon;
+        }
+        return '📝';
+    }
+    function getShortTitle(title) {
+        if (!title) return '';
+        const parts = title.split(':');
+        let shortTitle = parts.length > 1 ? parts[1].trim() : title.replace(/^Exercice \d+ -?\s*/, '');
+        if (shortTitle.length > 20) shortTitle = shortTitle.substring(0, 17) + '...';
+        return shortTitle;
+    }
+
+    details.exerciseScores.forEach((exerciseScore) => {
+        const exercise = exercisesData[exerciseScore.exerciseNumber];
+        const title = exercise?.title || `Exercice ${exerciseScore.exerciseNumber}`;
+        const icon = getExerciseIcon(title);
+        const name = getShortTitle(title);
+
         // Utiliser la fonction getExerciseScoreColor pour déterminer la couleur
         const scoreColor = getExerciseScoreColor(exerciseScore, exerciseScore.exerciseNumber, candidateNumber);
-        
+
         const badge = document.createElement('div');
         badge.className = 'exercise-badge';
         badge.innerHTML = `
-            <div class="exercise-badge-icon">${exerciseInfo.icon}</div>
-            <div class="exercise-badge-name">${exerciseInfo.name}</div>
+            <div class="exercise-badge-icon">${icon}</div>
+            <div class="exercise-badge-name">${name}</div>
             <div class="exercise-badge-score" style="background: ${scoreColor} !important;">
                 ${exerciseScore.score}/${exerciseScore.maxScore}
             </div>
         `;
-        
+
         container.appendChild(badge);
     });
+}
+
+/**
+ * Génère la grille visuelle NR par exercice (portée depuis DNB-Blanc-1).
+ * Affiche une ligne par exercice avec des carrés colorés pour chaque question.
+ * Vert = répondu, Gris foncé = NR (non rendu), Gris clair = non commencé.
+ */
+function renderNRGrid(candidateNumber) {
+    const container = document.getElementById('nrGridContainer');
+    if (!container) return;
+
+    // Helpers (mêmes que pour les badges, pour rester cohérent)
+    const themeIconsNR = {
+        'automatisme': '🎯', 'circuit': '🏃', 'pgcd': '🔢', 'ppcm': '🔢',
+        'arithmétique': '🔢', 'programme': '💻', 'scratch': '💻', 'calcul': '🧮',
+        'jardin': '🌿', 'botanique': '🌿', 'géométrie': '📐', 'pythagore': '📐',
+        'thalès': '📐', 'trigonométrie': '📐', 'lunettes': '🕶️', 'statistiques': '📊',
+        'tableur': '📊', 'fonction': '📈', 'graphique': '📈', 'opticien': '🕶️',
+        'probabilité': '🎲', 'qcm': '☐', 'algorithme': '💻'
+    };
+    const getNRIcon = (title) => {
+        const lower = (title || '').toLowerCase();
+        for (const [k, v] of Object.entries(themeIconsNR)) {
+            if (lower.includes(k)) return v;
+        }
+        return '📝';
+    };
+    const getNRShortTitle = (title) => {
+        if (!title) return '';
+        const parts = title.split(':');
+        let s = parts.length > 1 ? parts[1].trim() : title.replace(/^Exercice \d+ -?\s*/, '');
+        if (s.length > 10) s = s.substring(0, 9) + '…';
+        return s;
+    };
+
+    // Formatage français des nombres (1.5 → "1,5", 2 → "2")
+    const fmt = (n) => Number(n).toString().replace('.', ',');
+
+    let totalPointsEarned = 0;
+    let totalPointsMax = 0;
+    let html = '<div class="nr-grid-title">Questions par exercice</div>';
+
+    Object.keys(exercisesData).forEach(exKey => {
+        const exercise = exercisesData[exKey];
+        if (!exercise || !exercise.questions) return;
+
+        const icon = getNRIcon(exercise.title);
+        const shortTitle = getNRShortTitle(exercise.title);
+
+        let exercisePointsEarned = 0;
+        let exercisePointsMax = 0;
+        const questionsHtml = [];
+
+        // Parcourir les questions de l'exercice — logique RÉUSSITE ÉLÈVE (option A)
+        // Vert = réussi (TB ou score complet), Orange = partiel, Rouge = raté (TF ou 0),
+        // Gris foncé = NR (non rendu), vide = pas corrigée
+        // Compteur : points obtenus / points max (cohérent avec les badges du haut)
+        exercise.questions.forEach((question, qIndex) => {
+            const questionKey = question.id || `q${qIndex}`;
+
+            const quickState = appState.quickButtonStates[candidateNumber]?.[exKey]?.[questionKey];
+            const scoreData = appState.scores[candidateNumber]?.[exKey]?.[questionKey];
+            const questionScore = (scoreData && typeof scoreData.score === 'number') ? scoreData.score : 0;
+            const questionMax = question.points || 0;
+
+            exercisePointsMax += questionMax;
+
+            let stateClass = '';
+            let tooltip = `Q${qIndex + 1}`;
+
+            if (quickState === 'nr') {
+                stateClass = 'nr';
+                tooltip += ' — Non rendue';
+            } else if (quickState === 'tb') {
+                stateClass = 'answered';
+                tooltip += ' — Très bien';
+                exercisePointsEarned += questionMax;
+            } else if (quickState === 'tf') {
+                stateClass = 'wrong';
+                tooltip += ' — Très faible';
+            } else if (scoreData && Object.keys(scoreData).length > 0) {
+                // Correction par compétences (sans bouton rapide)
+                exercisePointsEarned += questionScore;
+                if (questionMax > 0 && questionScore >= questionMax) {
+                    stateClass = 'answered';
+                    tooltip += ` — ${fmt(questionScore)}/${fmt(questionMax)}`;
+                } else if (questionScore > 0) {
+                    stateClass = 'partial';
+                    tooltip += ` — ${fmt(questionScore)}/${fmt(questionMax)}`;
+                } else {
+                    stateClass = 'wrong';
+                    tooltip += ` — 0/${fmt(questionMax)}`;
+                }
+            }
+            // Sinon : pas encore corrigée (rare dans la modale, gris clair par défaut)
+
+            questionsHtml.push(`<div class="nr-grid-question ${stateClass}" title="${tooltip}"></div>`);
+        });
+
+        totalPointsEarned += exercisePointsEarned;
+        totalPointsMax += exercisePointsMax;
+
+        const allPoints = exercisePointsMax > 0 && exercisePointsEarned === exercisePointsMax;
+
+        html += `
+            <div class="nr-grid-exercise">
+                <span class="nr-grid-exercise-icon">${icon}</span>
+                <span class="nr-grid-exercise-name" title="${exercise.title || ''}">${shortTitle}</span>
+                <div class="nr-grid-questions">
+                    ${questionsHtml.join('')}
+                </div>
+                <span class="nr-grid-count ${allPoints ? 'all-answered' : ''}">${fmt(exercisePointsEarned)}/${fmt(exercisePointsMax)}</span>
+            </div>
+        `;
+    });
+
+    const allPerfect = totalPointsMax > 0 && totalPointsEarned === totalPointsMax;
+    html += `
+        <div class="nr-grid-total">
+            <span class="nr-grid-total-label">Total</span>
+            <span class="nr-grid-total-value ${!allPerfect ? 'has-nr' : ''}">${fmt(totalPointsEarned)}/${fmt(totalPointsMax)}</span>
+        </div>
+    `;
+
+    container.innerHTML = html;
 }
 
 function renderCompetencesValidation(competencesScores) {
@@ -6775,23 +7278,11 @@ function renderCompetencesValidation(competencesScores) {
     
     Object.entries(competencesScores).forEach(([competenceName, data]) => {
         const percentage = data.max > 0 ? Math.round((data.total / data.max) * 100) : 0;
-        
-        let levelText = '';
-        let levelColor = '';
-        
-        if (percentage >= 75) {
-            levelText = 'TBM';
-            levelColor = '#28a745';
-        } else if (percentage >= 50) {
-            levelText = 'MS';
-            levelColor = '#17a2b8';
-        } else if (percentage >= 25) {
-            levelText = 'MF';
-            levelColor = '#ffc107';
-        } else {
-            levelText = 'MI';
-            levelColor = '#dc3545';
-        }
+
+        // Niveau de maîtrise selon les seuils lus depuis evaluationConfig
+        const mastery = getMasteryLevel(percentage);
+        const levelText = mastery.level;
+        const levelColor = mastery.color;
         
         const row = document.createElement('tr');
         // Trouver la couleur de la compétence dans le code
@@ -6839,29 +7330,13 @@ function renderCompetencesSynthesis(competencesScores) {
     
     Object.entries(competencesScores).forEach(([competenceName, data]) => {
         const percentage = data.max > 0 ? Math.round((data.total / data.max) * 100) : 0;
-        
-        let levelText = '';
-        let levelClass = '';
-        let levelColor = '';
-        
-        if (percentage >= 75) {
-            levelText = 'TBM';
-            levelClass = 'tbm';
-            levelColor = '#28a745';
-        } else if (percentage >= 50) {
-            levelText = 'MS';
-            levelClass = 'ms';
-            levelColor = '#17a2b8';
-        } else if (percentage >= 25) {
-            levelText = 'MF';
-            levelClass = 'mf';
-            levelColor = '#ffc107';
-        } else {
-            levelText = 'MI';
-            levelClass = 'mi';
-            levelColor = '#dc3545';
-        }
-        
+
+        // Niveau de maîtrise selon les seuils lus depuis evaluationConfig
+        const mastery = getMasteryLevel(percentage);
+        const levelText = mastery.level;
+        const levelClass = mastery.level.toLowerCase();
+        const levelColor = mastery.color;
+
         const item = document.createElement('div');
         item.className = 'competence-synthesis-item';
         item.innerHTML = `
@@ -7000,15 +7475,35 @@ function saveValidationData() {
     updateOverviewIfVisible();
 }
 
+// Vérifie si la Rédaction/Justifications a été attribuée pour le candidat courant
+function ensureRedactionAttributed() {
+    const candidate = appState.activeCandidates[appState.currentCandidateIndex];
+    if (!candidate) return true;
+    const score = getPresentationScore(candidate.number);
+    if (score === null || score === undefined) {
+        alert('⚠️ Veuillez d\'abord attribuer les points de Rédaction / Justifications (curseur 0 à 2) avant de valider cette copie.');
+        // Attirer l'attention sur le curseur
+        const sliderContainer = document.getElementById('redactionSliderContainer');
+        if (sliderContainer) {
+            sliderContainer.classList.add('shake');
+            setTimeout(() => sliderContainer.classList.remove('shake'), 600);
+        }
+        return false;
+    }
+    return true;
+}
+
 function confirmValidationAndNext() {
+    if (!ensureRedactionAttributed()) return;
+
     // Arrêter la dictée vocale si elle est en cours
     if (isListening && recognition) {
         recognition.stop();
     }
-    
+
     saveValidationData();
     closeValidationModal();
-    
+
     // Passer au candidat suivant
     if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
         nextCandidate();
@@ -7016,11 +7511,13 @@ function confirmValidationAndNext() {
 }
 
 function confirmValidationAndReturn() {
+    if (!ensureRedactionAttributed()) return;
+
     // Arrêter la dictée vocale si elle est en cours
     if (isListening && recognition) {
         recognition.stop();
     }
-    
+
     saveValidationData();
     closeValidationModal();
     
@@ -7076,24 +7573,78 @@ function updateOverviewIfVisible() {
 }
 
 // === SAUVEGARDE ===
+// Clé localStorage pour la persistance des corrections (propre à la branche DNB2)
+const DNB2_STORAGE_KEY = 'dnb2_correction_state';
+
 function saveData() {
-    const dataToSave = {
-        appState: appState,
-        exercisesData: exercisesData
-    };
-    // Note: localStorage n'est pas disponible dans cet environnement
-    // La sauvegarde se ferait normalement ici
-    console.log('Données sauvegardées:', dataToSave);
-    
+    try {
+        const dataToSave = {
+            candidates: appState.candidates || [],
+            activeCandidates: appState.activeCandidates || [],
+            scores: appState.scores || {},
+            quickButtonStates: appState.quickButtonStates || {},
+            validatedCandidates: appState.validatedCandidates || {},
+            candidateComments: appState.candidateComments || {},
+            presentationScores: appState.presentationScores || {},
+            currentCandidateIndex: appState.currentCandidateIndex || 0,
+            currentExerciseIndex: appState.currentExerciseIndex || 1,
+            correctionMode: appState.correctionMode || null,
+            modeSelected: appState.modeSelected || false,
+            savedAt: Date.now()
+        };
+        localStorage.setItem(DNB2_STORAGE_KEY, JSON.stringify(dataToSave));
+        console.log(`💾 Sauvegardé (${dataToSave.candidates.length} candidats, ${Object.keys(dataToSave.scores).length} avec scores)`);
+    } catch (e) {
+        console.error('❌ Erreur sauvegarde localStorage:', e);
+    }
+
     // Mettre à jour la vue d'ensemble après chaque sauvegarde
-    updateOverviewIfVisible();
+    try { updateOverviewIfVisible(); } catch (e) { /* ignore */ }
 }
 
 function loadData() {
-    // Note: localStorage n'est pas disponible dans cet environnement
-    // Le chargement se ferait normalement ici
-    console.log('Chargement des données...');
+    try {
+        const raw = localStorage.getItem(DNB2_STORAGE_KEY);
+        if (!raw) {
+            console.log('📂 Aucune donnée sauvegardée à charger');
+            return false;
+        }
+        const saved = JSON.parse(raw);
+        // Restaurer uniquement les clés sauvegardées (ne pas écraser exercisesData ni baremeConfig)
+        if (Array.isArray(saved.candidates) && saved.candidates.length > 0) {
+            appState.candidates = saved.candidates;
+        }
+        if (Array.isArray(saved.activeCandidates) && saved.activeCandidates.length > 0) {
+            appState.activeCandidates = saved.activeCandidates;
+        }
+        if (saved.scores && Object.keys(saved.scores).length > 0) appState.scores = saved.scores;
+        if (saved.quickButtonStates && Object.keys(saved.quickButtonStates).length > 0) appState.quickButtonStates = saved.quickButtonStates;
+        if (saved.validatedCandidates && Object.keys(saved.validatedCandidates).length > 0) appState.validatedCandidates = saved.validatedCandidates;
+        if (saved.candidateComments && Object.keys(saved.candidateComments).length > 0) appState.candidateComments = saved.candidateComments;
+        if (saved.presentationScores && Object.keys(saved.presentationScores).length > 0) appState.presentationScores = saved.presentationScores;
+        if (typeof saved.currentCandidateIndex === 'number') appState.currentCandidateIndex = saved.currentCandidateIndex;
+        if (typeof saved.currentExerciseIndex === 'number') appState.currentExerciseIndex = saved.currentExerciseIndex;
+        if (saved.correctionMode) appState.correctionMode = saved.correctionMode;
+        if (typeof saved.modeSelected === 'boolean') appState.modeSelected = saved.modeSelected;
+        const savedDate = saved.savedAt ? new Date(saved.savedAt).toLocaleString('fr-FR') : '?';
+        console.log(`✅ Données restaurées depuis localStorage: ${appState.candidates?.length || 0} candidats, ${Object.keys(appState.scores || {}).length} avec scores (sauvegarde du ${savedDate})`);
+        return true;
+    } catch (e) {
+        console.error('❌ Erreur chargement localStorage:', e);
+        return false;
+    }
 }
+
+// 🛡️ Sauvegarde de sécurité : déclenchée à chaque changement de page / fermeture d'onglet
+window.addEventListener('beforeunload', () => {
+    try { saveData(); } catch (e) { /* ignore */ }
+});
+// 🛡️ Sauvegarde aussi quand la page passe en arrière-plan (mobile, changement d'onglet)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        try { saveData(); } catch (e) { /* ignore */ }
+    }
+});
 
 // === OUTILS DE TEST ET ANIMATIONS ===
 
@@ -7714,6 +8265,60 @@ saveValidationData = function() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Correcteur Universel - Initialisation');
 
+    // 📦 Auto-import JSON depuis URL : ?config=chemin/vers/config.json
+    // Ou, si on est sur le domaine dédié DNB Blanc 2 (rewrite Vercel qui masque
+    // le query string), charger dnb-blanc-2.json par défaut.
+    let configUrl = new URLSearchParams(window.location.search).get('config');
+    if (!configUrl) {
+        const host = window.location.hostname;
+        if (host.startsWith('dnb2-') || host.startsWith('dnb-blanc-2-')) {
+            configUrl = 'dnb-blanc-2.json';
+            console.log('🏷️ Domaine DNB Blanc 2 détecté — chargement de la config par défaut');
+        }
+    }
+    if (configUrl) {
+        console.log('📦 Auto-import config depuis:', configUrl);
+        fetch(configUrl)
+            .then(r => r.json())
+            .then(data => {
+                if (data.appState && data.exercisesData) {
+                    Object.assign(appState, data.appState);
+                    appState._configImported = true;
+                    // Vider puis remplir exercisesData
+                    Object.keys(exercisesData).forEach(k => delete exercisesData[k]);
+                    Object.assign(exercisesData, data.exercisesData);
+                    // Marquer les étapes 1-3 comme complétées (config déjà prête)
+                    // Et désactiver complètement les modales de guidage (pas de sens en auto-import)
+                    if (typeof workflowState !== 'undefined') {
+                        workflowState.completedSteps = [1, 2, 3];
+                        workflowState.currentStep = 4;
+                        workflowState.modalShown = { 1: true, 2: true, 3: true, 4: true, 5: true };
+                        workflowState.disableGuidance = true;
+                    }
+                    // Neutraliser showGuidanceModal pour cette session
+                    if (typeof window.showGuidanceModal === 'function') {
+                        window.showGuidanceModal = function() {
+                            console.log('🔕 Modale de guidage désactivée (auto-import)');
+                        };
+                    }
+                    // Restaurer les corrections précédentes depuis localStorage
+                    loadData();
+                    // Aller directement à la page candidats ou correction
+                    if (appState.candidates && appState.candidates.length > 0) {
+                        renderCandidatesOverview();
+                        showPage('candidatesOverviewPage');
+                    } else {
+                        showPage('setupPage');
+                    }
+                    console.log('✅ Config importée avec succès, exercisesData:', Object.keys(exercisesData));
+                } else {
+                    console.error('❌ JSON invalide');
+                }
+            })
+            .catch(err => console.error('❌ Erreur import config:', err));
+        return; // Ne pas continuer l'init normale
+    }
+
     // 🔒 Charger le seed verrouillé depuis URL/localStorage
     loadSeedFromStorage();
 
@@ -7732,8 +8337,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initAutomatismesData();
     
     // Charger les numéros de candidats depuis localStorage (DEV MODE)
-    const savedStartNumber = localStorage.getItem('dnb_dev_startNumber') || '150';
-    const savedEndNumber = localStorage.getItem('dnb_dev_endNumber') || '170';
+    const savedStartNumber = localStorage.getItem('dnb_dev_startNumber') || '1';
+    const savedEndNumber = localStorage.getItem('dnb_dev_endNumber') || '17';
     
     const startNumberInput = document.getElementById('startNumber');
     const endNumberInput = document.getElementById('endNumber');
