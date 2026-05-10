@@ -1478,10 +1478,13 @@
             <!-- KPI Cards -->
             <div class="kpi-grid" id="kpiGrid"></div>
 
-            <!-- Bouton pour ouvrir la section PDF -->
-            <div style="text-align:center;margin:20px 0">
+            <!-- Boutons principaux -->
+            <div style="text-align:center;margin:20px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
                 <button onclick="togglePdfSection()" class="pdf-btn pdf-btn-individual" id="btnTogglePdf" style="padding:14px 28px;font-size:1em">
                     📄 Générer les bilans PDF
+                </button>
+                <button onclick="showPronoteExportDnb2()" class="pdf-btn" style="padding:14px 28px;font-size:1em;background:#2980b9;color:white">
+                    📊 Export Pronote
                 </button>
             </div>
 
@@ -1533,14 +1536,7 @@
                     <div id="chefPreview" style="margin-top:10px"></div>
                 </div>
 
-                <h4>3. Export Pronote — 20 compétences</h4>
-                <div class="chef-export" id="pronoteExportSection">
-                    <p style="font-size:0.9em;color:var(--gray-700);margin:0 0 10px">Génère les niveaux A/B/C/D pour les 20 compétences à copier-coller directement dans Pronote.</p>
-                    <button class="btn-import-students" onclick="showPronoteExportDnb2()" style="background:#2980b9;color:white;border-color:#2980b9">📊 Ouvrir Export Pronote</button>
-                    <div style="font-size:0.82em;color:var(--gray-500);margin-top:8px">⚠️ Le barème DNB2 doit avoir été chargé au moins une fois via la console de la page de correction.</div>
-                </div>
-
-                <h4>4. Contenu du bilan individuel</h4>
+                <h4>3. Contenu du bilan individuel</h4>
                 <div class="config-grid" id="pdfConfigGrid">
                     <label class="config-item"><input type="checkbox" data-cfg="header" checked><span><span class="lbl">En-tête coloré (nom + note /20)</span><span class="desc">Bandeau du haut avec identifiant et note</span></span></label>
                     <label class="config-item"><input type="checkbox" data-cfg="apprec" checked><span><span class="lbl">Appréciation du professeur</span><span class="desc">Commentaire personnalisé en haut du bilan</span></span></label>
@@ -5694,9 +5690,12 @@
             const noteMap = {};
             stats.candidateNotes.forEach(c => { noteMap[c.id] = c.note; });
 
-            const sorted = Object.keys(rawScores).map(id => {
+            // On part de la liste CSV complète pour inclure les absents (sans score)
+            // + les élèves avec scores mais absents de la liste (candidats anonymes)
+            const allIds = new Set([...Object.keys(rawScores), ...(studentList ? Object.keys(studentList) : [])]);
+            const sorted = [...allIds].map(id => {
                 const info = studentList && studentList[id];
-                return { id, nom: info ? (info.nom || '') : '', prenom: info ? (info.prenom || '') : '' };
+                return { id, nom: info ? (info.nom || '') : '', prenom: info ? (info.prenom || '') : '', classe: info ? (info.classe || '') : '' };
             }).sort((a, b) => (a.nom || 'Z').toUpperCase().localeCompare((b.nom || 'Z').toUpperCase(), 'fr'));
 
             function levelToLetter(pct) { return pct >= 75 ? 'A' : pct >= 50 ? 'B' : pct >= 25 ? 'C' : 'D'; }
@@ -5709,13 +5708,10 @@
                     const exercise = evalData && evalData.find(e => e.exerciceIndex === ex);
                     const question = exercise && exercise.questions.find(qq => qq.questionIndex === q);
                     const pts = question ? (question.points || 1) : 1;
-                    const d = (cs[String(ex)] || {})[String(q)];
+                    const exBlock = cs[String(ex + 1)] || {};
+                    const d = exBlock[`q${q}`] ?? exBlock[String(q)];
                     total += pts;
-                    if (d) {
-                        if (d.pointsObtenus !== undefined) earned += d.pointsObtenus;
-                        else if (d.status === 'TB') earned += pts;
-                        else if (d.status === 'TB-') earned += pts / 2;
-                    }
+                    if (d) earned += d.score || 0;
                 });
                 return total > 0 ? earned / total * 100 : null;
             }
@@ -5737,121 +5733,184 @@
             const studentScores = {};
             sorted.forEach(s => {
                 const haNote = noteMap[s.id] !== undefined;
-                studentScores[s.id] = haNote ? pronoteMap.map((m, idx) => {
+                studentScores[s.id] = haNote ? pronoteMap.map(m => {
                     const pct = m.normKey ? getTransversaleScore(s.id, m.normKey) : getQScore(s.id, m.questions);
                     return pct !== null ? { pct } : null;
                 }) : null;
             });
 
-            function buildPreview() {
-                let h = '<div style="overflow-x:auto;border:1px solid #c8d6e5;border-radius:8px;background:#f4f6f9">';
-                h += '<table style="border-collapse:collapse;font-size:11px;font-family:monospace;white-space:nowrap;width:100%">';
-                h += '<thead><tr style="background:#dde4ed;color:#2c3e50">';
+            // Classes disponibles
+            const classes = [...new Set(sorted.map(s => s.classe).filter(Boolean))].sort();
+            let selectedClasse = classes.length === 1 ? classes[0] : null;
+            function filteredList() { return selectedClasse ? sorted.filter(s => s.classe === selectedClasse) : sorted; }
+
+            // ── helpers HTML ──────────────────────────────────────────
+            const theadTH = (txt, title) =>
+                `<th style="padding:4px 6px;text-align:center;border-bottom:1px solid #c8d6e5;white-space:nowrap${title ? ';cursor:help' : ''}" data-tip="${title || ''}">${txt}</th>`;
+            const previewHead = (() => {
+                let h = '<thead><tr style="background:#dde4ed;color:#2c3e50">';
                 h += '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid #c8d6e5">Nom</th>';
                 h += '<th style="padding:4px 8px;text-align:center;border-bottom:1px solid #c8d6e5">Note</th>';
-                compHeaders.forEach((h2, i) => { h += `<th style="padding:4px 6px;text-align:center;border-bottom:1px solid #c8d6e5" title="${pronoteMap[i].code}">${h2}</th>`; });
-                h += '</tr></thead><tbody>';
-                sorted.slice(0, 5).forEach((s, i) => {
+                compHeaders.forEach((hd, i) => { h += theadTH(hd, pronoteMap[i].code); });
+                return h + '</tr></thead>';
+            })();
+            const tableHead = (() => {
+                let h = '<thead><tr style="background:#2c3e50;color:white">';
+                h += '<th style="padding:6px 10px;text-align:left;border:1px solid #34495e;white-space:nowrap">Nom</th>';
+                h += '<th style="padding:6px 8px;text-align:center;border:1px solid #34495e">Note</th>';
+                compHeaders.forEach((hd, i) => { h += `<th style="padding:5px 6px;text-align:center;border:1px solid #34495e;white-space:nowrap;cursor:help" data-tip="${pronoteMap[i].code}">${hd}</th>`; });
+                return h + '</tr></thead>';
+            })();
+
+            function previewRowsHTML(list) {
+                return list.slice(0, 5).map((s, i) => {
                     const bg = i % 2 === 0 ? 'white' : '#f9fafc';
                     const nom = (s.nom + ' ' + s.prenom).trim() || 'Candidat n°' + s.id;
                     const haNote = noteMap[s.id] !== undefined;
                     const note = haNote ? (Math.round(noteMap[s.id]*10)/10).toString().replace('.',',') : '×';
-                    h += `<tr style="background:${bg}"><td style="padding:3px 8px;color:#444;border-right:1px solid #e0e7ef">${nom}</td>`;
-                    h += `<td style="padding:3px 6px;text-align:center;font-weight:bold;border-right:1px solid #e0e7ef">${note}</td>`;
+                    let row = `<tr style="background:${bg}"><td style="padding:3px 8px;color:#444;border-right:1px solid #e0e7ef">${nom}</td>`;
+                    row += `<td style="padding:3px 6px;text-align:center;font-weight:bold;border-right:1px solid #e0e7ef">${note}</td>`;
                     const sc = studentScores[s.id];
                     pronoteMap.forEach((_, idx) => {
                         let cell;
                         if (!haNote) cell = '<span style="color:#aaa">×</span>';
-                        else { const v = sc && sc[idx]; if (v) { const l = levelToLetter(v.pct); cell = `<span style="font-weight:bold;color:${levelToColor(l)}">${l}</span>`; } else cell = '<span style="color:#ccc">—</span>'; }
-                        h += `<td style="padding:3px 5px;text-align:center">${cell}</td>`;
+                        else { const v = sc && sc[idx]; cell = v ? `<span style="font-weight:bold;color:${levelToColor(levelToLetter(v.pct))}">${levelToLetter(v.pct)}</span>` : '<span style="color:#ccc">—</span>'; }
+                        row += `<td style="padding:3px 5px;text-align:center">${cell}</td>`;
                     });
-                    h += '</tr>';
-                });
-                h += '</tbody></table></div>';
-                return h;
+                    return row + '</tr>';
+                }).join('');
             }
 
-            let tableHTML = '<table style="border-collapse:collapse;width:100%;font-size:12px;font-family:Arial,sans-serif"><thead><tr style="background:#2c3e50;color:white">';
-            tableHTML += '<th style="padding:6px 10px;text-align:left;border:1px solid #34495e;white-space:nowrap">Nom</th>';
-            tableHTML += '<th style="padding:6px 8px;text-align:center;border:1px solid #34495e">Note</th>';
-            compHeaders.forEach((hdr, i) => { tableHTML += `<th style="padding:5px 6px;text-align:center;border:1px solid #34495e;white-space:nowrap" title="${pronoteMap[i].code}">${hdr}</th>`; });
-            tableHTML += '</tr></thead><tbody>';
-            sorted.forEach((s, i) => {
-                const bg = i % 2 === 0 ? '#fff' : '#f8f9fa';
-                const nom = (s.nom.toUpperCase() + ' ' + s.prenom).trim() || 'Candidat n°' + s.id;
-                const haNote = noteMap[s.id] !== undefined;
-                const noteDisp = haNote ? `<b>${(Math.round(noteMap[s.id]*10)/10).toString().replace('.',',')}</b>` : '<span style="color:#999">ABS</span>';
-                tableHTML += `<tr style="background:${bg}"><td style="padding:5px 8px;border:1px solid #dee2e6;white-space:nowrap">${nom}</td><td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center">${noteDisp}</td>`;
-                const sc = studentScores[s.id];
-                pronoteMap.forEach((_, idx) => {
-                    if (!haNote) { tableHTML += '<td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center;color:#999">ABS</td>'; return; }
-                    const v = sc && sc[idx];
-                    if (v) { const l = levelToLetter(v.pct); tableHTML += `<td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center;font-weight:bold;color:${levelToColor(l)}">${l}</td>`; }
-                    else tableHTML += '<td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center;color:#bbb">—</td>';
-                });
-                tableHTML += '</tr>';
-            });
-            tableHTML += '</tbody></table>';
+            function rowsHTML(list) {
+                return list.map((s, i) => {
+                    const bg = i % 2 === 0 ? '#fff' : '#f8f9fa';
+                    const nom = (s.nom.toUpperCase() + ' ' + s.prenom).trim() || 'Candidat n°' + s.id;
+                    const haNote = noteMap[s.id] !== undefined;
+                    const noteDisp = haNote ? `<b>${(Math.round(noteMap[s.id]*10)/10).toString().replace('.',',')}</b>` : '<span style="color:#999">ABS</span>';
+                    let row = `<tr style="background:${bg}"><td style="padding:5px 8px;border:1px solid #dee2e6;white-space:nowrap">${nom}</td><td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center">${noteDisp}</td>`;
+                    const sc = studentScores[s.id];
+                    pronoteMap.forEach((_, idx) => {
+                        if (!haNote) { row += '<td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center;color:#999">ABS</td>'; return; }
+                        const v = sc && sc[idx];
+                        row += v ? `<td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center;font-weight:bold;color:${levelToColor(levelToLetter(v.pct))}">${levelToLetter(v.pct)}</td>`
+                                 : '<td style="padding:5px 6px;border:1px solid #dee2e6;text-align:center;color:#bbb">—</td>';
+                    });
+                    return row + '</tr>';
+                }).join('');
+            }
 
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
-            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-            const modal = document.createElement('div');
-            modal.style.cssText = 'background:white;border-radius:12px;padding:24px;max-width:95vw;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
-            modal.innerHTML = `
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-                <h2 style="margin:0;font-size:18px;color:#2c3e50">&#x1F4CA; Export Pronote — 20 compétences</h2>
-                <button id="pn-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999">&times;</button>
-              </div>
-              <p style="margin:0 0 8px;color:#666;font-size:13px">Survolez les en-têtes pour voir le nom complet. Les absents sont marqués <b>×</b> dans la copie (format Pronote).</p>
-              <div style="margin-bottom:14px">
-                <p style="margin:0 0 5px;font-size:12px;font-weight:600;color:#555">&#x1F441; Aperçu — ce qui sera collé dans Pronote (5 premiers élèves)</p>
-                ${buildPreview()}
-              </div>
-              <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-                <button id="pn-copy" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">&#x1F4CB; Copier notes + compétences</button>
-                <button id="pn-csv" style="padding:8px 16px;background:#8e44ad;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">&#x1F4BE; Télécharger CSV</button>
-              </div>
-              ${tableHTML}
-              <div style="margin-top:10px;font-size:12px;color:#666;display:flex;gap:14px;flex-wrap:wrap">
-                <span><b style="color:#28a745">A</b> ≥ 75%</span><span><b style="color:#17a2b8">B</b> ≥ 50%</span>
-                <span><b style="color:#ffc107">C</b> ≥ 25%</span><span><b style="color:#dc3545">D</b> &lt; 25%</span>
-                <span style="color:#bbb">— = question non évaluée</span>
-              </div>`;
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-            document.getElementById('pn-close').addEventListener('click', () => overlay.remove());
+            function chipsHTML() {
+                if (classes.length <= 1) return '';
+                const chipStyle = (active) => `style="padding:5px 14px;border-radius:20px;border:2px solid ${active ? '#2980b9' : '#bdc3c7'};background:${active ? '#2980b9' : 'white'};color:${active ? 'white' : '#555'};cursor:pointer;font-size:13px;font-weight:${active ? '700' : '500'}"`;
+                let h = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center"><span style="font-size:12px;color:#888;font-weight:600">Classe :</span>';
+                h += `<button class="pn-chip" data-cl="" ${chipStyle(!selectedClasse)}>Toutes</button>`;
+                classes.forEach(cl => { h += `<button class="pn-chip" data-cl="${cl}" ${chipStyle(selectedClasse === cl)}>${cl}</button>`; });
+                return h + '</div>';
+            }
 
-            document.getElementById('pn-copy').addEventListener('click', () => {
-                const lines = sorted.map(s => {
+            function buildClipboard(list) {
+                return list.map(s => {
                     const haNote = noteMap[s.id] !== undefined;
                     if (!haNote) return ['×', ...pronoteMap.map(() => '×')].join('\t');
                     const note = (Math.round(noteMap[s.id]*10)/10).toString().replace('.',',');
                     const sc = studentScores[s.id];
                     return [note, ...pronoteMap.map((_, idx) => { const v = sc && sc[idx]; return v ? levelToLetter(v.pct) : ''; })].join('\t');
                 }).join('\n');
-                navigator.clipboard.writeText(lines).then(() => {
-                    const btn = document.getElementById('pn-copy');
-                    const orig = btn.innerHTML; btn.innerHTML = '&#x2705; Copié !'; btn.style.background = '#27ae60';
-                    setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#2980b9'; }, 2000);
-                });
-            });
+            }
 
-            document.getElementById('pn-csv').addEventListener('click', () => {
-                const lines = [['Nom', 'Note', ...compHeaders].join(';')];
-                sorted.forEach(s => {
-                    const nom = (s.nom.toUpperCase() + ' ' + s.prenom).trim() || 'Candidat ' + s.id;
-                    const haNote = noteMap[s.id] !== undefined;
-                    if (!haNote) { lines.push([nom, '×', ...pronoteMap.map(() => '×')].join(';')); return; }
-                    const note = (Math.round(noteMap[s.id]*10)/10).toString().replace('.',',');
-                    const sc = studentScores[s.id];
-                    lines.push([nom, note, ...pronoteMap.map((_, idx) => { const v = sc && sc[idx]; return v ? levelToLetter(v.pct) : ''; })].join(';'));
+            // ── overlay + modal ───────────────────────────────────────
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+            const modal = document.createElement('div');
+            modal.style.cssText = 'background:white;border-radius:12px;padding:24px;max-width:95vw;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+
+            function renderModal() {
+                const list = filteredList();
+                modal.innerHTML = `
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                    <h2 style="margin:0;font-size:18px;color:#2c3e50">&#x1F4CA; Export Pronote — 20 compétences</h2>
+                    <button id="pn-close" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999">&times;</button>
+                  </div>
+                  <p style="margin:0 0 10px;color:#666;font-size:13px">Survolez les en-têtes pour voir le nom complet. Les absents sont marqués <b>×</b> dans la copie (format Pronote).</p>
+                  ${chipsHTML()}
+                  <div style="margin-bottom:14px">
+                    <p style="margin:0 0 5px;font-size:12px;font-weight:600;color:#555">&#x1F441; Aperçu — ce qui sera collé dans Pronote (5 premiers)</p>
+                    <div style="overflow-x:auto;border:1px solid #c8d6e5;border-radius:8px;background:#f4f6f9">
+                      <table style="border-collapse:collapse;font-size:11px;font-family:monospace;white-space:nowrap;width:100%">
+                        ${previewHead}<tbody>${previewRowsHTML(list)}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+                    <button id="pn-copy" style="padding:8px 16px;background:#2980b9;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">&#x1F4CB; Copier notes + compétences</button>
+                    <button id="pn-csv" style="padding:8px 16px;background:#8e44ad;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">&#x1F4BE; Télécharger CSV</button>
+                  </div>
+                  <div style="overflow-x:auto">
+                    <table style="border-collapse:collapse;width:100%;font-size:12px;font-family:Arial,sans-serif">
+                      ${tableHead}<tbody>${rowsHTML(list)}</tbody>
+                    </table>
+                  </div>
+                  <div style="margin-top:10px;font-size:12px;color:#666;display:flex;gap:14px;flex-wrap:wrap">
+                    <span><b style="color:#28a745">A</b> ≥ 75%</span><span><b style="color:#17a2b8">B</b> ≥ 50%</span>
+                    <span><b style="color:#ffc107">C</b> ≥ 25%</span><span><b style="color:#dc3545">D</b> &lt; 25%</span>
+                    <span style="color:#bbb">— = question non évaluée</span>
+                  </div>`;
+
+                modal.querySelector('#pn-close').addEventListener('click', () => overlay.remove());
+
+                // ── Bulle tooltip instantanée sur les en-têtes [data-tip] ──
+                const tip = document.createElement('div');
+                tip.style.cssText = 'position:fixed;background:#1a252f;color:#fff;font-size:12px;line-height:1.4;padding:6px 10px;border-radius:6px;max-width:280px;pointer-events:none;z-index:99999;white-space:normal;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none';
+                document.body.appendChild(tip);
+                modal.addEventListener('mouseover', e => {
+                    const th = e.target.closest('[data-tip]');
+                    if (th && th.dataset.tip) { tip.textContent = th.dataset.tip; tip.style.display = 'block'; }
                 });
-                const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = 'export_pronote_dnb2.csv';
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-            });
+                modal.addEventListener('mousemove', e => {
+                    if (tip.style.display === 'none') return;
+                    const x = e.clientX + 12, y = e.clientY + 16;
+                    const bw = document.documentElement.clientWidth;
+                    tip.style.left = (x + tip.offsetWidth > bw ? bw - tip.offsetWidth - 8 : x) + 'px';
+                    tip.style.top = y + 'px';
+                });
+                modal.addEventListener('mouseout', e => {
+                    if (!e.target.closest('[data-tip]')) return;
+                    if (!e.relatedTarget || !e.relatedTarget.closest('[data-tip]')) tip.style.display = 'none';
+                });
+                overlay.addEventListener('click', () => tip.remove(), { once: true });
+                modal.querySelector('#pn-close').addEventListener('click', () => tip.remove(), { once: true });
+                modal.querySelectorAll('.pn-chip').forEach(btn => btn.addEventListener('click', () => {
+                    selectedClasse = btn.dataset.cl || null;
+                    renderModal();
+                }));
+                modal.querySelector('#pn-copy').addEventListener('click', () => {
+                    const btn = modal.querySelector('#pn-copy');
+                    navigator.clipboard.writeText(buildClipboard(list)).then(() => {
+                        const orig = btn.innerHTML; btn.innerHTML = '&#x2705; Copié !'; btn.style.background = '#27ae60';
+                        setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#2980b9'; }, 2000);
+                    });
+                });
+                modal.querySelector('#pn-csv').addEventListener('click', () => {
+                    const lines = [['Nom', 'Note', ...compHeaders].join(';')];
+                    list.forEach(s => {
+                        const nom = (s.nom.toUpperCase() + ' ' + s.prenom).trim() || 'Candidat ' + s.id;
+                        const haNote = noteMap[s.id] !== undefined;
+                        if (!haNote) { lines.push([nom, '×', ...pronoteMap.map(() => '×')].join(';')); return; }
+                        const note = (Math.round(noteMap[s.id]*10)/10).toString().replace('.',',');
+                        const sc = studentScores[s.id];
+                        lines.push([nom, note, ...pronoteMap.map((_, idx) => { const v = sc && sc[idx]; return v ? levelToLetter(v.pct) : ''; })].join(';'));
+                    });
+                    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `export_pronote_dnb2${selectedClasse ? '_' + selectedClasse : ''}.csv`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                });
+            }
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            renderModal();
         }
         // ========== FIN EXPORT PRONOTE ==========
 
