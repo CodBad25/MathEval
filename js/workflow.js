@@ -258,6 +258,15 @@ function createGuidanceModal() {
 
 // Afficher la modale de guidage pour une étape
 function showGuidanceModal(stepId) {
+    // Pas de modale en mode Import PDF/DOCX : ces modales décrivent le workflow DNB
+    // (Automatismes, Exos DNB, etc.) et n'ont pas de sens pour l'import PDF
+    var urlParams = new URLSearchParams(window.location.search);
+    var pdfImportActive = document.getElementById('pdfImportPage') && document.getElementById('pdfImportPage').style.display !== 'none';
+    var hasPdfImportState = window.appState && appState.pdfImport && appState.pdfImport.exercises && appState.pdfImport.exercises.length > 0;
+    if (urlParams.get('source') === 'upload' || pdfImportActive || hasPdfImportState) {
+        console.log('💡 Mode Import PDF détecté - modale d\'aide DNB ignorée');
+        return;
+    }
     // Si les écrans d'aide sont désactivés, ne rien afficher
     if (workflowState.disableGuidance) {
         console.log('💡 Écrans d\'aide désactivés - modale ignorée');
