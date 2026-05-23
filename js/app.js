@@ -3268,6 +3268,12 @@ function calculateTotalPoints() {
 }
 
 function goBackToSelection() {
+    var isUpload = (new URLSearchParams(window.location.search)).get('source') === 'upload'
+        || (appState && appState.pdfImport && appState.pdfImport.exercises && appState.pdfImport.exercises.length > 0);
+    if (isUpload) {
+        showPage('pdfImportPage');
+        return;
+    }
     showPage('dnbSelectionPage');
 }
 
@@ -4219,25 +4225,29 @@ function renderExerciseTabs() {
     Object.keys(exercisesData).forEach((exerciseNum, index) => {
         const exercise = exercisesData[exerciseNum];
         const icon = defaultIcons[index] || '📝';
-        const isFirst = index === 0;
-        
+        const currentTab = (appState && appState.currentTab) || 'exercise1';
+        const tabName = `exercise${exerciseNum}`;
+        const isActive = currentTab === tabName;
+
         const button = document.createElement('button');
-        button.className = `main-tab ${isFirst ? 'active' : ''}`;
-        button.onclick = () => showTab(`exercise${exerciseNum}`);
+        button.className = `main-tab ${isActive ? 'active' : ''}`;
+        button.dataset.tabName = tabName;
+        button.onclick = () => showTab(tabName);
         
-        // Extraire juste le numéro et le thème du titre
-        let displayTitle = `Ex ${exerciseNum}`;
+        // Extraire le thème du titre (en retirant "Exercice X -" si présent)
+        let theme = `Ex ${exerciseNum}`;
         if (exercise.title) {
-            // Si le titre contient ":", prendre ce qui est après
             const parts = exercise.title.split(':');
             if (parts.length > 1) {
-                displayTitle = parts[1].trim();
+                theme = parts[1].trim();
             } else {
-                // Sinon, garder le titre complet sauf "Exercice X -"
-                displayTitle = exercise.title.replace(/^Exercice \d+ -?\s*/, '');
+                theme = exercise.title.replace(/^Exercice \d+\s*[-–—]?\s*/i, '').trim();
             }
         }
-        
+        // Préfixe : "Ex N — " pour les exercices normaux, rien pour les bonus
+        // (leur titre contient déjà "BONUS N — ...")
+        const isBonus = !!exercise.isBonus || /^bonus/i.test(exercise.title || '');
+        const displayTitle = isBonus ? theme : `Ex ${exerciseNum} — ${theme}`;
         button.innerHTML = `
             <span class="tab-icon">${icon}</span>
             <span>${displayTitle}</span>
@@ -4341,10 +4351,10 @@ function generateCandidates() {
         }
 
         csvCandidates.forEach(num => {
-            appState.candidates.push({
-                number: num,
-                active: true
-            });
+            const entry = { number: num, active: true };
+            const name = (window.candidateNamesMap || {})[num];
+            if (name) entry.name = name;
+            appState.candidates.push(entry);
         });
     }
 
@@ -4366,8 +4376,10 @@ function renderCandidatesGrid() {
         card.className = `candidate-card ${candidate.active ? '' : 'eliminated'}`;
         card.onclick = () => toggleCandidate(candidate.number);
         
+        const cname = (window.candidateNamesMap || {})[candidate.number];
         card.innerHTML = `
             <div class="candidate-number">${candidate.number}</div>
+            ${cname ? `<div class="candidate-name" style="font-size:0.8em;font-weight:600;margin-top:2px;">${cname}</div>` : ''}
             <div class="candidate-status">${candidate.active ? 'ACTIF' : 'ÉLIMINÉ'}</div>
         `;
         
@@ -4439,27 +4451,30 @@ function loadCurrentCandidate() {
     const candidate = appState.activeCandidates[appState.currentCandidateIndex];
     const titleElement = document.getElementById('currentCandidateTitle');
     
-    // 🎯 Mise en évidence du numéro de candidat avec couleur et animation
+    // 🎯 Mise en évidence du candidat (nom Pronote s'il existe, sinon numéro)
+    const candidateLabel = candidate.name || (window.candidateNamesMap || {})[candidate.number] || ('n°' + candidate.number);
     titleElement.innerHTML = `
-        Correction du candidat 
+        Correction de
         <span style="
-            color: #007bff; 
-            font-weight: bold; 
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb); 
-            padding: 4px 12px; 
-            border-radius: 20px; 
+            color: #007bff;
+            font-weight: bold;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 4px 12px;
+            border-radius: 20px;
             border: 2px solid #007bff;
             box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
             animation: candidateHighlight 0.6s ease-out;
-        ">n°${candidate.number}</span>
+        ">${candidateLabel}</span>
     `;
     
     // Réinitialiser la compétence en cours quand on change de candidat
     currentlyEditingCompetence = null;
     
     updateTotalScore();
-    updateNavigationButtons();
+    // updateNavigationLabels avant updateNavigationButtons pour que la
+    // personnalisation par nom (dans updateNavigationButtons) écrase le label générique
     updateNavigationLabels();
+    updateNavigationButtons();
     renderCurrentExercise();
     updateAllProgressIndicators();
 }
@@ -4480,10 +4495,8 @@ function showTab(tabName) {
         tab.classList.remove('active');
     });
     
-    // Trouver l'onglet correspondant par son onclick
-    const targetTab = Array.from(document.querySelectorAll('.main-tab')).find(tab => {
-        return tab.onclick && tab.onclick.toString().includes(`showTab('${tabName}')`);
-    });
+    // Trouver l'onglet correspondant via dataset.tabName
+    const targetTab = document.querySelector(`.main-tab[data-tab-name="${tabName}"]`);
     if (targetTab) {
         targetTab.classList.add('active');
     }
@@ -5631,7 +5644,25 @@ function renderStatementWithTables(text) {
     });
     if (inTable) flushTable();
 
-    return result.join('\n');
+    var out = result.join('\n');
+    // Surlignage des éléments de réponse marqués ==X== → rouge gras
+    // Appliqué uniquement HORS des blocs LaTeX ($...$, $$...$$, \(...\), \[...\])
+    // pour ne pas insérer de HTML que KaTeX ne saurait pas parser.
+    var mathBlocks = [];
+    var mathRegex = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/g;
+    out = out.replace(mathRegex, function (match) {
+        mathBlocks.push(match);
+        return 'MATH' + (mathBlocks.length - 1) + '';
+    });
+    out = out.replace(/==([^=\n]+?)==/g, '<span class="highlight-answer">$1</span>');
+    out = out.replace(/MATH(\d+)/g, function (_, i) {
+        var block = mathBlocks[parseInt(i, 10)];
+        // Retirer les marqueurs ==...== à l'intérieur du LaTeX (KaTeX ne les rend pas en couleur,
+        // mais on les rendra rouges via \color{} pour conserver le repère visuel).
+        block = block.replace(/==([^=\n]+?)==/g, '{\\color{#dc2626}$1}');
+        return block;
+    });
+    return out;
 }
 
 function renderExerciseContent(exerciseNumber) {
@@ -5652,10 +5683,11 @@ function renderExerciseContent(exerciseNumber) {
         });
     });
 
+    const cleanTitle = exercise.title || '';
     let html = `
         <div class="exercise-header">
             <div class="exercise-title-section">
-                <div class="exercise-title">${exercise.title}</div>
+                <div class="exercise-title">${cleanTitle}</div>
                 <div class="exercise-score-badge" id="exerciseScore${exerciseNumber}">0 / ${exercise.totalPoints} pts</div>
             </div>
             <div class="exercise-actions">
@@ -5905,8 +5937,8 @@ function updateCorrectionMode() {
         modeSelector.classList.remove('not-selected');
         modeInstruction.classList.remove('show');
         enableCandidateCards();
-        updateNavigationButtons();
         updateNavigationLabels();
+        updateNavigationButtons();
     }
 }
 
@@ -5949,6 +5981,102 @@ function navigatePrevious() {
         previousExercise();
     }
 }
+
+// === SAUT VERS UN CANDIDAT QUELCONQUE (utile si copies dans le désordre) ===
+function openJumpToCandidate() {
+    const modal = document.getElementById('jumpCandidateModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const input = document.getElementById('jumpSearchInput');
+    if (input) { input.value = ''; setTimeout(() => input.focus(), 50); }
+    renderJumpList('');
+}
+
+function closeJumpToCandidate() {
+    const modal = document.getElementById('jumpCandidateModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function filterJumpList() {
+    const q = (document.getElementById('jumpSearchInput').value || '').toLowerCase().trim();
+    renderJumpList(q);
+}
+
+function renderJumpList(filter) {
+    const list = document.getElementById('jumpCandidatesList');
+    if (!list) return;
+    const candidates = appState.activeCandidates || [];
+    const currentNum = (appState.activeCandidates[appState.currentCandidateIndex] || {}).number;
+    const labelOf = (c) => c.name || (window.candidateNamesMap || {})[c.number] || ('Candidat n°' + c.number);
+    const items = candidates
+        .map((c, idx) => ({ c: c, idx: idx, label: labelOf(c) }))
+        .filter(it => !filter || it.label.toLowerCase().includes(filter));
+    if (items.length === 0) {
+        list.innerHTML = '<div style="padding:20px; text-align:center; color:#9ca3af;">Aucun élève trouvé.</div>';
+        return;
+    }
+    list.innerHTML = items.map(it => {
+        const prog = calculateCandidateProgress(it.c.number);
+        const ratio = prog.totalQuestions > 0 ? (prog.questionsAnswered / prog.totalQuestions) : 0;
+        let statusEmoji = '⚪'; let statusColor = '#9ca3af';
+        if (ratio === 1) { statusEmoji = '✅'; statusColor = '#10b981'; }
+        else if (ratio > 0) { statusEmoji = '🟡'; statusColor = '#f59e0b'; }
+        const isCurrent = it.c.number === currentNum;
+        return `<div onclick="jumpToCandidate(${it.idx})"
+                 style="padding:12px 14px; border-bottom:1px solid #f3f4f6; cursor:pointer; display:flex; align-items:center; gap:10px; ${isCurrent ? 'background:#eef2ff;' : ''}"
+                 onmouseover="this.style.background='#f9fafb';" onmouseout="this.style.background='${isCurrent ? '#eef2ff' : 'white'}';">
+                <span style="font-size:1.2em;">${statusEmoji}</span>
+                <span style="flex:1; font-weight:${isCurrent ? '700' : '500'}; color:#1f2937;">${it.label}</span>
+                <span style="font-size:0.85em; color:${statusColor};">${prog.questionsAnswered}/${prog.totalQuestions}</span>
+              </div>`;
+    }).join('');
+}
+
+function jumpToCandidate(activeIndex) {
+    appState.currentCandidateIndex = activeIndex;
+    closeJumpToCandidate();
+    // Rebuild de l'affichage candidat courant
+    if (typeof loadCurrentCandidate === 'function') loadCurrentCandidate();
+    if (typeof renderCurrentExercise === 'function') renderCurrentExercise();
+    if (typeof updateTotalScore === 'function') updateTotalScore();
+    if (typeof updateNavigationLabels === 'function') updateNavigationLabels();
+    if (typeof updateNavigationButtons === 'function') updateNavigationButtons();
+    if (typeof savePdfSession === 'function') savePdfSession();
+}
+
+// === RACCOURCIS CLAVIER ===
+// Cmd/Ctrl+K : ouvre la recherche d'élève
+// Échap : ferme la modale
+// Entrée (dans le champ recherche) : saute au premier résultat
+document.addEventListener('keydown', function (e) {
+    // Cmd+K ou Ctrl+K → ouvrir saut candidat
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        // ne pas court-circuiter si on est dans un champ texte non lié à notre modale
+        const activeTag = (document.activeElement && document.activeElement.tagName) || '';
+        const isInput = (activeTag === 'INPUT' || activeTag === 'TEXTAREA');
+        const isOurInput = document.activeElement && document.activeElement.id === 'jumpSearchInput';
+        if (isInput && !isOurInput) return; // on laisse le user finir sa saisie
+        e.preventDefault();
+        openJumpToCandidate();
+        return;
+    }
+    // Échap → fermer la modale de saut si ouverte
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('jumpCandidateModal');
+        if (modal && modal.style.display === 'flex') {
+            closeJumpToCandidate();
+            return;
+        }
+    }
+    // Entrée dans le champ recherche → saut au premier résultat affiché
+    if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'jumpSearchInput') {
+        const firstItem = document.querySelector('#jumpCandidatesList > div[onclick^="jumpToCandidate"]');
+        if (firstItem) {
+            e.preventDefault();
+            firstItem.click();
+        }
+    }
+});
 
 function navigateNext() {
     if (appState.correctionMode === 'candidate') {
@@ -6043,18 +6171,17 @@ function updateNavigationButtons() {
         nextBtn.disabled = isLastCandidate;
         
         // 🎯 Afficher le numéro du candidat précédent/suivant
+        const labelOf = (cand) => cand && (cand.name || (window.candidateNamesMap || {})[cand.number] || ('Candidat n°' + cand.number));
         if (isFirstCandidate) {
             prevBtn.innerHTML = '← Candidat précédent';
         } else {
-            const prevCandidateNumber = appState.activeCandidates[currentIndex - 1].number;
-            prevBtn.innerHTML = `← Candidat n°${prevCandidateNumber}`;
+            prevBtn.innerHTML = '← ' + labelOf(appState.activeCandidates[currentIndex - 1]);
         }
-        
+
         if (isLastCandidate) {
             nextBtn.innerHTML = 'Candidat suivant →';
         } else {
-            const nextCandidateNumber = appState.activeCandidates[currentIndex + 1].number;
-            nextBtn.innerHTML = `Candidat n°${nextCandidateNumber} →`;
+            nextBtn.innerHTML = labelOf(appState.activeCandidates[currentIndex + 1]) + ' →';
         }
         
         // Afficher le bouton "Valider la correction" seulement si 100% des questions sont traitées
@@ -6253,7 +6380,7 @@ function renderCandidatesOverview() {
             ${commentBtn}
             <div>
                 <div class="candidate-header">
-                    <div class="candidate-number">Candidat n°${candidate.number}</div>
+                    <div class="candidate-number">${candidate.name || (window.candidateNamesMap || {})[candidate.number] || ('Candidat n°' + candidate.number)}</div>
                     <div class="candidate-main-score ${mainScoreClass}">${mainScoreText}</div>
                 </div>
                 
@@ -6440,6 +6567,14 @@ function startCandidateCorrection(candidateNumber) {
 // showPage() est défini au début du fichier (ligne 11) - pas de duplication nécessaire
 
 function backToSetup() {
+    // En mode Import PDF, "Recommencer" doit revenir sur la page d'upload
+    // et non sur la page de setup DNB.
+    var isUpload = (new URLSearchParams(window.location.search)).get('source') === 'upload'
+        || (appState && appState.pdfImport && appState.pdfImport.exercises && appState.pdfImport.exercises.length > 0);
+    if (isUpload) {
+        showPage('pdfImportPage');
+        return;
+    }
     showPage('setupPage');
 }
 
@@ -6473,6 +6608,32 @@ function startCorrectionFromOverview() {
 }
 
 // === FONCTIONS EXPORT/IMPORT ===
+function toggleSaveMenu(event) {
+    if (event) event.stopPropagation();
+    var menu = document.getElementById('saveMenu');
+    if (!menu) return;
+    var isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        setTimeout(function() {
+            document.addEventListener('click', closeSaveMenuOnOutsideClick);
+        }, 0);
+    }
+}
+
+function closeSaveMenu() {
+    var menu = document.getElementById('saveMenu');
+    if (menu) menu.style.display = 'none';
+    document.removeEventListener('click', closeSaveMenuOnOutsideClick);
+}
+
+function closeSaveMenuOnOutsideClick(e) {
+    var menu = document.getElementById('saveMenu');
+    if (menu && !menu.contains(e.target) && !e.target.closest('.save-menu-wrapper')) {
+        closeSaveMenu();
+    }
+}
+
 function exportJSON() {
     const dataToExport = {
         appState: appState,
@@ -6487,7 +6648,7 @@ function exportJSON() {
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dnb-correction-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `matheval-sauvegarde-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -6559,40 +6720,69 @@ function goBackToBareme() {
     showPage('baremeDesignPage');
 }
 
+// Décode un buffer en Latin1 si UTF-8 échoue (CSV Pronote)
+function decodeCsvBuffer(buf) {
+    const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+    if (!/[�]/.test(utf8)) return utf8;
+    return new TextDecoder('windows-1252').decode(buf);
+}
+
 async function handleCsvImport(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     document.getElementById('csvFileName').textContent = file.name;
 
-    const text = await file.text();
+    const buf = await file.arrayBuffer();
+    const text = decodeCsvBuffer(buf);
+    // Auto-détecter séparateur : ; (Pronote) ou , ou tab
+    const firstLine = text.split('\n')[0];
+    const sep = firstLine.includes(';') ? ';' : (firstLine.includes('\t') ? '\t' : ',');
     const lines = text.trim().split('\n');
-    
-    // Vérifier le header
-    const header = lines[0].trim().toLowerCase();
-    if (!header.includes('numero')) {
-        alert('⚠️ Le fichier CSV doit contenir une colonne "numero"');
-        return;
-    }
+    const headerLower = lines[0].trim().toLowerCase();
+    const headerCols = lines[0].split(sep).map(s => s.trim().toLowerCase().replace(/^"|"$/g, ''));
 
-    // Parser les numéros
     csvCandidates = [];
-    for (let i = 1; i < lines.length; i++) {
-        const num = parseInt(lines[i].trim());
-        if (!isNaN(num)) {
+    window.candidateNamesMap = {};
+
+    // Cas 1 : format "numero" historique (DNB) — une seule colonne avec numéro
+    if (headerLower.includes('numero') && !headerCols.some(c => c === 'nom' || c === 'prénom' || c === 'prenom')) {
+        for (let i = 1; i < lines.length; i++) {
+            const num = parseInt(lines[i].trim());
+            if (!isNaN(num)) csvCandidates.push(num);
+        }
+    } else {
+        // Cas 2 : format Pronote — colonnes NOM, Prénom, ...
+        const idxNom = headerCols.findIndex(c => c === 'nom' || c === 'nom de famille' || c === 'name');
+        const idxPrenom = headerCols.findIndex(c => c === 'prénom' || c === 'prenom' || c === 'first name');
+        if (idxNom < 0) {
+            alert('⚠️ Le CSV doit contenir soit une colonne "numero", soit une colonne "NOM" (format Pronote).');
+            return;
+        }
+        for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
+            const nom = (row[idxNom] || '').trim();
+            if (!nom) continue;
+            const prenom = idxPrenom >= 0 ? (row[idxPrenom] || '').trim() : '';
+            const num = csvCandidates.length + 1;
             csvCandidates.push(num);
+            window.candidateNamesMap[num] = prenom ? `${nom} ${prenom}` : nom;
         }
     }
 
     // Afficher l'aperçu
     const preview = document.getElementById('csvPreview');
     preview.style.display = 'block';
+    const previewItems = csvCandidates.slice(0, 10).map(n => {
+        const name = window.candidateNamesMap[n];
+        return name ? `${n} — ${name}` : `${n}`;
+    }).join(', ');
     preview.innerHTML = `
         <div style="font-weight: 600; margin-bottom: 10px; color: #28a745;">
             ✓ ${csvCandidates.length} candidat(s) importé(s) depuis le CSV
         </div>
         <div style="font-size: 0.9em; color: #666;">
-            Numéros : ${csvCandidates.slice(0, 10).join(', ')}${csvCandidates.length > 10 ? '...' : ''}
+            ${previewItems}${csvCandidates.length > 10 ? '...' : ''}
         </div>
     `;
 }
@@ -6604,8 +6794,10 @@ function openCommentModal(candidateNumber) {
     currentCommentCandidateNumber = candidateNumber;
     const details = calculateCandidateDetails(candidateNumber);
     
-    // Remplir la modale avec les informations du candidat
-    document.getElementById('commentCandidateNumber').textContent = candidateNumber;
+    // Remplir la modale avec les informations du candidat (nom Pronote ou numéro)
+    const _cand = (appState.candidates || []).find(c => c.number === candidateNumber);
+    const _label = (_cand && _cand.name) || (window.candidateNamesMap || {})[candidateNumber] || ('n°' + candidateNumber);
+    document.getElementById('commentCandidateNumber').textContent = _label;
     document.getElementById('commentScore').textContent = details.noteOn20;
     document.getElementById('commentProgress').textContent = `${details.questionsAnswered}/${details.totalQuestions} questions traitées`;
     
@@ -6687,8 +6879,9 @@ function validateCorrection() {
     // Calculer les scores par compétence
     const competencesScores = calculateCompetencesScores(candidate.number);
     
-    // Remplir la modale avec les informations du candidat
-    document.getElementById('validationCandidateNumber').textContent = candidate.number;
+    // Remplir la modale avec les informations du candidat (nom Pronote ou numéro)
+    document.getElementById('validationCandidateNumber').textContent =
+        candidate.name || (window.candidateNamesMap || {})[candidate.number] || ('n°' + candidate.number);
     document.getElementById('validationMainScore').textContent = `${details.noteOn20}/20`;
 
     // Appliquer la couleur selon le niveau de maîtrise (barème DNB 2025)
@@ -6731,9 +6924,10 @@ function validateCorrection() {
         btnValidateNext.style.cursor = 'not-allowed';
     } else {
         btnValidateNext.disabled = false;
-        const nextCandidateNumber = appState.activeCandidates[appState.currentCandidateIndex + 1].number;
-        btnValidateNext.innerHTML = `➡️ Valider et passer au <strong style="color: #fff; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px;">n°${nextCandidateNumber}</strong>`;
-        btnValidateNext.title = `Valider et passer au candidat n°${nextCandidateNumber}`;
+        const nextCandidate = appState.activeCandidates[appState.currentCandidateIndex + 1];
+        const nextLabel = nextCandidate.name || (window.candidateNamesMap || {})[nextCandidate.number] || ('n°' + nextCandidate.number);
+        btnValidateNext.innerHTML = `➡️ Valider et passer à <strong style="color: #fff; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px;">${nextLabel}</strong>`;
+        btnValidateNext.title = `Valider et passer à ${nextLabel}`;
         btnValidateNext.style.background = '#17a2b8';
         btnValidateNext.style.cursor = 'pointer';
     }

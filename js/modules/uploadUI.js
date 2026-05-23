@@ -6,6 +6,14 @@ var pdfImportScale = 1.5; // Échelle de rendu du canvas PDF
 
 function initPdfImportPage() {
     console.log('📄 Initialisation Import PDF/DOCX');
+    // Adapter le header pour le mode Import PDF (au lieu de "Correcteur Universel - DNB")
+    var title = document.getElementById('appTitle');
+    if (title) title.innerHTML = '📄 Correcteur Universel — Import PDF';
+    document.title = 'Correcteur Universel — Import PDF';
+    // Masquer le bouton Admin global (non pertinent pour le flow Import PDF).
+    // On garde Paramètres pour permettre la modif manuelle du barème.
+    var adminBtn = document.getElementById('adminToggleBtnHeader');
+    if (adminBtn) adminBtn.style.display = 'none';
     // Configurer le worker pdf.js
     if (typeof pdfjsLib !== 'undefined') {
         pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -13,6 +21,22 @@ function initPdfImportPage() {
     }
     // Charger la clé API Mistral si elle existe
     loadMistralApiKey();
+
+    // Restaurer la session précédente (silencieux) — exos détectés, élèves, scores, etc.
+    if (typeof restorePdfSession === 'function') {
+        var restored = restorePdfSession();
+        if (restored && window.appState && appState.pdfImport && appState.pdfImport.exercises && appState.pdfImport.exercises.length > 0) {
+            console.log('♻️ Session restaurée : ' + appState.pdfImport.exercises.length + ' exercices, '
+                + ((appState.candidates && appState.candidates.length) || 0) + ' élèves');
+            // Aller à la dernière étape utile : si des élèves existent, on va à l'overview ; sinon barème
+            if (appState.candidates && appState.candidates.length > 0) {
+                if (typeof showPage === 'function') showPage('candidatesOverviewPage');
+                if (typeof renderCandidatesOverview === 'function') renderCandidatesOverview();
+            } else if (typeof pdfImportGoToStep === 'function') {
+                pdfImportGoToStep(3); // configuration barème
+            }
+        }
+    }
 }
 
 function retourAccueil() {
@@ -836,4 +860,5 @@ function pdfImportGoToStep(step) {
     var targets = { 1: 'pdfUploadStep', 2: 'pdfZonesStep', 3: 'pdfBaremeStep', 4: 'pdfCorrectionStep' };
     document.getElementById(targets[step]).style.display = 'block';
     if (step === 3) renderPdfBaremeConfig();
+    if (typeof savePdfSession === 'function') savePdfSession();
 }
