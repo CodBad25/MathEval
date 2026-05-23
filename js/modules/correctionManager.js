@@ -2,6 +2,33 @@
 // MODULE CORRECTION MANAGER - 3 chemins + génération exercisesData
 // ============================================================================
 
+// Distribue les points d'une question entre ses compétences :
+//   - en multiples de 0.5 (compatible avec increment 0.5 des clics badges)
+//   - somme exacte = q.points
+//   - répartition aussi équitable que possible (reste va aux 1ères comp)
+//   - max 2 compétences par question : si le JSON en liste plus, on garde
+//     les 2 premières (par convention, l'ordre dans le JSON = ordre d'importance)
+// Limitation connue : Q 0.5pt avec 2 comp donne "0.5 + 0" — voir
+// memory/project_matheval_bareme_v2.md
+function _distributeCompetencePoints(qPoints, competenceNames) {
+    var names = competenceNames || [];
+    if (names.length > 2) {
+        console.warn('⚠️ Question avec ' + names.length + ' compétences détectée. ' +
+            'Max 2 supporté. Conservées : [' + names.slice(0, 2).join(', ') +
+            '], ignorées : [' + names.slice(2).join(', ') + '].');
+        names = names.slice(0, 2);
+    }
+    var n = Math.max(names.length, 1);
+    var halves = Math.round((qPoints || 1) * 2);
+    var base = Math.floor(halves / n);
+    var rem = halves - base * n;
+    var pts = [];
+    for (var i = 0; i < n; i++) {
+        pts.push((base + (i < rem ? 1 : 0)) * 0.5);
+    }
+    return { names: names, pointsPerComp: pts };
+}
+
 function selectCorrectionPath(path) {
     appState.pdfImport.correctionPath = path;
     // UI : highlight la carte sélectionnée
@@ -139,28 +166,78 @@ function parseJsonCorrection() {
 
         // Format supporté : { exercises: [{ questions: [{numero, correction, points, competences}] }] }
         // Ou format plat : { questions: [{exercice, numero, correction}] }
+        //
+        // STRATÉGIE D'IMPORT : on aplatit le JSON (toutes questions de tous exos dans l'ordre)
+        // et on aplatit l'app (toutes questions détectées par l'OCR dans l'ordre), puis on mappe
+        // 1-à-1 par index. Cela rend l'import robuste :
+        //  - aux numero string ("1a", "1b", "a", "b"...)
+        //  - aux découpages en exercices différents entre JSON et OCR (Bonus séparés ou fusionnés)
         if (data.exercises && Array.isArray(data.exercises)) {
+            // Aplatir les questions détectées par l'app (OCR) — sert de pool de réutilisation
+            var appAllQuestions = [];
+            exercises.forEach(function (ex) {
+                ex.questions.forEach(function (q) { appAllQuestions.push(q); });
+            });
+            // Compter les questions du JSON
+            var jsonQCount = 0;
+            data.exercises.forEach(function (je) { jsonQCount += (je.questions || []).length; });
+            console.log('📊 Mapping : ' + jsonQCount + ' questions JSON → ' + appAllQuestions.length + ' questions détectées par l\'app');
+            if (jsonQCount !== appAllQuestions.length) {
+                console.warn('⚠️ Décompte différent : ' + jsonQCount + ' (JSON) vs ' + appAllQuestions.length + ' (app). Le JSON est la source de vérité pour la structure.');
+            }
+
+            // RECONSTRUCTION DE LA STRUCTURE EXERCICES selon le JSON
+            // → si l'OCR a fusionné des exos (ex: Bonus absorbés dans Ex4), on les sépare
+            //   en respectant le découpage du JSON. Les questions OCR sont réutilisées
+            //   par index ; si l'app en a moins, on crée des questions à partir du JSON.
+            var newExercises = [];
+            var qIdx = 0;
             data.exercises.forEach(function (jsonEx, ei) {
-                var ex = exercises[ei];
-                if (!ex) {
-                    console.warn('⚠️ Exercice ' + (ei + 1) + ' du JSON n\'a pas de correspondance dans l\'app');
-                    return;
-                }
-                (jsonEx.questions || []).forEach(function (item) {
-                    var idx = (item.numero || 1) - 1;
-                    var q = ex.questions[idx];
+                var newEx = {
+                    id: 'ex' + (ei + 1),
+                    num: ei + 1,
+                    title: jsonEx.title || ('Exercice ' + (ei + 1)),
+                    isBonus: /^bonus/i.test(jsonEx.title || ''),
+                    page: 1,
+                    y: 0,
+                    questions: []
+                };
+                (jsonEx.questions || []).forEach(function (item, qi) {
+                    var q = appAllQuestions[qIdx];
                     if (!q) {
-                        console.warn('⚠️ Question ' + item.numero + ' de l\'exercice ' + (ei + 1) + ' n\'existe pas');
-                        return;
+                        // Aucune question OCR correspondante — on crée à partir du JSON
+                        q = {
+                            id: 'q_json_' + (ei + 1) + '_' + (qi + 1),
+                            num: qi + 1,
+                            label: String(item.numero || (qi + 1)),
+                            text: '',
+                            answer: '',
+                            points: 1,
+                            competences: []
+                        };
                     }
+                    if (item.enonce) q.text = item.enonce;
                     q.answer = item.correction || item.answer || '';
                     if (item.points) q.points = item.points;
                     if (item.competences) q.competences = item.competences;
                     appState.pdfImport.corrections[q.id] = { text: q.answer };
-                    console.log('✅ Ex' + (ei + 1) + ' Q' + item.numero + ' : correction importée (' + q.answer.substring(0, 50) + '...)');
+                    newEx.questions.push(q);
+                    qIdx++;
                     imported++;
                 });
+                newExercises.push(newEx);
             });
+            // Si l'app avait plus de questions OCR que le JSON, on les laisse dans le dernier exo en fin
+            // (cas atypique, on évite de perdre du contenu)
+            if (qIdx < appAllQuestions.length && newExercises.length === 0) {
+                // pas d'exo JSON du tout — on garde l'OCR
+            } else if (qIdx < appAllQuestions.length && newExercises.length > 0) {
+                var lastEx = newExercises[newExercises.length - 1];
+                for (var i = qIdx; i < appAllQuestions.length; i++) {
+                    lastEx.questions.push(appAllQuestions[i]);
+                }
+            }
+            appState.pdfImport.exercises = newExercises;
         } else if (data.questions && Array.isArray(data.questions)) {
             // Format plat : toutes les questions dans l'ordre
             var allQuestions = [];
@@ -170,6 +247,7 @@ function parseJsonCorrection() {
             data.questions.forEach(function (item, i) {
                 var q = allQuestions[i];
                 if (!q) return;
+                if (item.enonce) q.text = item.enonce;
                 q.answer = item.correction || item.answer || '';
                 if (item.points) q.points = item.points;
                 if (item.competences) q.competences = item.competences;
@@ -189,9 +267,101 @@ function parseJsonCorrection() {
             if (btn) btn.disabled = false;
         }
         renderPdfBaremeConfig();
+
+        // Si l'utilisateur a DÉJÀ finalisé l'import et corrige des copies, le JSON
+        // recollé peut changer la structure (ex: bonus séparés). On régénère
+        // exercisesData + on rafraîchit l'UI de correction si elle est active.
+        var alreadyFinalized = window.exercisesData && Object.keys(window.exercisesData).length > 0;
+        if (alreadyFinalized) {
+            console.log('🔁 Régénération exercisesData suite à re-collage du JSON');
+            regenerateExercisesDataFromPdfImport();
+            // Rafraîchir uniquement les vues compatibles : on évite renderCurrentExercise
+            // qui suppose un candidat actif (peut être undefined si on est encore à
+            // l'étape "Source des corrections")
+            var hasActiveCandidate = appState.activeCandidates
+                && appState.activeCandidates.length > 0
+                && appState.activeCandidates[appState.currentCandidateIndex];
+            try { if (typeof renderExerciseTabs === 'function') renderExerciseTabs(); } catch (e) { console.warn(e); }
+            try { if (typeof renderExerciseTabContents === 'function') renderExerciseTabContents(); } catch (e) { console.warn(e); }
+            if (hasActiveCandidate) {
+                try { if (typeof renderCurrentExercise === 'function') renderCurrentExercise(); } catch (e) { console.warn(e); }
+                try { if (typeof updateTotalScore === 'function') updateTotalScore(); } catch (e) { console.warn(e); }
+            }
+            try { if (typeof renderCandidatesOverview === 'function') renderCandidatesOverview(); } catch (e) { console.warn(e); }
+            if (typeof savePdfSession === 'function') savePdfSession();
+        }
     } catch (e) {
         alert('JSON invalide : ' + e.message);
     }
+}
+
+// Régénère exercisesData + baremeConfig.exercises depuis appState.pdfImport.exercises
+// Utilisé par finalizePdfImport() (1er passage) et par parseJsonCorrection() lorsque
+// l'utilisateur recolle un JSON après avoir déjà finalisé : la structure change
+// (ex: bonus extraits en exercices distincts) et il faut propager partout.
+function regenerateExercisesDataFromPdfImport() {
+    var exercises = appState.pdfImport.exercises || [];
+    if (exercises.length === 0) return false;
+    var allComps = defaultCompetences.concat(appState.pdfImport.customCompetences || []);
+
+    exercisesData = {};
+    appState.baremeConfig.exercises = {};
+
+    exercises.forEach(function (ex, ei) {
+        var exNum = ei + 1;
+        var exTotal = ex.questions.reduce(function (s, q) { return s + (q.points || 0); }, 0);
+
+        exercisesData[exNum] = {
+            title: ex.title,
+            totalPoints: exTotal,
+            questions: ex.questions.map(function (q, qi) {
+                var corr = appState.pdfImport.corrections[q.id] || {};
+                var qNum = qi + 1;
+                var distrib = _distributeCompetencePoints(q.points, q.competences || []);
+                return {
+                    id: 'q' + qNum,
+                    title: 'Question ' + qNum,
+                    points: q.points || 1,
+                    statement: q.text || q.label || '',
+                    answer: corr.text || q.answer || '',
+                    images: q.images || [],
+                    competences: distrib.names.map(function (cName, ci) {
+                        var found = allComps.find(function (c) { return c.name === cName; });
+                        return {
+                            name: cName,
+                            color: found ? found.color : '#666',
+                            description: found ? found.description : '',
+                            tooltip: '',
+                            points: distrib.pointsPerComp[ci],
+                            increment: 0.5
+                        };
+                    })
+                };
+            })
+        };
+
+        var qPoints = {};
+        var qComps = {};
+        var allSelectedComps = [];
+        exercisesData[exNum].questions.forEach(function (q) {
+            qPoints[q.id] = q.points;
+            qComps[q.id] = q.competences.map(function (c) { return c.name; });
+            q.competences.forEach(function (c) {
+                if (allSelectedComps.indexOf(c.name) < 0) allSelectedComps.push(c.name);
+            });
+        });
+
+        appState.baremeConfig.exercises[String(exNum)] = {
+            totalPoints: exTotal,
+            selectedCompetences: allSelectedComps,
+            questionCompetences: qComps,
+            questionCompetencePoints: {},
+            questionPoints: qPoints,
+            competenceDetails: {},
+            questionCompetenceDetails: {}
+        };
+    });
+    return true;
 }
 
 function finalizePdfImport() {
@@ -218,8 +388,7 @@ function finalizePdfImport() {
             questions: ex.questions.map(function (q, qi) {
                 var corr = appState.pdfImport.corrections[q.id] || {};
                 var qNum = qi + 1;
-                var qCompetences = q.competences || [];
-                var numComps = Math.max(qCompetences.length, 1);
+                var distrib = _distributeCompetencePoints(q.points, q.competences || []);
 
                 return {
                     id: 'q' + qNum,
@@ -228,14 +397,14 @@ function finalizePdfImport() {
                     statement: q.text || q.label || '',
                     answer: corr.text || q.answer || '',
                     images: q.images || [],
-                    competences: qCompetences.map(function (cName) {
+                    competences: distrib.names.map(function (cName, ci) {
                         var found = allComps.find(function (c) { return c.name === cName; });
                         return {
                             name: cName,
                             color: found ? found.color : '#666',
                             description: found ? found.description : '',
                             tooltip: '',
-                            points: Math.round(((q.points || 1) / numComps) * 10) / 10,
+                            points: distrib.pointsPerComp[ci],
                             increment: 0.5
                         };
                     })
