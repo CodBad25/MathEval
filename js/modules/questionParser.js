@@ -41,6 +41,9 @@ function autoDetectQuestions() {
         // Fusionner les items sur la même ligne (même page + même Y ±2px)
         var lines = mergeItemsIntoLines(allItems);
 
+        // Filtrer les en-têtes/pieds de page répétés (ex: "Collège X — M. Y" qui revient sur chaque page)
+        lines = filterRepeatedHeadersFooters(lines, appState.pdfImport.totalPages);
+
         // Détecter la structure exercices → questions
         var exercises = parseExercisesFromLines(lines);
 
@@ -127,6 +130,93 @@ function mergeItemsIntoLines(items) {
 }
 
 /**
+ * Filtre les lignes répétées en haut ou en bas de page (en-têtes / pieds de page).
+ *
+ * Stratégie : on regarde les N premières et N dernières lignes de chaque page.
+ * Si un texte apparaît identique (après normalisation) sur ≥ 2 pages dans
+ * cette zone, c'est probablement un header/footer répété, donc on le retire.
+ *
+ * Exemples capturés :
+ *   - "Collège Gaston Chaissac Classe de 5e M. Belhaj"
+ *   - "1", "2", "3"... (numéros de page seuls)
+ *   - "Évaluation — Angles du triangle & Fractions"
+ */
+function filterRepeatedHeadersFooters(lines, totalPages) {
+    if (!lines || lines.length === 0 || !totalPages || totalPages < 2) return lines || [];
+
+    // 1. Grouper les lignes par page
+    var byPage = {};
+    lines.forEach(function (l) {
+        if (!byPage[l.page]) byPage[l.page] = [];
+        byPage[l.page].push(l);
+    });
+
+    var HEADER_LINES = 3; // nombre de lignes en haut considérées comme zone header
+    var FOOTER_LINES = 2; // nombre de lignes en bas considérées comme zone footer
+
+    // 2. Collecter les textes des zones header/footer par page
+    function norm(t) {
+        return (t || '').toLowerCase().replace(/\s+/g, ' ').replace(/\d+/g, '#').trim();
+    }
+    var headerCounts = {};
+    var footerCounts = {};
+    Object.keys(byPage).forEach(function (pNum) {
+        var pageLines = byPage[pNum].slice().sort(function (a, b) { return a.y - b.y; });
+        pageLines.slice(0, HEADER_LINES).forEach(function (l) {
+            var k = norm(l.text);
+            if (k.length > 0) headerCounts[k] = (headerCounts[k] || 0) + 1;
+        });
+        pageLines.slice(-FOOTER_LINES).forEach(function (l) {
+            var k = norm(l.text);
+            if (k.length > 0) footerCounts[k] = (footerCounts[k] || 0) + 1;
+        });
+    });
+
+    // 3. Marquer "répété" si apparaît sur ≥ 50% des pages (et au moins 2 pages)
+    var threshold = Math.max(2, Math.ceil(totalPages * 0.5));
+    var repeatedHeaders = {};
+    Object.keys(headerCounts).forEach(function (k) {
+        if (headerCounts[k] >= threshold) repeatedHeaders[k] = true;
+    });
+    var repeatedFooters = {};
+    Object.keys(footerCounts).forEach(function (k) {
+        if (footerCounts[k] >= threshold) repeatedFooters[k] = true;
+    });
+
+    if (Object.keys(repeatedHeaders).length === 0 && Object.keys(repeatedFooters).length === 0) {
+        return lines;
+    }
+
+    // 4. Filtrer : on retire ces lignes uniquement si elles sont effectivement
+    // dans la zone header/footer de leur page (pas si elles apparaissent par
+    // hasard au milieu du texte).
+    var filtered = [];
+    var removedCount = 0;
+    Object.keys(byPage).forEach(function (pNum) {
+        var pageLines = byPage[pNum].slice().sort(function (a, b) { return a.y - b.y; });
+        var headerZone = pageLines.slice(0, HEADER_LINES);
+        var footerZone = pageLines.slice(-FOOTER_LINES);
+        var headerZoneSet = new Set(headerZone);
+        var footerZoneSet = new Set(footerZone);
+        pageLines.forEach(function (l) {
+            var k = norm(l.text);
+            var isHeader = headerZoneSet.has(l) && repeatedHeaders[k];
+            var isFooter = footerZoneSet.has(l) && repeatedFooters[k];
+            if (isHeader || isFooter) {
+                removedCount++;
+                return;
+            }
+            filtered.push(l);
+        });
+    });
+
+    if (removedCount > 0) {
+        console.log('🧹 Filtré ' + removedCount + ' ligne(s) répétée(s) en header/footer');
+    }
+    return filtered;
+}
+
+/**
  * Parse les lignes fusionnées en structure exercices → questions
  */
 function parseExercisesFromLines(lines) {
@@ -136,9 +226,14 @@ function parseExercisesFromLines(lines) {
 
     // Patterns de détection
     var exPattern = /exercice\s+(\d+)/i;
+    // Bonus reconnu comme nouvel exercice. Cas couverts :
+    //   "Bonus 1 — ...", "Bonus 2 :", "BONUS — ..." (le numéro N est optionnel)
+    // Doit être en début de ligne pour éviter les faux positifs en plein texte.
+    var bonusPattern = /^bonus(?:\s+(\d+))?\b/i;
     var qNumPattern = /^(\d+)\s*[).]\s*/;
     var qLetterPattern = /^([a-f])\s*[).]\s*/i;
     var questionCounter = 0;
+    var bonusCounter = 0;
 
     lines.forEach(function (line) {
         var text = line.text.trim();
@@ -157,6 +252,29 @@ function parseExercisesFromLines(lines) {
                 id: 'ex' + exMatch[1],
                 num: parseInt(exMatch[1]),
                 title: text,
+                page: line.page,
+                y: line.y,
+                questions: []
+            };
+            exercises.push(currentExercise);
+            return;
+        }
+
+        // Détecter un Bonus comme nouvel exercice (numérotation continue)
+        var bonusMatch = text.match(bonusPattern);
+        if (bonusMatch) {
+            if (currentQuestion && currentExercise) {
+                currentExercise.questions.push(currentQuestion);
+                currentQuestion = null;
+            }
+            questionCounter = 0;
+            bonusCounter++;
+            var nextNum = exercises.length + 1;
+            currentExercise = {
+                id: 'bonus' + bonusCounter,
+                num: nextNum,
+                title: text,
+                isBonus: true,
                 page: line.page,
                 y: line.y,
                 questions: []
