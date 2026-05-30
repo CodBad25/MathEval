@@ -220,6 +220,7 @@ function parseJsonCorrection() {
                     q.answer = item.correction || item.answer || '';
                     if (item.points) q.points = item.points;
                     if (item.competences) q.competences = item.competences;
+                    if (item.numero) q.numero = String(item.numero); // vrai numéro du sujet (1a, 2a, a, b...) pour l'affichage
                     appState.pdfImport.corrections[q.id] = { text: q.answer };
                     newEx.questions.push(q);
                     qIdx++;
@@ -320,7 +321,7 @@ function regenerateExercisesDataFromPdfImport() {
                 var distrib = _distributeCompetencePoints(q.points, q.competences || []);
                 return {
                     id: 'q' + qNum,
-                    title: 'Question ' + qNum,
+                    title: 'Question ' + (q.numero || qNum),
                     points: q.points || 1,
                     statement: q.text || q.label || '',
                     answer: corr.text || q.answer || '',
@@ -392,7 +393,7 @@ function finalizePdfImport() {
 
                 return {
                     id: 'q' + qNum,
-                    title: 'Question ' + qNum,
+                    title: 'Question ' + (q.numero || qNum),
                     points: q.points || 1,
                     statement: q.text || q.label || '',
                     answer: corr.text || q.answer || '',

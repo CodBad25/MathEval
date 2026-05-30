@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation copie — COQUELET Adrien</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #e8ecf0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    /* === MODALE === */
+    .modal {
+      width: 100%;
+      max-width: 1150px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* === EN-TÊTE === */
+    .modal-header {
+      background: linear-gradient(135deg, #5b8def 0%, #4a7fd0 100%);
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-icon {
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .modal-title {
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .modal-subtitle {
+      color: rgba(255,255,255,0.8);
+      font-size: 12px;
+      margin-top: 1px;
+    }
+    .btn-close {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 18px;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      font-weight: 300;
+      line-height: 1;
+    }
+    .btn-close:hover { background: rgba(255,255,255,0.3); }
+
+    /* === CORPS (2 COLONNES) === */
+    .modal-body {
+      display: flex;
+      gap: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* === COLONNE GAUCHE === */
+    .col-left {
+      width: 40%;
+      flex-shrink: 0;
+      padding: 16px 18px;
+      border-right: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    /* Badge note */
+    .note-badge {
+      background: linear-gradient(135deg, #e8f4fd 0%, #d6eaf8 100%);
+      border: 2px solid #17a2b8;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .note-score {
+      font-size: 38px;
+      font-weight: 800;
+      color: #0e7490;
+      line-height: 1;
+    }
+    .note-denom {
+      font-size: 16px;
+      color: #0e7490;
+      font-weight: 600;
+      align-self: flex-end;
+      padding-bottom: 4px;
+    }
+    .note-info {
+      flex: 1;
+    }
+    .note-level-badge {
+      display: inline-block;
+      background: #17a2b8;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .note-mention {
+      font-size: 11px;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* Section exercices */
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+    }
+
+    .exo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .exo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 7px 10px;
+    }
+    .exo-num {
+      background: #5b8def;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .exo-name {
+      flex: 1;
+      font-size: 12px;
+      color: #334155;
+      font-weight: 500;
+    }
+    .exo-score {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+      white-space: nowrap;
+    }
+    .exo-max {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    /* Séparateur bonus */
+    .bonus-sep {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .bonus-sep-line {
+      flex: 1;
+      height: 1px;
+      background: #f59e0b;
+      opacity: 0.5;
+    }
+    .bonus-sep-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #d97706;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* Items bonus */
+    .bonus-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    .bonus-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .bonus-name {
+      flex: 1;
+      font-size: 11.5px;
+      color: #78350f;
+      font-weight: 500;
+    }
+    .bonus-score {
+      font-size: 12px;
+      font-weight: 700;
+      color: #92400e;
+      white-space: nowrap;
+    }
+
+    /* === COLONNE DROITE === */
+    .col-right {
+      flex: 1;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .comp-table {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 1;
+    }
+
+    .comp-row {
+      display: grid;
+      grid-template-columns: 130px 48px 56px 1fr;
+      align-items: center;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      padding: 9px 12px;
+    }
+
+    .comp-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .comp-icon {
+      font-size: 15px;
+    }
+    .comp-pct {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: right;
+    }
+    .comp-items {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 1px;
+      text-align: right;
+    }
+
+    .comp-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      color: #fff;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+    .badge-MI { background: #dc3545; }
+    .badge-MF { background: #f59e0b; }
+    .badge-MS { background: #17a2b8; }
+    .badge-TBM { background: #28a745; }
+
+    .comp-bar-wrap {
+      background: #e2e8f0;
+      border-radius: 99px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .comp-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+    .fill-MI { background: #dc3545; }
+    .fill-MF { background: #f59e0b; }
+    .fill-MS { background: #17a2b8; }
+    .fill-TBM { background: #28a745; }
+
+    /* === PIED (pleine largeur) === */
+    .modal-footer {
+      border-top: 1px solid #e9ecef;
+      padding: 12px 18px;
+      flex-shrink: 0;
+      background: #f8fafc;
+    }
+
+    .footer-inner {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+    }
+
+    .comment-zone {
+      flex: 1;
+    }
+    .comment-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 5px;
+    }
+    .comment-textarea {
+      width: 100%;
+      height: 58px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #334155;
+      resize: none;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      line-height: 1.5;
+    }
+    .comment-textarea:focus {
+      outline: none;
+      border-color: #5b8def;
+      box-shadow: 0 0 0 3px rgba(91,141,239,0.15);
+    }
+    .comment-textarea::placeholder { color: #b0bec5; }
+
+    .footer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-cancel {
+      background: #fff;
+      color: #64748b;
+      border: 1.5px solid #cbd5e1;
+    }
+    .btn-cancel:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+    .btn-next {
+      background: linear-gradient(135deg, #5b8def 0%, #4a7fd0 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(91,141,239,0.35);
+    }
+    .btn-next:hover { background: linear-gradient(135deg, #4a7fd0 0%, #3a6fc0 100%); box-shadow: 0 4px 12px rgba(91,141,239,0.45); }
+
+    .btn-list {
+      background: linear-gradient(135deg, #28a745 0%, #1e8535 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(40,167,69,0.3);
+    }
+    .btn-list:hover { background: linear-gradient(135deg, #1e8535 0%, #166827 100%); }
+
+    /* Légère info sur les items compétence */
+    .comp-pct-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+  </style>
+</head>
+<body>
+
+<div class="modal">
+
+  <!-- EN-TÊTE -->
+  <div class="modal-header">
+    <div class="modal-header-left">
+      <div class="header-icon">📝</div>
+      <div>
+        <div class="modal-title">Candidat — COQUELET Adrien</div>
+        <div class="modal-subtitle">Validation de la copie corrigée</div>
+      </div>
+    </div>
+    <button class="btn-close" title="Fermer">×</button>
+  </div>
+
+  <!-- CORPS 2 COLONNES -->
+  <div class="modal-body">
+
+    <!-- COLONNE GAUCHE -->
+    <div class="col-left">
+
+      <!-- Badge note -->
+      <div class="note-badge">
+        <span class="note-score">13</span>
+        <span class="note-denom">/20</span>
+        <div class="note-info">
+          <div class="note-level-badge">MS — Maîtrise satisfaisante</div>
+          <div class="note-mention">⚠ 1 question non rendue</div>
+        </div>
+      </div>
+
+      <!-- Exercices obligatoires -->
+      <div>
+        <div class="section-title">Exercices obligatoires</div>
+        <div class="exo-list">
+          <div class="exo-item">
+            <div class="exo-num">1</div>
+            <div class="exo-name">Cours</div>
+            <div class="exo-score">2,5 <span class="exo-max">/ 5</span></div>
+          </div>
+          <div class="exo-item">
+            <div class="exo-num">2</div>
+            <div class="exo-name">Calculs d'angles</div>
+            <div class="exo-score">2 <span class="exo-max">/ 6</span></div>
+          </div>
+          <div class="exo-item">
+            <div class="exo-num">3</div>
+            <div class="exo-name">Inégalité triangulaire</div>
+            <div class="exo-score">1,5 <span class="exo-max">/ 4</span></div>
+          </div>
+          <div class="exo-item">
+            <div class="exo-num">4</div>
+            <div class="exo-name">Droite graduée et fractions</div>
+            <div class="exo-score">3,5 <span class="exo-max">/ 5</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Séparateur bonus -->
+      <div class="bonus-sep">
+        <div class="bonus-sep-line"></div>
+        <span class="bonus-sep-label">⭐ Bonus</span>
+        <div class="bonus-sep-line"></div>
+      </div>
+
+      <!-- Exercices bonus -->
+      <div class="exo-list">
+        <div class="bonus-item">
+          <span class="bonus-icon">⭐</span>
+          <div class="bonus-name">Droite graduée (douzièmes)</div>
+          <div class="bonus-score">0,5 <span style="font-size:10px;color:#b45309;">/ 1</span></div>
+        </div>
+        <div class="bonus-item">
+          <span class="bonus-icon">⭐</span>
+          <div class="bonus-name">Nature du triangle ABC</div>
+          <div class="bonus-score">1,5 <span style="font-size:10px;color:#b45309;">/ 1,5</span></div>
+        </div>
+        <div class="bonus-item">
+          <span class="bonus-icon">⭐</span>
+          <div class="bonus-name">Construction instrumentée</div>
+          <div class="bonus-score">1,5 <span style="font-size:10px;color:#b45309;">/ 2</span></div>
+        </div>
+      </div>
+
+    </div><!-- /col-left -->
+
+    <!-- COLONNE DROITE -->
+    <div class="col-right">
+      <div class="section-title">Compétences évaluées</div>
+      <div class="comp-table">
+
+        <!-- Calculer : 36% MF -->
+        <div class="comp-row">
+          <div class="comp-name">
+            <span class="comp-icon">🔢</span>
+            Calculer
+          </div>
+          <div class="comp-pct-block">
+            <div class="comp-pct">36 %</div>
+            <div class="comp-items">4 / 8 items</div>
+          </div>
+          <div><span class="comp-badge badge-MF">MF</span></div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar-fill fill-MF" style="width:36%"></div>
+          </div>
+        </div>
+
+        <!-- Modéliser : 29% MF -->
+        <div class="comp-row">
+          <div class="comp-name">
+            <span class="comp-icon">📐</span>
+            Modéliser
+          </div>
+          <div class="comp-pct-block">
+            <div class="comp-pct">29 %</div>
+            <div class="comp-items">3 / 4 items</div>
+          </div>
+          <div><span class="comp-badge badge-MF">MF</span></div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar-fill fill-MF" style="width:29%"></div>
+          </div>
+        </div>
+
+        <!-- Représenter : 82% TBM -->
+        <div class="comp-row">
+          <div class="comp-name">
+            <span class="comp-icon">📊</span>
+            Représenter
+          </div>
+          <div class="comp-pct-block">
+            <div class="comp-pct">82 %</div>
+            <div class="comp-items">7 / 8 items</div>
+          </div>
+          <div><span class="comp-badge badge-TBM">TBM</span></div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar-fill fill-TBM" style="width:82%"></div>
+          </div>
+        </div>
+
+        <!-- Raisonner : 50% MS -->
+        <div class="comp-row">
+          <div class="comp-name">
+            <span class="comp-icon">🧠</span>
+            Raisonner
+          </div>
+          <div class="comp-pct-block">
+            <div class="comp-pct">50 %</div>
+            <div class="comp-items">6 / 10 items</div>
+          </div>
+          <div><span class="comp-badge badge-MS">MS</span></div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar-fill fill-MS" style="width:50%"></div>
+          </div>
+        </div>
+
+        <!-- Communiquer : 71% MS -->
+        <div class="comp-row">
+          <div class="comp-name">
+            <span class="comp-icon">💬</span>
+            Communiquer
+          </div>
+          <div class="comp-pct-block">
+            <div class="comp-pct">71 %</div>
+            <div class="comp-items">6 / 6 items</div>
+          </div>
+          <div><span class="comp-badge badge-MS">MS</span></div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar-fill fill-MS" style="width:71%"></div>
+          </div>
+        </div>
+
+        <!-- Chercher : 0% MI -->
+        <div class="comp-row">
+          <div class="comp-name">
+            <span class="comp-icon">🔍</span>
+            Chercher
+          </div>
+          <div class="comp-pct-block">
+            <div class="comp-pct">0 %</div>
+            <div class="comp-items">0 / 1 items</div>
+          </div>
+          <div><span class="comp-badge badge-MI">MI</span></div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar-fill fill-MI" style="width:0%"></div>
+          </div>
+        </div>
+
+      </div><!-- /comp-table -->
+    </div><!-- /col-right -->
+
+  </div><!-- /modal-body -->
+
+  <!-- PIED PLEINE LARGEUR -->
+  <div class="modal-footer">
+    <div class="footer-inner">
+      <div class="comment-zone">
+        <div class="comment-label">Commentaire global</div>
+        <textarea
+          class="comment-textarea"
+          placeholder="Ajouter un commentaire pour cet élève (facultatif)…"
+        ></textarea>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-cancel">✕ Annuler</button>
+        <button class="btn btn-next">➜ Valider et passer à FORTIN Nohlan</button>
+        <button class="btn btn-list">☰ Valider et revenir à la liste</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /modal -->
+
+</body>
+</html>

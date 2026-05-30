@@ -6271,6 +6271,17 @@ function renderCandidatesOverview() {
     // Mettre à jour l'info du mode de correction
     updateCorrectionModeInfo();
 
+    // Si un mode est déjà actif (ex: session de correction restaurée), synchroniser le
+    // sélecteur visuel pour éviter le faux avertissement "choisir un mode de correction".
+    if (appState.modeSelected && appState.correctionMode) {
+        const modeSelectEl = document.getElementById('correctionMode');
+        if (modeSelectEl && modeSelectEl.value !== appState.correctionMode) modeSelectEl.value = appState.correctionMode;
+        const modeSelectorEl = document.getElementById('correctionModeSelector');
+        if (modeSelectorEl) modeSelectorEl.classList.remove('not-selected');
+        const modeInstructionEl = document.getElementById('modeInstruction');
+        if (modeInstructionEl) modeInstructionEl.classList.remove('show');
+    }
+
     appState.activeCandidates.forEach(candidate => {
         const details = calculateCandidateDetails(candidate.number);
         const percentage = Math.round((details.questionsAnswered / details.totalQuestions) * 100);
@@ -6334,18 +6345,41 @@ function renderCandidatesOverview() {
             mainScoreClass = 'in-progress';
         }
         
-        // Génération des scores par exercice avec couleurs et noms
-        const exerciseNames = ['🎲', '📐', '☐', '💻', '📈']; // Icônes des exercices
-        const exerciseScoresHtml = details.exerciseScores.map((ex, index) => {
+        // Génération des scores par exercice — obligatoires puis bonus groupés sur une 2e ligne
+        const isBonusExercise = (ex) => {
+            const d = exercisesData[ex.exerciseNumber] || {};
+            return !!d.isBonus || /^\s*bonus/i.test(d.title || '');
+        };
+        const renderExScore = (ex) => {
+            const bonus = isBonusExercise(ex);
+            const icon = bonus ? '⭐' : String(ex.exerciseNumber);
             const scoreColor = getExerciseScoreColor(ex, ex.exerciseNumber, candidate.number);
-            
             return `
-                <div class="exercise-score-container">
-                    <div class="exercise-icon">${exerciseNames[index]}</div>
+                <div class="exercise-score-container${bonus ? ' exercise-score-bonus' : ''}">
+                    <div class="exercise-icon">${icon}</div>
                     <div class="exercise-score" style="background: ${scoreColor} !important; color: white !important;">${ex.score}/${ex.maxScore}</div>
-                </div>
-            `;
-        }).join('');
+                </div>`;
+        };
+        const obligScores = details.exerciseScores.filter(ex => !isBonusExercise(ex));
+        const bonusScores = details.exerciseScores.filter(ex => isBonusExercise(ex));
+        const exerciseScoresHtml = obligScores.map(renderExScore).join('')
+            + (bonusScores.length ? '<div class="exercise-scores-break"></div>' + bonusScores.map(renderExScore).join('') : '');
+
+        // Bandeau compétences (A) : 6 pastilles colorées par niveau + détail au survol (B)
+        let competenceStripHtml = '';
+        try {
+            const compScores = (typeof calculateCompetencesScores === 'function') ? calculateCompetencesScores(candidate.number) : {};
+            const chips = Object.entries(compScores).map(([name, data]) => {
+                const pct = data.max > 0 ? Math.round((data.total / data.max) * 100) : 0;
+                let lvl, color;
+                if (pct >= 75) { lvl = 'TBM'; color = '#28a745'; }
+                else if (pct >= 50) { lvl = 'MS'; color = '#17a2b8'; }
+                else if (pct >= 25) { lvl = 'MF'; color = '#ffc107'; }
+                else { lvl = 'MI'; color = '#dc3545'; }
+                return `<div class="competence-chip" style="border-color:${color};" title="${name} : ${pct}% — ${lvl}">${data.icon || '📋'}</div>`;
+            }).join('');
+            if (chips) competenceStripHtml = `<div class="competence-strip">${chips}</div>`;
+        } catch (e) { /* pas de bandeau si calcul indisponible */ }
         
         // Badge de validation
         const validationBadge = details.isValidated ? '<div class="validation-badge">✓</div>' : '';
@@ -6387,11 +6421,13 @@ function renderCandidatesOverview() {
                 ${details.status === 'completed' ? `
                     <div class="candidate-details completed">
                         <div class="exercise-scores-grid">${exerciseScoresHtml}</div>
+                        ${competenceStripHtml}
                         ${details.nrCount > 0 ? `<div class="nr-info">NR : ${details.nrCount} question${details.nrCount > 1 ? 's' : ''}</div>` : ''}
                     </div>
                 ` : details.status === 'in-progress' ? `
                     <div class="candidate-details">
                         <div class="exercise-scores-grid">${exerciseScoresHtml}</div>
+                        ${competenceStripHtml}
                     </div>
                 ` : ''}
                 
@@ -6473,8 +6509,9 @@ function calculateCandidateDetails(candidateNumber) {
     const maxScore = calculateMaxScore();
     const { questionsAnswered, totalQuestions } = calculateCandidateProgress(candidateNumber);
 
-    // Calculer la note sur 20 (nouveau barème DNB 2025)
-    const noteOn20 = Math.round((totalScore / maxScore) * 20 * 10) / 10; // Note avec 1 décimale
+    // La note sur 20 est calculée plus bas (après le détail par exercice), pour gérer
+    // les exercices bonus en points additionnels plafonnés, sans diluer le dénominateur.
+    let noteOn20 = 0;
     
     // Compter les questions NR
     let nrCount = 0;
@@ -6503,7 +6540,23 @@ function calculateCandidateDetails(candidateNumber) {
             maxScore: exercise.totalPoints
         });
     });
-    
+
+    // Note sur 20 : exercices de base ramenés sur 20, BONUS ajoutés en points par-dessus
+    // (plafond 20). Les bonus ne doivent pas gonfler le dénominateur ni pénaliser l'élève.
+    let baseScore = 0, baseMax = 0, bonusScore = 0;
+    exerciseScores.forEach(es => {
+        const exData = exercisesData[es.exerciseNumber] || {};
+        const isBonusEx = !!exData.isBonus || /^\s*bonus/i.test(exData.title || '');
+        if (isBonusEx) {
+            bonusScore += es.score;
+        } else {
+            baseScore += es.score;
+            baseMax += es.maxScore;
+        }
+    });
+    const baseNote = baseMax > 0 ? (baseScore / baseMax) * 20 : 0;
+    noteOn20 = Math.round(Math.min(20, baseNote + bonusScore) * 10) / 10;
+
     // Déterminer le statut
     let status = 'not-started';
     const isValidated = appState.validatedCandidates[candidateNumber]?.validated || false;
@@ -6520,6 +6573,9 @@ function calculateCandidateDetails(candidateNumber) {
         totalScore,
         maxScore,
         noteOn20,
+        baseScore,
+        baseMax,
+        bonusScore,
         questionsAnswered,
         totalQuestions,
         nrCount,
@@ -6908,10 +6964,24 @@ function validateCorrection() {
     const existingComment = appState.candidateComments[candidate.number] || '';
     document.getElementById('validationComment').value = existingComment;
     
+    // Note réelle (transparence) : détail base + bonus, plafonné à 20
+    const rawScoreEl = document.getElementById('validationRawScore');
+    if (rawScoreEl) {
+        const fmtFr = (n) => Number(n).toString().replace('.', ',');
+        if (details.bonusScore > 0) {
+            const raw = Math.round((details.baseScore + details.bonusScore) * 10) / 10;
+            rawScoreEl.textContent = `Base ${fmtFr(details.baseScore)}/${fmtFr(details.baseMax)} + bonus ${fmtFr(details.bonusScore)}`
+                + (raw > 20 ? ' → plafonné à 20' : ` → ${fmtFr(raw)}/20`);
+        } else {
+            rawScoreEl.textContent = `Base ${fmtFr(details.baseScore)}/${fmtFr(details.baseMax)}`;
+        }
+    }
+
     // Générer les grilles des exercices et compétences
     renderExercisesValidation(candidate.number);
     renderCompetencesValidation(competencesScores);
-    
+    renderNRGrid(candidate.number);
+
     // Gérer l'affichage du bouton "candidat suivant"
     const btnValidateNext = document.getElementById('btnValidateNext');
     const isLastCandidate = appState.currentCandidateIndex >= appState.activeCandidates.length - 1;
@@ -7004,24 +7074,110 @@ function renderExercisesValidation(candidateNumber) {
         { name: 'Fonctions', icon: '📈' }
     ];
     
-    details.exerciseScores.forEach((exerciseScore, index) => {
-        const exerciseInfo = exercisesInfo[index];
-        
-        // Utiliser la fonction getExerciseScoreColor pour déterminer la couleur
+    let bonusSeparatorAdded = false;
+    details.exerciseScores.forEach((exerciseScore) => {
+        const exData = (window.exercisesData && exercisesData[exerciseScore.exerciseNumber]) || {};
+        const title = exData.title || ('Exercice ' + exerciseScore.exerciseNumber);
+        const isBonus = !!exData.isBonus || /^\s*bonus/i.test(title);
+
+        // Séparateur visuel net entre exercices obligatoires et bonus
+        if (isBonus && !bonusSeparatorAdded) {
+            const sep = document.createElement('div');
+            sep.className = 'exercise-badge-separator';
+            sep.style.cssText = 'align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 10px;margin:0 4px;color:#b45309;font-weight:800;font-size:0.75em;border-left:3px dashed #f59e0b;';
+            sep.innerHTML = '⭐<span>BONUS</span>';
+            container.appendChild(sep);
+            bonusSeparatorAdded = true;
+        }
+
+        // Obligatoire : numéro de l'exercice ; bonus : étoile pour tous
+        const icon = isBonus ? '⭐' : String(exerciseScore.exerciseNumber);
+        const name = isBonus ? title : title.replace(/^Exercice\s+/i, 'Ex ');
         const scoreColor = getExerciseScoreColor(exerciseScore, exerciseScore.exerciseNumber, candidateNumber);
-        
+
         const badge = document.createElement('div');
-        badge.className = 'exercise-badge';
+        badge.className = 'exercise-badge' + (isBonus ? ' exercise-badge-bonus' : '');
+        if (isBonus) badge.style.background = '#fffbeb';
         badge.innerHTML = `
-            <div class="exercise-badge-icon">${exerciseInfo.icon}</div>
-            <div class="exercise-badge-name">${exerciseInfo.name}</div>
+            <div class="exercise-badge-icon">${icon}</div>
+            <div class="exercise-badge-name">${name}</div>
             <div class="exercise-badge-score" style="background: ${scoreColor} !important;">
                 ${exerciseScore.score}/${exerciseScore.maxScore}
             </div>
         `;
-        
+
         container.appendChild(badge);
     });
+}
+
+// Encart "Questions par exercice" : un carré par question (vert=réussi, orange=partiel,
+// rouge=raté, gris=NR), avec compteur points obtenus/max par exercice + total.
+// Obligatoires = numéro ; bonus = ⭐.
+function renderNRGrid(candidateNumber) {
+    const container = document.getElementById('nrGridContainer');
+    if (!container) return;
+    const fmt = (n) => Number(n).toString().replace('.', ',');
+    const shortName = (title) => {
+        if (!title) return '';
+        return title
+            .replace(/^Exercice\s+\d+\s*[—–-]\s*/i, '')
+            .replace(/^BONUS\s+\d+\s*[—–-]\s*/i, '');
+    };
+
+    let totalEarned = 0, totalMax = 0;
+    let html = '<div class="nr-grid-title">Questions par exercice</div>';
+
+    Object.keys(exercisesData).forEach(exKey => {
+        const exercise = exercisesData[exKey];
+        if (!exercise || !exercise.questions) return;
+        const isBonus = !!exercise.isBonus || /^\s*bonus/i.test(exercise.title || '');
+        const icon = isBonus ? '⭐' : String(exKey);
+        const name = shortName(exercise.title);
+
+        let exEarned = 0, exMax = 0;
+        const qHtml = [];
+        exercise.questions.forEach((question, qIndex) => {
+            const qKey = question.id || `q${qIndex}`;
+            const quickState = appState.quickButtonStates[candidateNumber]?.[exKey]?.[qKey];
+            const scoreData = appState.scores[candidateNumber]?.[exKey]?.[qKey];
+            const qScore = (scoreData && typeof scoreData.score === 'number') ? scoreData.score : 0;
+            const qMax = question.points || 0;
+            exMax += qMax;
+
+            let cls = '';
+            let tip = `Q${qIndex + 1}`;
+            if (quickState === 'nr') { cls = 'nr'; tip += ' — Non rendue'; }
+            else if (quickState === 'tb') { cls = 'answered'; exEarned += qMax; tip += ' — Très bien'; }
+            else if (quickState === 'tf') { cls = 'wrong'; tip += ' — Faux'; }
+            else if (scoreData && Object.keys(scoreData).length > 0) {
+                exEarned += qScore;
+                if (qMax > 0 && qScore >= qMax) { cls = 'answered'; }
+                else if (qScore > 0) { cls = 'partial'; }
+                else { cls = 'wrong'; }
+                tip += ` — ${fmt(qScore)}/${fmt(qMax)}`;
+            }
+            qHtml.push(`<div class="nr-grid-question ${cls}" title="${tip}"></div>`);
+        });
+
+        totalEarned += exEarned; totalMax += exMax;
+        const allOk = exMax > 0 && exEarned === exMax;
+        html += `
+            <div class="nr-grid-exercise${isBonus ? ' nr-grid-bonus' : ''}">
+                <span class="nr-grid-exercise-icon">${icon}</span>
+                <span class="nr-grid-exercise-name" title="${(exercise.title || '').replace(/"/g, '&quot;')}">${name}</span>
+                <div class="nr-grid-questions">${qHtml.join('')}</div>
+                <span class="nr-grid-count ${allOk ? 'all-answered' : ''}">${fmt(exEarned)}/${fmt(exMax)}</span>
+            </div>`;
+    });
+
+    const allPerfect = totalMax > 0 && totalEarned === totalMax;
+    html += `
+        <div class="nr-grid-total">
+            <span class="nr-grid-total-label">Total</span>
+            <span class="nr-grid-total-value ${!allPerfect ? 'has-nr' : ''}">${fmt(totalEarned)}/${fmt(totalMax)}</span>
+        </div>`;
+
+    container.innerHTML = html;
 }
 
 function renderCompetencesValidation(competencesScores) {

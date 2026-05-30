@@ -44,7 +44,9 @@ function savePdfSession() {
             baremeConfig: appState.baremeConfig || null,
             exercisesData: window.exercisesData || null,
             candidateNamesMap: window.candidateNamesMap || {},
-            csvCandidates: typeof csvCandidates !== 'undefined' ? csvCandidates : null
+            csvCandidates: typeof csvCandidates !== 'undefined' ? csvCandidates : null,
+            modeSelected: appState.modeSelected || false,
+            correctionMode: appState.correctionMode || ''
         };
         localStorage.setItem(PDF_SESSION_STORAGE, JSON.stringify(snapshot));
     } catch (e) {
@@ -84,6 +86,16 @@ function restorePdfSession() {
         if (snapshot.csvCandidates) {
             // csvCandidates est une variable globale du module app.js
             try { csvCandidates = snapshot.csvCandidates; } catch (e) { window.csvCandidates = snapshot.csvCandidates; }
+        }
+        if (typeof snapshot.modeSelected === 'boolean') appState.modeSelected = snapshot.modeSelected;
+        if (snapshot.correctionMode) appState.correctionMode = snapshot.correctionMode;
+        // Filet de sécurité : si une correction est en cours (candidats + exercices présents),
+        // on réactive le mode de correction pour éviter des cartes grisées non cliquables au reload.
+        if (!appState.modeSelected
+            && appState.candidates && appState.candidates.length > 0
+            && appState.pdfImport && appState.pdfImport.exercises && appState.pdfImport.exercises.length > 0) {
+            appState.modeSelected = true;
+            if (!appState.correctionMode) appState.correctionMode = 'candidate';
         }
         console.log('♻️ Session Import PDF restaurée (sauvegardée le ' + new Date(snapshot.t).toLocaleString() + ')');
         return true;
