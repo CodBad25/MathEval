@@ -173,39 +173,36 @@ function parseJsonCorrection() {
         //  - aux numero string ("1a", "1b", "a", "b"...)
         //  - aux découpages en exercices différents entre JSON et OCR (Bonus séparés ou fusionnés)
         if (data.exercises && Array.isArray(data.exercises)) {
-            // Aplatir les questions détectées par l'app (OCR) — sert de pool de réutilisation
-            var appAllQuestions = [];
-            exercises.forEach(function (ex) {
-                ex.questions.forEach(function (q) { appAllQuestions.push(q); });
-            });
-            // Compter les questions du JSON
+            // Compter les questions (info debug)
             var jsonQCount = 0;
             data.exercises.forEach(function (je) { jsonQCount += (je.questions || []).length; });
-            console.log('📊 Mapping : ' + jsonQCount + ' questions JSON → ' + appAllQuestions.length + ' questions détectées par l\'app');
-            if (jsonQCount !== appAllQuestions.length) {
-                console.warn('⚠️ Décompte différent : ' + jsonQCount + ' (JSON) vs ' + appAllQuestions.length + ' (app). Le JSON est la source de vérité pour la structure.');
-            }
+            var appQCount = 0;
+            exercises.forEach(function (ex) { appQCount += (ex.questions || []).length; });
+            console.log('📊 Mapping par exercice : ' + jsonQCount + ' questions JSON / ' + appQCount + ' zones détectées (OCR)');
 
-            // RECONSTRUCTION DE LA STRUCTURE EXERCICES selon le JSON
-            // → si l'OCR a fusionné des exos (ex: Bonus absorbés dans Ex4), on les sépare
-            //   en respectant le découpage du JSON. Les questions OCR sont réutilisées
-            //   par index ; si l'app en a moins, on crée des questions à partir du JSON.
+            // RECONSTRUCTION DE LA STRUCTURE selon le JSON, EXERCICE PAR EXERCICE.
+            // Le JSON est la source de vérité pour la structure (nb d'exos ET de questions).
+            // Pour chaque exercice JSON, on réutilise les zones de l'exercice OCR DE MÊME RANG
+            // (par position), au lieu d'un pool global aplati. Cela évite tout décalage en
+            // cascade et tout débordement dans le dernier exercice, même si la granularité
+            // diffère (ex: le JSON regroupe 1a/1b/1c là où l'OCR les éclate).
             var newExercises = [];
-            var qIdx = 0;
             data.exercises.forEach(function (jsonEx, ei) {
+                var ocrEx = exercises[ei];                 // exercice OCR de même rang (peut être absent)
+                var ocrQuestions = (ocrEx && ocrEx.questions) ? ocrEx.questions : [];
                 var newEx = {
                     id: 'ex' + (ei + 1),
                     num: ei + 1,
                     title: jsonEx.title || ('Exercice ' + (ei + 1)),
                     isBonus: /^bonus/i.test(jsonEx.title || ''),
-                    page: 1,
-                    y: 0,
+                    page: (ocrEx && ocrEx.page) || 1,
+                    y: (ocrEx && ocrEx.y) || 0,
                     questions: []
                 };
                 (jsonEx.questions || []).forEach(function (item, qi) {
-                    var q = appAllQuestions[qIdx];
+                    var q = ocrQuestions[qi];               // zone OCR de CET exo, à la même position
                     if (!q) {
-                        // Aucune question OCR correspondante — on crée à partir du JSON
+                        // Pas de zone OCR correspondante dans cet exo — on crée depuis le JSON
                         q = {
                             id: 'q_json_' + (ei + 1) + '_' + (qi + 1),
                             num: qi + 1,
@@ -223,21 +220,13 @@ function parseJsonCorrection() {
                     if (item.numero) q.numero = String(item.numero); // vrai numéro du sujet (1a, 2a, a, b...) pour l'affichage
                     appState.pdfImport.corrections[q.id] = { text: q.answer };
                     newEx.questions.push(q);
-                    qIdx++;
                     imported++;
                 });
                 newExercises.push(newEx);
             });
-            // Si l'app avait plus de questions OCR que le JSON, on les laisse dans le dernier exo en fin
-            // (cas atypique, on évite de perdre du contenu)
-            if (qIdx < appAllQuestions.length && newExercises.length === 0) {
-                // pas d'exo JSON du tout — on garde l'OCR
-            } else if (qIdx < appAllQuestions.length && newExercises.length > 0) {
-                var lastEx = newExercises[newExercises.length - 1];
-                for (var i = qIdx; i < appAllQuestions.length; i++) {
-                    lastEx.questions.push(appAllQuestions[i]);
-                }
-            }
+            // Les zones OCR en surplus dans un exercice (granularité OCR plus fine que le JSON)
+            // sont volontairement ignorées : le JSON fait foi sur le nombre de questions.
+            // → Plus de "déversoir" des zones restantes dans le dernier exercice.
             appState.pdfImport.exercises = newExercises;
         } else if (data.questions && Array.isArray(data.questions)) {
             // Format plat : toutes les questions dans l'ordre
