@@ -17,6 +17,7 @@ function showPage(pageId) {
         'automatismesSelectionPage',
         'dnbSelectionPage',
         'pdfImportPage',
+        'dnb2026LaunchPage',
         'baremeDesignPage',
         'setupPage',
         'candidatesPage',
@@ -8421,7 +8422,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Détection du mode Import PDF/DOCX via ?source=upload
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('source') === 'upload') {
+    if (urlParams.get('subject') === 'dnb-2026') {
+        console.log('🎯 Mode DNB 2026 clé en main');
+        showPage('dnb2026LaunchPage');
+        if (typeof initDnb2026LaunchPage === 'function') {
+            initDnb2026LaunchPage();
+        }
+    } else if (urlParams.get('source') === 'upload') {
         console.log('📄 Mode Import PDF/DOCX détecté');
         showPage('pdfImportPage');
         if (typeof initPdfImportPage === 'function') {

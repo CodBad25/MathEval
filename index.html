@@ -520,6 +520,34 @@
             </div>
         </div>
 
+        <!-- Bannière héro DNB 2026 — clé en main -->
+        <div class="dnb2026-hero" onclick="selectSource('dnb-2026')" style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 36px 28px;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 28px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(102,126,234,0.35);
+            transition: transform 0.2s, box-shadow 0.2s;">
+            <div style="font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 10px;">
+                ✨ Nouveau — Spécial DNB 2026
+            </div>
+            <h2 style="font-size: 1.7em; font-weight: 800; margin-bottom: 10px; line-height: 1.2;">
+                🏆 Corriger le DNB National 2026
+            </h2>
+            <p style="font-size: 0.95em; opacity: 0.9; margin-bottom: 22px; line-height: 1.5;">
+                Le sujet Métropole est déjà chargé — indiquez vos copies et corrigez.
+            </p>
+            <button onclick="event.stopPropagation(); selectSource('dnb-2026')" style="
+                background: #fff; color: #764ba2; font-weight: 800; padding: 13px 32px;
+                border-radius: 30px; border: none; font-size: 1em; cursor: pointer;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.18);">
+                Démarrer →
+            </button>
+        </div>
+
         <div class="sources-container">
             <!-- DNB - Disponible -->
             <div class="source-card dnb" onclick="selectSource('dnb')">
@@ -663,6 +691,8 @@
                 // Redirection selon la source
                 if (source === 'mathalea') {
                     window.location.href = 'alea/index.html';
+                } else if (source === 'dnb-2026') {
+                    window.location.href = 'app.html?source=upload&subject=dnb-2026';
                 } else if (source === 'upload') {
                     window.location.href = 'app.html?source=upload';
                 } else {

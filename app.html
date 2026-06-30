@@ -694,6 +694,148 @@
             </div>
         </div>
 
+        <!-- === PAGE DE LANCEMENT DNB 2026 — CLÉ EN MAIN === -->
+        <style>
+            #dnb2026LaunchPage .dnb2026-clair {
+                background: #f4f5f9;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 32px 20px 28px;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            #dnb2026LaunchPage .dnb2026-applabel {
+                color: #9CA3AF; font-size: 0.85em; font-weight: 700; letter-spacing: 2px;
+                text-transform: uppercase; margin-bottom: 20px;
+            }
+            #dnb2026LaunchPage .dnb2026-applabel strong { color: #4F46E5; }
+            #dnb2026LaunchPage .dnb2026-card {
+                background: #fff; border-radius: 16px; padding: 36px; max-width: 580px; width: 100%;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+            }
+            #dnb2026LaunchPage .dnb2026-head { text-align: center; margin-bottom: 24px; }
+            #dnb2026LaunchPage .dnb2026-badge {
+                display: inline-block; background: linear-gradient(135deg, #F59E0B, #EF4444);
+                color: #fff; font-size: 0.7em; font-weight: 800; padding: 5px 14px; border-radius: 20px;
+                text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;
+            }
+            #dnb2026LaunchPage .dnb2026-head h2 {
+                font-size: 1.6em; font-weight: 800; color: #1F2937; margin-bottom: 8px; letter-spacing: -0.4px;
+            }
+            #dnb2026LaunchPage .dnb2026-head p {
+                color: #6B7280; font-size: 0.87em; line-height: 1.55; max-width: 400px; margin: 0 auto;
+            }
+            #dnb2026LaunchPage .dnb2026-bareme {
+                background: #F8FAFC; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px;
+                border-left: 4px solid #4F46E5;
+            }
+            #dnb2026LaunchPage .dnb2026-bareme-titre {
+                font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+                color: #9CA3AF; margin-bottom: 10px;
+            }
+            #dnb2026LaunchPage .dnb2026-row {
+                display: flex; justify-content: space-between; align-items: center; padding: 5px 0;
+                border-bottom: 1px solid #E5E7EB; font-size: 0.83em;
+            }
+            #dnb2026LaunchPage .dnb2026-row:last-of-type { border-bottom: none; }
+            #dnb2026LaunchPage .dnb2026-row-name { color: #374151; font-weight: 500; }
+            #dnb2026LaunchPage .dnb2026-pts {
+                font-weight: 700; color: #fff; background: #4F46E5; padding: 2px 10px; border-radius: 10px;
+                font-size: 0.82em; white-space: nowrap;
+            }
+            #dnb2026LaunchPage .dnb2026-total {
+                display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
+                padding-top: 10px; border-top: 2px solid #4F46E5; font-weight: 700; color: #1F2937; font-size: 0.85em;
+            }
+            #dnb2026LaunchPage .dnb2026-total-val { color: #4F46E5; }
+            #dnb2026LaunchPage .dnb2026-plage-label {
+                display: block; font-weight: 700; color: #1F2937; margin-bottom: 10px; font-size: 0.92em;
+            }
+            #dnb2026LaunchPage .dnb2026-plage-row {
+                display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+            }
+            #dnb2026LaunchPage .dnb2026-plage-group { display: flex; flex-direction: column; }
+            #dnb2026LaunchPage .dnb2026-plage-sub {
+                font-size: 0.75em; color: #9CA3AF; margin-bottom: 5px; font-weight: 500;
+            }
+            #dnb2026LaunchPage .dnb2026-input {
+                padding: 11px 14px; border: 2px solid #E5E7EB; border-radius: 10px; font-size: 1.1em;
+                font-weight: 700; color: #1F2937; text-align: center; transition: border-color 0.2s; width: 100%;
+            }
+            #dnb2026LaunchPage .dnb2026-input:focus {
+                outline: none; border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
+            }
+            #dnb2026LaunchPage .dnb2026-apercu {
+                background: #EEF2FF; border: 1px solid #C7D2FE; color: #4F46E5; border-radius: 8px;
+                padding: 9px 14px; font-size: 0.88em; font-weight: 600; text-align: center; margin-bottom: 22px;
+            }
+            #dnb2026LaunchPage .dnb2026-btn {
+                width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: #fff; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 700;
+                cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(102,126,234,0.40); letter-spacing: 0.1px;
+            }
+            #dnb2026LaunchPage .dnb2026-btn:hover {
+                transform: translateY(-2px); box-shadow: 0 8px 28px rgba(102,126,234,0.55);
+            }
+        </style>
+        <div class="dnb-selection-page" id="dnb2026LaunchPage" style="display: none;">
+            <div class="dnb2026-clair">
+                <div class="dnb2026-applabel">🎯 <strong>MathEval</strong></div>
+                <div class="dnb2026-card">
+                    <div class="dnb2026-head">
+                        <div class="dnb2026-badge">🏆 DNB National — Métropole 2026</div>
+                        <h2>Correction clé en main</h2>
+                        <p>Le barème est pré-configuré. Saisissez votre paquet de copies et corrigez directement.</p>
+                    </div>
+
+                    <div class="dnb2026-bareme">
+                        <div class="dnb2026-bareme-titre">Structure du sujet (pré-chargée)</div>
+                        <div class="dnb2026-row">
+                            <span class="dnb2026-row-name">Automatismes — 9 questions QCM</span>
+                            <span class="dnb2026-pts">6 pts</span>
+                        </div>
+                        <div class="dnb2026-row">
+                            <span class="dnb2026-row-name">Exercice 1 — Médailles &amp; statistiques</span>
+                            <span class="dnb2026-pts">3 pts</span>
+                        </div>
+                        <div class="dnb2026-row">
+                            <span class="dnb2026-row-name">Exercice 2 — Pythagore / Thalès</span>
+                            <span class="dnb2026-pts">4 pts</span>
+                        </div>
+                        <div class="dnb2026-row">
+                            <span class="dnb2026-row-name">Exercice 3 — Volume d'une boule</span>
+                            <span class="dnb2026-pts">3 pts</span>
+                        </div>
+                        <div class="dnb2026-row">
+                            <span class="dnb2026-row-name">Exercice 4 — Sachets &amp; arithmétique</span>
+                            <span class="dnb2026-pts">2 pts</span>
+                        </div>
+                        <div class="dnb2026-total">
+                            <span>Note totale</span>
+                            <span>18 + 2 pts présentation = <span class="dnb2026-total-val">/20</span></span>
+                        </div>
+                    </div>
+
+                    <label class="dnb2026-plage-label">Plage de copies à corriger</label>
+                    <div class="dnb2026-plage-row">
+                        <div class="dnb2026-plage-group">
+                            <span class="dnb2026-plage-sub">Du numéro</span>
+                            <input class="dnb2026-input" type="number" value="1" min="1" id="dnb2026Start">
+                        </div>
+                        <div class="dnb2026-plage-group">
+                            <span class="dnb2026-plage-sub">Au numéro</span>
+                            <input class="dnb2026-input" type="number" value="30" min="1" id="dnb2026End">
+                        </div>
+                    </div>
+                    <div class="dnb2026-apercu" id="dnb2026Preview">30 candidats — numéros 1 à 30</div>
+
+                    <button class="dnb2026-btn" onclick="startDnb2026Correction()">⚡ Démarrer la correction →</button>
+                </div>
+            </div>
+        </div>
+
         <!-- === PAGE DE CONFIGURATION === -->
         <div class="setup-page" id="setupPage" style="display: none;">
             <div class="setup-card">
@@ -1693,8 +1835,9 @@
     <script src="js/modules/questionParser.js?v=20260417002"></script>
     <script src="js/modules/baremeConfig.js?v=20260630001"></script>
     <script src="js/modules/correctionManager.js?v=20260630003"></script>
+    <script src="js/modules/dnb2026.js?v=20260701003"></script>
     <script src="js/modules/pdfSessionPersist.js?v=20260530001"></script>
     <script src="js/modules/exportPronote.js?v=20260611001"></script>
-    <script src="js/app.js?v=20260630014"></script>
+    <script src="js/app.js?v=20260701001"></script>
 </body>
 </html>

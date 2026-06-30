@@ -93,7 +93,7 @@
       box-shadow: 0 4px 14px rgba(245,158,11,0.45);
       letter-spacing: 0.4px;
       pointer-events: none;
-      max-width: 240px;
+      max-width: 280px;
       text-align: right;
     }
 
@@ -104,7 +104,7 @@
     .section.active { display: block; }
 
     /* ================================================
-       FONDS
+       FOND CLAIR — commun à toutes les vues
        ================================================ */
     .page-clair {
       background: #f4f5f9;
@@ -114,31 +114,6 @@
       align-items: center;
       justify-content: center;
       padding: 32px 20px 28px;
-    }
-
-    .page-teinte {
-      background: linear-gradient(160deg, #eef0fb 0%, #f8f9ff 50%, #ffffff 100%);
-      min-height: calc(100vh - 56px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 20px 28px;
-      position: relative;
-    }
-
-    /* Léger halo violet pâle en haut pour la variante teintée */
-    .page-teinte::before {
-      content: '';
-      position: absolute;
-      top: -60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 700px;
-      height: 400px;
-      background: radial-gradient(ellipse, rgba(99, 90, 230, 0.10) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
     }
 
     /* ================================================
@@ -155,12 +130,10 @@
       position: relative;
     }
 
-    .app-label strong {
-      color: #4F46E5;
-    }
+    .app-label strong { color: #4F46E5; }
 
     /* ================================================
-       CARTE CENTRALE
+       CARTE CENTRALE (écran de lancement)
        ================================================ */
     .main-card {
       background: #ffffff;
@@ -371,6 +344,204 @@
     }
 
     .other-link a:hover { color: #4F46E5; }
+
+    /* ================================================
+       SECTION A2 — HUB avec bannière héro
+       ================================================ */
+    .page-hub {
+      background: #f4f5f9;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* Bannière héro pleine largeur */
+    .hero-banner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 44px 24px 40px;
+      text-align: center;
+      color: white;
+    }
+
+    .hero-pretitle {
+      font-size: 0.72em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0.75;
+      margin-bottom: 10px;
+    }
+
+    .hero-banner h1 {
+      font-size: 1.9em;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .hero-banner p {
+      font-size: 0.95em;
+      opacity: 0.88;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .hero-chips {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+
+    .hero-chip {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      font-size: 0.78em;
+      font-weight: 600;
+      padding: 5px 13px;
+      border-radius: 20px;
+    }
+
+    .hero-btn {
+      display: inline-block;
+      background: white;
+      color: #764ba2;
+      font-weight: 800;
+      padding: 13px 32px;
+      border-radius: 30px;
+      border: none;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      letter-spacing: 0.1px;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    /* Grille des 3 cartes du hub */
+    .hub-content {
+      max-width: 940px;
+      margin: 0 auto;
+      padding: 32px 20px 40px;
+    }
+
+    .hub-section-title {
+      font-size: 0.73em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: #9CA3AF;
+      margin-bottom: 16px;
+    }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 720px) {
+      .hub-grid { grid-template-columns: 1fr; }
+    }
+
+    .hub-card {
+      background: white;
+      border-radius: 16px;
+      padding: 26px 22px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hub-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.13);
+      border-color: #C7D2FE;
+    }
+
+    .hub-card-badge {
+      display: inline-block;
+      background: #ECFDF5;
+      color: #059669;
+      font-size: 0.67em;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 10px;
+      align-self: flex-start;
+      letter-spacing: 0.3px;
+    }
+
+    .hub-card-icon { font-size: 2em; line-height: 1; }
+
+    .hub-card-title {
+      font-size: 1em;
+      font-weight: 700;
+      color: #1F2937;
+      line-height: 1.3;
+    }
+
+    .hub-card-desc {
+      font-size: 0.81em;
+      color: #6B7280;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .hub-card-features {
+      list-style: none;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hub-card-features li {
+      font-size: 0.78em;
+      color: #4B5563;
+      padding-left: 14px;
+      position: relative;
+    }
+
+    .hub-card-features li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #059669;
+      font-weight: 700;
+    }
+
+    .hub-card-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #EEF2FF;
+      color: #4F46E5;
+      font-size: 0.8em;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 6px;
+      align-self: flex-start;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .hub-card-btn:hover {
+      background: #4F46E5;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -381,18 +552,103 @@
 <nav class="proto-nav">
   <span class="proto-nav-label">🔬 Proto DNB 2026</span>
 
-  <button class="proto-btn active" onclick="showSection('clair')" id="btn-clair">Fond clair</button>
-  <button class="proto-btn"        onclick="showSection('teinte')" id="btn-teinte">Fond teinté</button>
+  <button class="proto-btn active" onclick="showSection('a2')" id="btn-a2">Accueil A2</button>
+  <button class="proto-btn"        onclick="showSection('a3')" id="btn-a3">Accueil A3</button>
+  <button class="proto-btn"        onclick="showSection('lancement')" id="btn-lancement">Écran de lancement</button>
 </nav>
 
 <!-- Badge flottant indiquant la variante active -->
-<div class="variant-badge" id="variantBadge">Fond clair — sobre / dashboard</div>
+<div class="variant-badge" id="variantBadge">A2 — Hub + bannière héro</div>
 
 
 <!-- ===================================================
-     SECTION "FOND CLAIR"
+     SECTION A2 — Accueil avec hub conservé + bannière héro
      =================================================== -->
-<div class="section active" id="section-clair">
+<div class="section active" id="section-a2">
+  <div class="page-hub">
+
+    <!-- Bannière héro pleine largeur -->
+    <div class="hero-banner" onclick="showSection('lancement')" style="cursor:pointer;">
+      <div class="hero-pretitle">✨ Nouveau — Spécial DNB 2026</div>
+      <h1>🎯 Corriger le DNB 2026 — Métropole</h1>
+      <p>Barème pré-configuré · Prêt à corriger en 30 secondes</p>
+      <div class="hero-chips">
+        <span class="hero-chip">📋 Barème officiel intégré</span>
+        <span class="hero-chip">⚡ Correction immédiate</span>
+        <span class="hero-chip">18 + 2 pts présentation</span>
+      </div>
+      <button class="hero-btn" onclick="event.stopPropagation(); showSection('lancement');">
+        Lancer la correction →
+      </button>
+    </div>
+
+    <!-- Grille des 3 cartes du hub réel -->
+    <div class="hub-content">
+      <div class="hub-section-title">Ou choisissez un autre mode de correction</div>
+      <div class="hub-grid">
+
+        <!-- Carte 1 : Sujets DNB Blanc -->
+        <div class="hub-card">
+          <span class="hub-card-badge">Disponible</span>
+          <div class="hub-card-icon">📚</div>
+          <div class="hub-card-title">Sujets DNB Blanc</div>
+          <div class="hub-card-desc">
+            Concevez et corrigez des sujets de DNB blanc conformes au nouveau brevet
+          </div>
+          <ul class="hub-card-features">
+            <li>Format officiel avec automatismes</li>
+            <li>Notation sur 20 points</li>
+            <li>Base complète depuis 2013</li>
+            <li>Corrections détaillées</li>
+          </ul>
+          <button class="hub-card-btn">Créer un sujet DNB →</button>
+        </div>
+
+        <!-- Carte 2 : MathALÉA -->
+        <div class="hub-card">
+          <span class="hub-card-badge">Disponible</span>
+          <div class="hub-card-icon">🎓</div>
+          <div class="hub-card-title">Plateforme MathALÉA</div>
+          <div class="hub-card-desc">
+            Accédez à la plateforme complète d'exercices de mathématiques
+          </div>
+          <ul class="hub-card-features">
+            <li>Des milliers d'exercices interactifs</li>
+            <li>Corrections détaillées et animées</li>
+            <li>Génération automatique d'évaluations</li>
+            <li>Exercices paramétrables et aléatoires</li>
+          </ul>
+          <button class="hub-card-btn">Accéder à MathALÉA →</button>
+        </div>
+
+        <!-- Carte 3 : Import PDF / DOCX -->
+        <div class="hub-card">
+          <span class="hub-card-badge">Disponible</span>
+          <div class="hub-card-icon">📄</div>
+          <div class="hub-card-title">Import PDF / DOCX</div>
+          <div class="hub-card-desc">
+            Importez vos propres sujets au format PDF ou Word
+          </div>
+          <ul class="hub-card-features">
+            <li>Upload de fichiers PDF ou DOCX</li>
+            <li>Découpage semi-auto des questions</li>
+            <li>Barème et compétences personnalisables</li>
+            <li>Correction via PDF, photos ou JSON IA</li>
+          </ul>
+          <button class="hub-card-btn">Importer un sujet →</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ===================================================
+     SECTION A3 — Accès direct (carte de lancement + lien discret)
+     =================================================== -->
+<div class="section" id="section-a3">
   <div class="page-clair">
 
     <div class="app-label">🎯 <strong>MathEval</strong></div>
@@ -437,21 +693,21 @@
         <div class="plage-group">
           <span class="plage-sublabel">Du numéro</span>
           <input class="plage-input" type="number" value="1" min="1"
-                 id="clair-from" oninput="updateApercu('clair')">
+                 id="a3-from" oninput="updateApercu('a3')">
         </div>
         <div class="plage-group">
           <span class="plage-sublabel">Au numéro</span>
           <input class="plage-input" type="number" value="28" min="1"
-                 id="clair-to" oninput="updateApercu('clair')">
+                 id="a3-to" oninput="updateApercu('a3')">
         </div>
       </div>
-      <div class="apercu-pill" id="clair-apercu">28 candidats — numéros 1 à 28</div>
+      <div class="apercu-pill" id="a3-apercu">28 candidats — numéros 1 à 28</div>
 
       <button class="btn-demarrer">⚡ Démarrer la correction →</button>
     </div>
 
     <div class="other-link">
-      Ce n'est pas le DNB 2026 ?&nbsp;<a>Choisir un autre mode de correction</a>
+      Ce n'est pas le DNB 2026 ?&nbsp;<a onclick="showSection('a2')">Choisir un autre mode de correction</a>
     </div>
 
   </div>
@@ -459,10 +715,10 @@
 
 
 <!-- ===================================================
-     SECTION "FOND TEINTÉ"
+     SECTION "ÉCRAN DE LANCEMENT" — cible commune (validée)
      =================================================== -->
-<div class="section" id="section-teinte">
-  <div class="page-teinte">
+<div class="section" id="section-lancement">
+  <div class="page-clair">
 
     <div class="app-label">🎯 <strong>MathEval</strong></div>
 
@@ -506,21 +762,17 @@
         <div class="plage-group">
           <span class="plage-sublabel">Du numéro</span>
           <input class="plage-input" type="number" value="1" min="1"
-                 id="teinte-from" oninput="updateApercu('teinte')">
+                 id="lancement-from" oninput="updateApercu('lancement')">
         </div>
         <div class="plage-group">
           <span class="plage-sublabel">Au numéro</span>
           <input class="plage-input" type="number" value="28" min="1"
-                 id="teinte-to" oninput="updateApercu('teinte')">
+                 id="lancement-to" oninput="updateApercu('lancement')">
         </div>
       </div>
-      <div class="apercu-pill" id="teinte-apercu">28 candidats — numéros 1 à 28</div>
+      <div class="apercu-pill" id="lancement-apercu">28 candidats — numéros 1 à 28</div>
 
       <button class="btn-demarrer">⚡ Démarrer la correction →</button>
-    </div>
-
-    <div class="other-link">
-      Ce n'est pas le DNB 2026 ?&nbsp;<a>Choisir un autre mode de correction</a>
     </div>
 
   </div>
@@ -532,8 +784,9 @@
      NAVIGATION ENTRE LES SECTIONS
      ================================================ */
   var LABELS = {
-    clair:  'Fond clair — sobre / dashboard',
-    teinte: 'Fond teinté — voile violet pâle',
+    a2:        'A2 — Hub + bannière héro',
+    a3:        'A3 — Accès direct (sans hub)',
+    lancement: 'Écran de lancement — cible commune',
   };
 
   function showSection(id) {
@@ -564,7 +817,7 @@
   /* ================================================
      INITIALISATION
      ================================================ */
-  showSection('clair');
+  showSection('a2');
 </script>
 </body>
 </html>
