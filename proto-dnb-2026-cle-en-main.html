@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proto — DNB 2026 Clé en main · MathEval</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* === RESET & BASE === */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary:      #4F46E5;
+      --primary-dark: #4338CA;
+      --accent:       #F59E0B;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding-top: 56px;
+    }
+
+    /* ================================================
+       BANDEAU DE NAVIGATION DU PROTOTYPE (fixe en haut)
+       ================================================ */
+    .proto-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: rgba(10, 7, 30, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .proto-nav-label {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.68em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+
+    .proto-btn {
+      padding: 5px 11px;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.7);
+      border-radius: 20px;
+      font-size: 0.72em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .proto-btn:hover {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      border-color: rgba(255,255,255,0.45);
+    }
+
+    .proto-btn.active {
+      background: #4F46E5;
+      border-color: #4F46E5;
+      color: white;
+    }
+
+    /* ================================================
+       BADGE VARIANTE (affiché en haut à droite)
+       ================================================ */
+    .variant-badge {
+      position: fixed;
+      top: 64px;
+      right: 14px;
+      z-index: 8000;
+      background: linear-gradient(135deg, #F59E0B, #EF4444);
+      color: white;
+      font-size: 0.7em;
+      font-weight: 800;
+      padding: 5px 13px;
+      border-radius: 20px;
+      box-shadow: 0 4px 14px rgba(245,158,11,0.45);
+      letter-spacing: 0.4px;
+      pointer-events: none;
+      max-width: 240px;
+      text-align: right;
+    }
+
+    /* ================================================
+       SECTIONS
+       ================================================ */
+    .section { display: none; min-height: calc(100vh - 56px); }
+    .section.active { display: block; }
+
+    /* ================================================
+       FONDS
+       ================================================ */
+    .page-clair {
+      background: #f4f5f9;
+      min-height: calc(100vh - 56px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px 28px;
+    }
+
+    .page-teinte {
+      background: linear-gradient(160deg, #eef0fb 0%, #f8f9ff 50%, #ffffff 100%);
+      min-height: calc(100vh - 56px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px 28px;
+      position: relative;
+    }
+
+    /* Léger halo violet pâle en haut pour la variante teintée */
+    .page-teinte::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(99, 90, 230, 0.10) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ================================================
+       ÉTIQUETTE APP
+       ================================================ */
+    .app-label {
+      color: #9CA3AF;
+      font-size: 0.85em;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      z-index: 1;
+      position: relative;
+    }
+
+    .app-label strong {
+      color: #4F46E5;
+    }
+
+    /* ================================================
+       CARTE CENTRALE
+       ================================================ */
+    .main-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 36px;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+      z-index: 1;
+      position: relative;
+    }
+
+    /* ================================================
+       EN-TÊTE DE LA CARTE
+       ================================================ */
+    .card-head {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .badge-dnb {
+      display: inline-block;
+      background: linear-gradient(135deg, #F59E0B, #EF4444);
+      color: white;
+      font-size: 0.7em;
+      font-weight: 800;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    .card-head h2 {
+      font-size: 1.6em;
+      font-weight: 800;
+      color: #1F2937;
+      margin-bottom: 8px;
+      letter-spacing: -0.4px;
+    }
+
+    .card-head p {
+      color: #6B7280;
+      font-size: 0.87em;
+      line-height: 1.55;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* ================================================
+       STRUCTURE BARÈME PRÉ-CHARGÉE
+       ================================================ */
+    .bareme-bloc {
+      background: #F8FAFC;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      border-left: 4px solid #4F46E5;
+    }
+
+    .bareme-titre {
+      font-size: 0.72em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #9CA3AF;
+      margin-bottom: 10px;
+    }
+
+    .bareme-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 0.83em;
+    }
+
+    .bareme-row:last-child { border-bottom: none; }
+
+    .bareme-row-name { color: #374151; font-weight: 500; }
+
+    .bareme-pts {
+      font-weight: 700;
+      color: white;
+      background: #4F46E5;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 0.82em;
+      white-space: nowrap;
+    }
+
+    .bareme-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 2px solid #4F46E5;
+      font-weight: 700;
+      color: #1F2937;
+      font-size: 0.85em;
+    }
+
+    .bareme-total-val { color: #4F46E5; }
+
+    /* ================================================
+       PLAGE DE COPIES
+       ================================================ */
+    .plage-label {
+      display: block;
+      font-weight: 700;
+      color: #1F2937;
+      margin-bottom: 10px;
+      font-size: 0.92em;
+    }
+
+    .plage-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .plage-group { display: flex; flex-direction: column; }
+
+    .plage-sublabel {
+      font-size: 0.75em;
+      color: #9CA3AF;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .plage-input {
+      padding: 11px 14px;
+      border: 2px solid #E5E7EB;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: 700;
+      color: #1F2937;
+      text-align: center;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .plage-input:focus {
+      outline: none;
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+    }
+
+    .apercu-pill {
+      background: #EEF2FF;
+      border: 1px solid #C7D2FE;
+      color: #4F46E5;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 0.88em;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    /* ================================================
+       BOUTON DÉMARRER
+       ================================================ */
+    .btn-demarrer {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.40);
+      font-family: inherit;
+      letter-spacing: 0.1px;
+    }
+
+    .btn-demarrer:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(102, 126, 234, 0.55);
+    }
+
+    /* ================================================
+       LIEN DISCRET EN BAS
+       ================================================ */
+    .other-link {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.82em;
+      color: #9CA3AF;
+      z-index: 1;
+      position: relative;
+    }
+
+    .other-link a {
+      color: #6B7280;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .other-link a:hover { color: #4F46E5; }
+  </style>
+</head>
+<body>
+
+<!-- ===================================================
+     BANDEAU DE NAVIGATION DU PROTOTYPE
+     =================================================== -->
+<nav class="proto-nav">
+  <span class="proto-nav-label">🔬 Proto DNB 2026</span>
+
+  <button class="proto-btn active" onclick="showSection('clair')" id="btn-clair">Fond clair</button>
+  <button class="proto-btn"        onclick="showSection('teinte')" id="btn-teinte">Fond teinté</button>
+</nav>
+
+<!-- Badge flottant indiquant la variante active -->
+<div class="variant-badge" id="variantBadge">Fond clair — sobre / dashboard</div>
+
+
+<!-- ===================================================
+     SECTION "FOND CLAIR"
+     =================================================== -->
+<div class="section active" id="section-clair">
+  <div class="page-clair">
+
+    <div class="app-label">🎯 <strong>MathEval</strong></div>
+
+    <div class="main-card">
+      <div class="card-head">
+        <div class="badge-dnb">🏆 DNB National — Métropole 2026</div>
+        <h2>Correction clé en main</h2>
+        <p>Le barème est pré-configuré. Saisissez votre paquet de copies et corrigez directement.</p>
+      </div>
+
+      <div class="bareme-bloc">
+        <div class="bareme-titre">Structure du sujet (pré-chargée)</div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Automatismes — 9 questions QCM</span>
+          <span class="bareme-pts">6 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 1 — Médailles &amp; statistiques</span>
+          <span class="bareme-pts">3 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 2 — Pythagore / Thalès</span>
+          <span class="bareme-pts">4 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 3 — Volume d'une boule</span>
+          <span class="bareme-pts">3 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 4 — Sachets &amp; arithmétique</span>
+          <span class="bareme-pts">2 pts</span>
+        </div>
+        <div class="bareme-total">
+          <span>Note totale</span>
+          <span>18 + 2 pts présentation = <span class="bareme-total-val">/20</span></span>
+        </div>
+      </div>
+
+      <label class="plage-label">Plage de copies à corriger</label>
+      <div class="plage-row">
+        <div class="plage-group">
+          <span class="plage-sublabel">Du numéro</span>
+          <input class="plage-input" type="number" value="1" min="1"
+                 id="clair-from" oninput="updateApercu('clair')">
+        </div>
+        <div class="plage-group">
+          <span class="plage-sublabel">Au numéro</span>
+          <input class="plage-input" type="number" value="28" min="1"
+                 id="clair-to" oninput="updateApercu('clair')">
+        </div>
+      </div>
+      <div class="apercu-pill" id="clair-apercu">28 candidats — numéros 1 à 28</div>
+
+      <button class="btn-demarrer">⚡ Démarrer la correction →</button>
+    </div>
+
+    <div class="other-link">
+      Ce n'est pas le DNB 2026 ?&nbsp;<a>Choisir un autre mode de correction</a>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ===================================================
+     SECTION "FOND TEINTÉ"
+     =================================================== -->
+<div class="section" id="section-teinte">
+  <div class="page-teinte">
+
+    <div class="app-label">🎯 <strong>MathEval</strong></div>
+
+    <div class="main-card">
+      <div class="card-head">
+        <div class="badge-dnb">🏆 DNB National — Métropole 2026</div>
+        <h2>Correction clé en main</h2>
+        <p>Le barème est pré-configuré. Saisissez votre paquet de copies et corrigez directement.</p>
+      </div>
+
+      <div class="bareme-bloc">
+        <div class="bareme-titre">Structure du sujet (pré-chargée)</div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Automatismes — 9 questions QCM</span>
+          <span class="bareme-pts">6 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 1 — Médailles &amp; statistiques</span>
+          <span class="bareme-pts">3 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 2 — Pythagore / Thalès</span>
+          <span class="bareme-pts">4 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 3 — Volume d'une boule</span>
+          <span class="bareme-pts">3 pts</span>
+        </div>
+        <div class="bareme-row">
+          <span class="bareme-row-name">Exercice 4 — Sachets &amp; arithmétique</span>
+          <span class="bareme-pts">2 pts</span>
+        </div>
+        <div class="bareme-total">
+          <span>Note totale</span>
+          <span>18 + 2 pts présentation = <span class="bareme-total-val">/20</span></span>
+        </div>
+      </div>
+
+      <label class="plage-label">Plage de copies à corriger</label>
+      <div class="plage-row">
+        <div class="plage-group">
+          <span class="plage-sublabel">Du numéro</span>
+          <input class="plage-input" type="number" value="1" min="1"
+                 id="teinte-from" oninput="updateApercu('teinte')">
+        </div>
+        <div class="plage-group">
+          <span class="plage-sublabel">Au numéro</span>
+          <input class="plage-input" type="number" value="28" min="1"
+                 id="teinte-to" oninput="updateApercu('teinte')">
+        </div>
+      </div>
+      <div class="apercu-pill" id="teinte-apercu">28 candidats — numéros 1 à 28</div>
+
+      <button class="btn-demarrer">⚡ Démarrer la correction →</button>
+    </div>
+
+    <div class="other-link">
+      Ce n'est pas le DNB 2026 ?&nbsp;<a>Choisir un autre mode de correction</a>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+  /* ================================================
+     NAVIGATION ENTRE LES SECTIONS
+     ================================================ */
+  var LABELS = {
+    clair:  'Fond clair — sobre / dashboard',
+    teinte: 'Fond teinté — voile violet pâle',
+  };
+
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(function(s) {
+      s.classList.remove('active');
+    });
+    document.querySelectorAll('.proto-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    document.getElementById('section-' + id).classList.add('active');
+    var btn = document.getElementById('btn-' + id);
+    if (btn) btn.classList.add('active');
+    document.getElementById('variantBadge').textContent = LABELS[id] || id;
+    window.scrollTo(0, 0);
+  }
+
+  /* ================================================
+     PRÉVISUALISATION — bandeau d'aperçu
+     ================================================ */
+  function updateApercu(prefix) {
+    var f = parseInt(document.getElementById(prefix + '-from').value) || 1;
+    var t = parseInt(document.getElementById(prefix + '-to').value)   || 1;
+    var n = Math.max(0, t - f + 1);
+    document.getElementById(prefix + '-apercu').textContent =
+      n + ' candidat' + (n > 1 ? 's' : '') + ' — numéros ' + f + ' à ' + t;
+  }
+
+  /* ================================================
+     INITIALISATION
+     ================================================ */
+  showSection('clair');
+</script>
+</body>
+</html>
