@@ -47,6 +47,17 @@ function showPage(pageId) {
         } else if (pageId === 'automatismesSelectionPage' && typeof renderAutomatismes === 'function') {
             console.log('🔄 Appel automatique de renderAutomatismes()');
             setTimeout(() => renderAutomatismes(), 50);
+        } else if (pageId === 'candidatesOverviewPage') {
+            // Bouton "Réimporter corrections" : visible uniquement en mode Import PDF
+            const reimportBtn = document.getElementById('btnReimportCorrections');
+            if (reimportBtn) reimportBtn.style.display = (appState && appState.pdfImport) ? 'flex' : 'none';
+            // Repartir d'une recherche vierge + curseur prêt pour enchaîner directement l'élève suivant
+            const si = document.getElementById('candidateSearchInput');
+            if (si) {
+                si.value = '';
+                if (typeof filterCandidateCards === 'function') filterCandidateCards();
+                setTimeout(() => { try { si.focus(); } catch (e) {} }, 50);
+            }
         }
     } else {
         console.error(`❌ Page ${pageId} introuvable`);
@@ -4247,7 +4258,21 @@ function renderExerciseTabs() {
         // Préfixe : "Ex N — " pour les exercices normaux, rien pour les bonus
         // (leur titre contient déjà "BONUS N — ...")
         const isBonus = !!exercise.isBonus || /^bonus/i.test(exercise.title || '');
-        const displayTitle = isBonus ? theme : `Ex ${exerciseNum} — ${theme}`;
+        // Mode Import PDF (option 3) UNIQUEMENT : respecter la numérotation officielle
+        // portée par le titre (« Automatismes » non numéroté, « Exercice N — … » gardé
+        // tel quel). Le DNB blanc (appState.pdfImport absent) conserve « Ex N — … ».
+        const isPdfImportMode = !!(appState && appState.pdfImport);
+        const rawTitle = (exercise.title || '').trim();
+        let displayTitle;
+        if (isBonus) {
+            displayTitle = theme;
+        } else if (isPdfImportMode && /^automatismes/i.test(rawTitle)) {
+            displayTitle = theme;
+        } else if (isPdfImportMode && /^exercice\s*\d+/i.test(rawTitle)) {
+            displayTitle = rawTitle;
+        } else {
+            displayTitle = `Ex ${exerciseNum} — ${theme}`;
+        }
         button.innerHTML = `
             <span class="tab-icon">${icon}</span>
             <span>${displayTitle}</span>
@@ -4989,7 +5014,7 @@ function autoNavigateAfterQuickButton() {
             nextCandidate();
         } else {
             // Dernier candidat : passer à l'exercice suivant, candidat 1
-            if (appState.currentExerciseIndex < 5) {
+            if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
                 appState.currentCandidateIndex = 0; // Retour au premier candidat
                 nextExercise();
             } else {
@@ -5000,21 +5025,20 @@ function autoNavigateAfterQuickButton() {
     } else if (appState.correctionMode === 'candidate') {
         // Mode par candidat : corriger tous les exercices pour le même candidat
         // → passer à l'exercice suivant (même candidat)
-        if (appState.currentExerciseIndex < 5) {
+        if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
             // Passer à l'exercice suivant pour le même candidat
             nextExercise();
         } else {
-            // Dernier exercice : candidat terminé, proposer validation
+            // Dernier exercice : si toute la copie est corrigée, ouvrir DIRECTEMENT la modale de validation
             const candidate = appState.activeCandidates[appState.currentCandidateIndex];
-            if (confirm('🎉 Candidat terminé ! Voulez-vous valider la correction maintenant ?')) {
-                validateCorrection();
-            } else {
-                // Passer au candidat suivant, exercice 1
-                if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
-                    appState.currentExerciseIndex = 1;
-                    nextCandidate();
-                    showTab('exercise1');
-                }
+            const details = calculateCandidateDetails(candidate.number);
+            if (details.questionsAnswered >= details.totalQuestions) {
+                validateCorrection(); // modale directe (pas de confirm puisque 100% corrigé)
+            } else if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
+                // Copie encore incomplète : passer au candidat suivant
+                appState.currentExerciseIndex = 1;
+                nextCandidate();
+                showTab('exercise1');
             }
         }
     }
@@ -5085,12 +5109,18 @@ function autoNavigateAfterCompetenceCorrection(originalExerciseNumber, questionI
         if (exerciseState === 'completed' || exerciseState === 'perfect') {
             // TOUT l'exercice est terminé → passer à l'exercice suivant
             console.log('✅ NAVIGATION AUTOMATIQUE DÉCLENCHÉE !');
-            if (appState.currentExerciseIndex < 5) {
+            if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
                 console.log(`📍 Passage de l'exercice ${appState.currentExerciseIndex} vers ${appState.currentExerciseIndex + 1}`);
                 nextExercise();
             } else {
-                // Dernier exercice du candidat : pas de navigation automatique
-                console.log('🏁 Dernier exercice atteint - validation manuelle possible');
+                // Dernier exercice terminé : si toute la copie est corrigée, ouvrir la modale de validation
+                const details = calculateCandidateDetails(candidate.number);
+                if (details.questionsAnswered >= details.totalQuestions) {
+                    console.log('🏁 Copie 100% corrigée → ouverture automatique de la modale de validation');
+                    validateCorrection(); // modale directe, sans demander de confirmation
+                } else {
+                    console.log('🏁 Dernier exercice atteint mais copie incomplète - validation manuelle possible');
+                }
             }
         } else {
             // Exercice pas entièrement terminé → chercher la prochaine question non terminée
@@ -5768,9 +5798,9 @@ function renderExerciseContent(exerciseNumber) {
                 </div>
                 
                 ${question.qcm ? `
-                    <div class="qcm-options">
+                    <div class="qcm-options"${(appState && appState.pdfImport) ? ' style="display:flex;flex-wrap:wrap;gap:6px;"' : ''}>
                         ${question.options.map(option => `
-                            <div class="qcm-option ${option.correct ? 'correct' : ''}">${option.label}</div>
+                            <div class="qcm-option ${option.correct ? 'correct' : ''}"${(appState && appState.pdfImport) ? ' style="white-space:nowrap;"' : ''}>${option.label}</div>
                         `).join('')}
                     </div>
                 ` : ''}
@@ -6118,7 +6148,7 @@ function previousExercise() {
 }
 
 function nextExercise() {
-    if (appState.currentExerciseIndex < 5) {
+    if (appState.currentExerciseIndex < Object.keys(exercisesData).length) {
         appState.currentExerciseIndex++;
         showTab(`exercise${appState.currentExerciseIndex}`);
     } else {
@@ -6195,7 +6225,7 @@ function updateNavigationButtons() {
     } else {
         // Mode par exercice
         const isFirstExerciseFirstCandidate = appState.currentExerciseIndex === 1 && appState.currentCandidateIndex === 0;
-        const isLastExerciseLastCandidate = appState.currentExerciseIndex === 5 && appState.currentCandidateIndex === appState.activeCandidates.length - 1;
+        const isLastExerciseLastCandidate = appState.currentExerciseIndex === Object.keys(exercisesData).length && appState.currentCandidateIndex === appState.activeCandidates.length - 1;
         
         prevBtn.disabled = isFirstExerciseFirstCandidate;
         nextBtn.disabled = isLastExerciseLastCandidate;
@@ -6271,6 +6301,10 @@ function renderCandidatesOverview() {
     // Mettre à jour l'info du mode de correction
     updateCorrectionModeInfo();
 
+    // Bouton "Réimporter corrections" : visible uniquement en mode Import PDF
+    const reimportBtn = document.getElementById('btnReimportCorrections');
+    if (reimportBtn) reimportBtn.style.display = (appState && appState.pdfImport) ? 'flex' : 'none';
+
     // Si un mode est déjà actif (ex: session de correction restaurée), synchroniser le
     // sélecteur visuel pour éviter le faux avertissement "choisir un mode de correction".
     if (appState.modeSelected && appState.correctionMode) {
@@ -6289,7 +6323,8 @@ function renderCandidatesOverview() {
         const card = document.createElement('div');
         card.className = `candidate-overview-card ${details.status}`;
         card.setAttribute('data-candidate', candidate.number);
-        
+        card.setAttribute('data-name', candidate.name || (window.candidateNamesMap || {})[candidate.number] || ('Candidat n°' + candidate.number));
+
         // Désactiver la carte si aucun mode n'est sélectionné
         if (!appState.modeSelected) {
             card.classList.add('disabled');
@@ -6445,6 +6480,56 @@ function renderCandidatesOverview() {
         
         grid.appendChild(card);
     });
+
+    // Réappliquer le filtre courant (préserve la recherche lors d'un rafraîchissement en place).
+    // Le vidage + focus à l'ARRIVÉE sur la page est géré dans showPage().
+    filterCandidateCards();
+}
+
+// === RECHERCHE INTELLIGENTE D'UN ÉLÈVE (page vue d'ensemble) ===
+function _normalizeSearch(s) {
+    return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+function filterCandidateCards() {
+    const input = document.getElementById('candidateSearchInput');
+    if (!input) return;
+    const countEl = document.getElementById('candidateSearchCount');
+    const clearBtn = document.getElementById('candidateSearchClear');
+    const q = _normalizeSearch(input.value);
+    if (clearBtn) clearBtn.style.display = input.value ? 'flex' : 'none';
+
+    const cards = document.querySelectorAll('#candidatesOverviewGrid .candidate-overview-card');
+    let visible = 0;
+    cards.forEach(card => {
+        const name = _normalizeSearch(card.getAttribute('data-name'));
+        const num = (card.getAttribute('data-candidate') || '').toString();
+        const match = !q || name.includes(q) || num.includes(q) || ('n' + num) === q;
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+
+    if (countEl) {
+        countEl.textContent = q ? (visible + ' élève' + (visible > 1 ? 's' : '')) : '';
+        countEl.classList.toggle('none', !!q && visible === 0);
+    }
+}
+
+function handleCandidateSearchKey(e) {
+    if (e.key === 'Escape') { clearCandidateSearch(); return; }
+    if (e.key === 'Enter') {
+        const visibles = Array.from(document.querySelectorAll('#candidatesOverviewGrid .candidate-overview-card'))
+            .filter(c => c.style.display !== 'none');
+        if (visibles.length === 1) {
+            const num = parseInt(visibles[0].getAttribute('data-candidate'), 10);
+            if (!isNaN(num)) startCandidateCorrection(num);
+        }
+    }
+}
+
+function clearCandidateSearch() {
+    const input = document.getElementById('candidateSearchInput');
+    if (input) { input.value = ''; filterCandidateCards(); input.focus(); }
 }
 
 function calculateCandidateTotal(candidateNumber) {
@@ -6554,8 +6639,20 @@ function calculateCandidateDetails(candidateNumber) {
             baseMax += es.maxScore;
         }
     });
-    const baseNote = baseMax > 0 ? (baseScore / baseMax) * 20 : 0;
-    noteOn20 = Math.round(Math.min(20, baseNote + bonusScore) * 10) / 10;
+    // Mode Import PDF (option 3) : barème officiel = exercices (sur baseMax, = 18) +
+    // points de présentation / maîtrise de la langue (sur 2), SANS règle de trois.
+    // Hors ce mode (DNB blanc) : on conserve la mise à l'échelle /20 d'origine.
+    const isPdfImport = !!(appState && appState.pdfImport);
+    let presentationScore = 0, presentationAttributed = false;
+    if (isPdfImport) {
+        const ps = (appState.presentationScores || {})[candidateNumber];
+        presentationAttributed = (typeof ps === 'number');
+        presentationScore = presentationAttributed ? ps : 0;
+        noteOn20 = Math.round(Math.min(20, baseScore + presentationScore + bonusScore) * 10) / 10;
+    } else {
+        const baseNote = baseMax > 0 ? (baseScore / baseMax) * 20 : 0;
+        noteOn20 = Math.round(Math.min(20, baseNote + bonusScore) * 10) / 10;
+    }
 
     // Déterminer le statut
     let status = 'not-started';
@@ -6581,7 +6678,10 @@ function calculateCandidateDetails(candidateNumber) {
         nrCount,
         exerciseScores,
         status,
-        isValidated
+        isValidated,
+        isPdfImport,
+        presentationScore,
+        presentationAttributed
     };
 }
 
@@ -6691,26 +6791,42 @@ function closeSaveMenuOnOutsideClick(e) {
 }
 
 function exportJSON() {
-    const dataToExport = {
-        appState: appState,
-        exercisesData: exercisesData,
-        exportDate: new Date().toISOString(),
-        version: "1.0"
+    // Certaines propriétés de appState.pdfImport ne sont PAS sérialisables et
+    // faisaient planter JSON.stringify (objet File, document pdf.js avec
+    // références circulaires, PDF corrigé). On les exclut de la sauvegarde :
+    // elles sont de toute façon régénérées au ré-upload du PDF.
+    const replacer = (key, value) => {
+        if (key === 'file' || key === 'pdfDoc' || key === '_correctedPdf') return undefined;
+        if (typeof File !== 'undefined' && value instanceof File) return undefined;
+        if (typeof Blob !== 'undefined' && value instanceof Blob) return undefined;
+        return value;
     };
 
-    const jsonString = JSON.stringify(dataToExport, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `matheval-sauvegarde-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    alert('Export JSON réussi !');
+    try {
+        const dataToExport = {
+            appState: appState,
+            exercisesData: exercisesData,
+            exportDate: new Date().toISOString(),
+            version: "1.0"
+        };
+
+        const jsonString = JSON.stringify(dataToExport, replacer, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `matheval-sauvegarde-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        alert('Export JSON réussi !');
+    } catch (err) {
+        console.error('exportJSON a échoué :', err);
+        alert('Échec de l\'export JSON : ' + (err && err.message ? err.message : err));
+    }
 }
 
 function importJSON() {
@@ -6730,7 +6846,12 @@ function handleFileImport(event) {
                 if (confirm('Voulez-vous vraiment importer ces données ? Cela remplacera toute la correction en cours.')) {
                     Object.assign(appState, data.appState);
                     Object.assign(exercisesData, data.exercisesData);
-                    
+
+                    // Re-sauvegarder immédiatement la session restaurée et amener
+                    // l'utilisateur sur la vue d'ensemble (cas : restauration depuis
+                    // l'écran de départ après une session perdue).
+                    if (typeof savePdfSession === 'function') savePdfSession();
+                    showPage('candidatesOverviewPage');
                     renderCandidatesOverview();
                     alert('Import JSON réussi !');
                 }
@@ -7001,13 +7122,167 @@ function validateCorrection() {
         btnValidateNext.style.background = '#17a2b8';
         btnValidateNext.style.cursor = 'pointer';
     }
-    
+    btnValidateNext.dataset.last = isLastCandidate ? '1' : '0';
+
+    // Initialiser le contrôle "présentation / maîtrise de la langue" (mode Import PDF)
+    setupPresentationControl(candidate.number);
+
     // Afficher la modale
     document.getElementById('validationModal').classList.add('active');
 }
 
 function closeValidationModal() {
     document.getElementById('validationModal').classList.remove('active');
+}
+
+// === Points de présentation / maîtrise de la langue (sur 2) — mode Import PDF ===
+function setupPresentationControl(candidateNumber) {
+    const box = document.getElementById('presentationBox');
+    const slider = document.getElementById('presentationSlider');
+    const isPdfImport = !!(appState && appState.pdfImport);
+    if (box) box.style.display = isPdfImport ? 'block' : 'none';
+    if (!isPdfImport || !slider) return;
+    if (!appState.presentationScores) appState.presentationScores = {};
+    const ps = appState.presentationScores[candidateNumber];
+    slider.value = (typeof ps === 'number') ? ps : 0;
+    updatePresentationUI();
+}
+
+function markPresentationTouched() {
+    const candidate = appState.activeCandidates[appState.currentCandidateIndex];
+    if (!candidate) return;
+    if (!appState.presentationScores) appState.presentationScores = {};
+    // Première interaction = attribution (même si la valeur reste 0)
+    if (typeof appState.presentationScores[candidate.number] !== 'number') {
+        const slider = document.getElementById('presentationSlider');
+        appState.presentationScores[candidate.number] = slider ? parseFloat(slider.value) : 0;
+        updatePresentationUI();
+    }
+}
+
+function onPresentationSliderInput(value) {
+    const candidate = appState.activeCandidates[appState.currentCandidateIndex];
+    if (!candidate) return;
+    if (!appState.presentationScores) appState.presentationScores = {};
+    appState.presentationScores[candidate.number] = parseFloat(value);
+    updatePresentationUI();
+}
+
+function updatePresentationUI() {
+    const candidate = appState.activeCandidates[appState.currentCandidateIndex];
+    if (!candidate) return;
+    const details = calculateCandidateDetails(candidate.number);
+    const ps = (appState.presentationScores || {})[candidate.number];
+    const attributed = (typeof ps === 'number');
+
+    const valEl = document.getElementById('presentationValue');
+    if (valEl) valEl.textContent = attributed ? (ps.toString().replace('.', ',') + ' / 2') : '— / 2';
+
+    const hintEl = document.getElementById('presentationHint');
+    if (hintEl) hintEl.style.display = attributed ? 'none' : 'block';
+
+    const boxEl = document.getElementById('presentationBox');
+    if (boxEl) {
+        boxEl.style.borderColor = attributed ? '#86efac' : '#fca5a5';
+        boxEl.style.background = attributed ? '#f0fdf4' : '#fef2f2';
+    }
+
+    const mainScoreElement = document.getElementById('validationMainScore');
+    if (mainScoreElement) {
+        mainScoreElement.textContent = `${details.noteOn20}/20`;
+        if (details.noteOn20 >= 15) mainScoreElement.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+        else if (details.noteOn20 >= 10) mainScoreElement.style.background = 'linear-gradient(135deg, #17a2b8, #007bff)';
+        else if (details.noteOn20 >= 5) mainScoreElement.style.background = 'linear-gradient(135deg, #ffc107, #fd7e14)';
+        else mainScoreElement.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+    }
+
+    refreshValidationButtonsState(details);
+}
+
+function refreshValidationButtonsState(details) {
+    const block = !!(details.isPdfImport && !details.presentationAttributed);
+    const btnReturn = document.querySelector('#validationModal .btn-validate');
+    if (btnReturn) {
+        btnReturn.disabled = block;
+        btnReturn.style.opacity = block ? '0.5' : '1';
+        btnReturn.style.cursor = block ? 'not-allowed' : 'pointer';
+    }
+    const btnNext = document.getElementById('btnValidateNext');
+    if (btnNext) {
+        const isLast = btnNext.dataset.last === '1';
+        btnNext.disabled = block || isLast;
+        if (!isLast) {
+            btnNext.style.opacity = block ? '0.5' : '1';
+            btnNext.style.cursor = block ? 'not-allowed' : 'pointer';
+        }
+    }
+}
+
+// Réimport du JSON de corrections depuis le presse-papier (déclenché par un clic réel,
+// ce qui autorise navigator.clipboard.readText() — impossible depuis la console).
+function reimportCorrectionsFromClipboard() {
+    if (typeof parseJsonCorrection !== 'function') {
+        alert("La fonction d'import des corrections est indisponible.");
+        return;
+    }
+    // Le navigateur bloque souvent la lecture auto du presse-papier : on propose un collage
+    // manuel (⌘V) dans un champ texte, puis import via parseJsonCorrection().
+    const existing = document.getElementById('reimportPasteModal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'reimportPasteModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20000;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML =
+        '<div style="background:#fff;border-radius:14px;max-width:560px;width:92%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
+            '<h3 style="margin:0 0 6px;font-size:1.2em;color:#1f2937;">🔄 Réimporter les corrections</h3>' +
+            '<p style="margin:0 0 6px;color:#6b7280;font-size:.92em;">Clique dans le champ, fais <strong>⌘V</strong> pour coller le JSON, puis <strong>Importer</strong>.</p>' +
+            '<p style="margin:0 0 12px;color:#b45309;font-size:.82em;">⚠️ À faire avant de corriger les vraies copies (les scores déjà saisis peuvent être réinitialisés).</p>' +
+            '<textarea id="reimportPasteArea" style="width:100%;height:150px;border:2px solid #d1d5db;border-radius:8px;padding:10px;font-family:monospace;font-size:.8em;box-sizing:border-box;" placeholder="Colle ici le JSON (⌘V)…"></textarea>' +
+            '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">' +
+                '<button id="reimportCancelBtn" style="padding:9px 16px;border:none;border-radius:8px;background:#e5e7eb;color:#374151;font-weight:600;cursor:pointer;">Annuler</button>' +
+                '<button id="reimportConfirmBtn" style="padding:9px 16px;border:none;border-radius:8px;background:#8b5cf6;color:#fff;font-weight:600;cursor:pointer;">Importer</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+    const area = document.getElementById('reimportPasteArea');
+    setTimeout(function () { try { area.focus(); } catch (e) {} }, 50);
+    document.getElementById('reimportCancelBtn').onclick = function () { overlay.remove(); };
+    document.getElementById('reimportConfirmBtn').onclick = function () {
+        const txt = area.value;
+        if (!txt || !txt.trim()) { alert('Colle d\'abord le JSON dans le champ (⌘V).'); return; }
+        try { JSON.parse(txt); } catch (e) { alert('Le contenu collé n\'est pas un JSON valide.'); return; }
+        // Le champ #jsonCorrectionInput (étape 4 du workflow) peut être absent du DOM
+        // quand on déclenche le réimport depuis la vue candidats : on le crée caché.
+        let target = document.getElementById('jsonCorrectionInput');
+        if (!target) {
+            target = document.createElement('textarea');
+            target.id = 'jsonCorrectionInput';
+            target.style.display = 'none';
+            document.body.appendChild(target);
+        }
+        target.value = txt;
+        overlay.remove();
+        try {
+            parseJsonCorrection();
+            alert('✅ Corrections réimportées (énoncés, barème, compétences, figures, QCM).');
+        } catch (e) {
+            alert('Erreur lors de l\'import : ' + e.message);
+        }
+    };
+}
+
+function ensurePresentationAttributed() {
+    if (!(appState && appState.pdfImport)) return true;
+    const candidate = appState.activeCandidates[appState.currentCandidateIndex];
+    const ps = (appState.presentationScores || {})[candidate && candidate.number];
+    if (typeof ps !== 'number') {
+        const hintEl = document.getElementById('presentationHint');
+        if (hintEl) { hintEl.style.display = 'block'; hintEl.textContent = '⚠️ Attribue les points de présentation (même 0) avant de valider.'; }
+        const boxEl = document.getElementById('presentationBox');
+        if (boxEl) boxEl.style.borderColor = '#dc2626';
+        return false;
+    }
+    return true;
 }
 
 
@@ -7412,14 +7687,15 @@ function saveValidationData() {
 }
 
 function confirmValidationAndNext() {
+    if (!ensurePresentationAttributed()) return;
     // Arrêter la dictée vocale si elle est en cours
     if (isListening && recognition) {
         recognition.stop();
     }
-    
+
     saveValidationData();
     closeValidationModal();
-    
+
     // Passer au candidat suivant
     if (appState.currentCandidateIndex < appState.activeCandidates.length - 1) {
         nextCandidate();
@@ -7427,11 +7703,12 @@ function confirmValidationAndNext() {
 }
 
 function confirmValidationAndReturn() {
+    if (!ensurePresentationAttributed()) return;
     // Arrêter la dictée vocale si elle est en cours
     if (isListening && recognition) {
         recognition.stop();
     }
-    
+
     saveValidationData();
     closeValidationModal();
     
@@ -7856,7 +8133,7 @@ function exportFinalData() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    alert('Données exportées avec succès ! Merci de les envoyer à correction-dnb@ac-nantes.fr');
+    alert('Données exportées avec succès !');
 }
 
 // Calculer les statistiques finales

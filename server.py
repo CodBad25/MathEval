@@ -12,7 +12,7 @@ import urllib.parse
 import json
 import re
 
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 MATHALEA_LOCAL = "http://localhost:5173"
 MATHALEA_DISTANT = "https://coopmaths.fr"
 

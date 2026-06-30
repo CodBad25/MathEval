@@ -3817,4 +3817,66 @@
             display: none;
         }
 
+        /* === BARRE DE RECHERCHE ÉLÈVE (page vue d'ensemble) === */
+        .overview-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 520px;
+            margin: 0 auto 18px;
+            padding: 8px 14px;
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .overview-search:focus-within {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+        .overview-search-icon {
+            font-size: 1.1em;
+            opacity: .7;
+        }
+        .overview-search-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            font-size: 1em;
+            background: transparent;
+            color: #1f2937;
+        }
+        .overview-search-clear {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border: none;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: .75em;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .overview-search-clear:hover {
+            background: #d1d5db;
+            color: #374151;
+        }
+        .overview-search-count {
+            font-size: .85em;
+            color: #6b7280;
+            white-space: nowrap;
+            min-width: 64px;
+            text-align: right;
+        }
+        .overview-search-count.none {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
         /* === RESPONSIVE === */

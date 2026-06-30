@@ -4,6 +4,7 @@
 
 function renderPdfBaremeConfig() {
     var container = document.getElementById('pdfBaremeContent');
+    if (!container) return; // page d'import non affichée (ex: réimport depuis la vue candidats)
     var exercises = appState.pdfImport.exercises || [];
 
     if (exercises.length === 0) {

@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Correcteur Universel - DNB</title>
+    <script>
+        /* Coupe les logs de debug en PRODUCTION (les garde en local) — console propre */
+        (function () {
+            var h = location.hostname;
+            if (!(h === 'localhost' || h === '127.0.0.1' || h === '[::1]')) {
+                console.log = function () {};
+                console.debug = function () {};
+                console.info = function () {};
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script>
@@ -25,7 +36,7 @@
     <script src="js/modules/generateursAutomatismes.js?v=20251105004"></script>
     <!-- MathALÉA Integration via RPC (comme Capytale) -->
     <script type="module" src="js/rpc-wrapper.js"></script>
-    <link rel="stylesheet" href="css/main.css?v=20260530010">
+    <link rel="stylesheet" href="css/main.css?v=20260530011">
     <style>
         body {
             margin: 0;
@@ -431,6 +442,11 @@
                                 style="padding: 8px 16px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer;">
                             🗑️ Réinitialiser la session
                         </button>
+                        <button onclick="importJSON()"
+                                title="Recharge une sauvegarde JSON (élèves, notes, barème) téléchargée via le menu Sauvegarder."
+                                style="padding: 8px 16px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; border-radius: 6px; cursor: pointer;">
+                            ⬆ Restaurer une sauvegarde (JSON)
+                        </button>
                     </div>
                 </div>
 
@@ -826,6 +842,14 @@
                             <span>📊</span>
                             <span>Export bilans PDF</span>
                         </button>
+                        <button style="padding: 10px 16px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;" onclick="showPronoteExportModal()" title="Copier les notes et compétences au format attendu par Pronote">
+                            <span>📋</span>
+                            <span>Export Pronote</span>
+                        </button>
+                        <button id="btnReimportCorrections" style="display: none; padding: 10px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; align-items: center; gap: 6px;" onclick="reimportCorrectionsFromClipboard()" title="Recoller le JSON de corrections depuis le presse-papier (met à jour énoncés, barème, figures)">
+                            <span>🔄</span>
+                            <span>Réimporter corrections</span>
+                        </button>
                         <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleFileImport(event)">
                     </div>
                     <div class="motivation-checkbox">
@@ -841,6 +865,15 @@
                     📋 <strong>Par candidat</strong> : correction complète candidat par candidat • 
                     🎯 <strong>Par exercice</strong> : correction exercice par exercice pour tous les candidats
                 </span>
+            </div>
+
+            <div class="overview-search">
+                <span class="overview-search-icon">🔍</span>
+                <input type="text" id="candidateSearchInput" class="overview-search-input"
+                    placeholder="Rechercher un élève par nom ou numéro…" autocomplete="off"
+                    oninput="filterCandidateCards()" onkeydown="handleCandidateSearchKey(event)">
+                <button type="button" class="overview-search-clear" id="candidateSearchClear" onclick="clearCandidateSearch()" style="display:none;" title="Effacer (Échap)">✕</button>
+                <span class="overview-search-count" id="candidateSearchCount"></span>
             </div>
 
             <div class="candidates-overview-grid" id="candidatesOverviewGrid">
@@ -1147,7 +1180,7 @@
                 </div>
             </div>
 
-            <div class="admin-section" style="margin-top:20px;">
+            <div class="admin-section" style="margin-top:20px;display:none;">
                 <div class="admin-section-title">🤖 OCR par IA (Mistral)</div>
                 <div style="background:#f0fdf4;padding:15px;border-radius:8px;border-left:4px solid #10b981;">
                     <p style="margin-bottom:12px;color:#166534;font-size:0.9em;">
@@ -1330,36 +1363,18 @@
                 </div>
                 
                 <div class="completion-thanks">
-                    Merci d'avoir utilisé cet outil de correction DNB.
+                    Merci d'avoir utilisé cet outil de correction.
                 </div>
-                
-                <div class="completion-request">
-                    <p><strong>Pour encourager le développement et améliorer l'outil grâce aux statistiques de correction :</strong></p>
-                    <p>Merci d'exporter le fichier JSON et de l'envoyer à : <strong>correction-dnb@ac-nantes.fr</strong></p>
-                    <p style="font-size: 0.9em; color: #6c757d;">Votre contribution aide à améliorer l'outil pour tous les correcteurs !</p>
-                </div>
-                
+
                 <div class="completion-actions">
                     <button class="btn-export-final" onclick="exportFinalData()">
                         📤 Exporter mes données de correction
                     </button>
                 </div>
             </div>
-            
-            <div class="completion-survey" id="completionSurvey" style="display: none;">
-                <div class="survey-title">📋 Évaluation rapide (optionnel)</div>
-                <div class="survey-questions" id="surveyQuestions">
-                    <!-- Questions générées dynamiquement -->
-                </div>
-                <div class="survey-actions">
-                    <button class="btn-skip-survey" onclick="skipSurvey()">Passer</button>
-                    <button class="btn-submit-survey" onclick="submitSurvey()">Envoyer l'évaluation</button>
-                </div>
-            </div>
-            
+
             <div class="modal-buttons">
                 <button class="modal-btn cancel" onclick="closeCompletionModal()">Fermer</button>
-                <button class="modal-btn save" onclick="showSurvey()" id="btnShowSurvey">📋 Évaluer l'outil (optionnel)</button>
             </div>
         </div>
     </div>
@@ -1381,6 +1396,21 @@
                     <div class="main-score-badge" id="validationMainScore">17/20</div>
                     <div class="raw-score-details" id="validationRawScore"></div>
                     <div class="score-nr" id="validationNR"></div>
+                    <!-- === Maîtrise de la langue / présentation (sur 2) === -->
+                    <div id="presentationBox" style="margin-top:14px;padding:12px 14px;border:2px solid #fca5a5;border-radius:12px;background:#fef2f2;transition:all .2s;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#374151;font-size:.92em;">
+                            <span>📝 Maîtrise de la langue / présentation</span>
+                            <span id="presentationValue" style="padding:2px 10px;border-radius:10px;background:#8b5cf6;color:#fff;font-size:.95em;">— / 2</span>
+                        </div>
+                        <input type="range" id="presentationSlider" min="0" max="2" step="0.5" value="0"
+                               style="width:100%;margin:12px 0 4px;accent-color:#8b5cf6;cursor:pointer;"
+                               oninput="onPresentationSliderInput(this.value)"
+                               onpointerdown="markPresentationTouched()" onclick="markPresentationTouched()">
+                        <div style="display:flex;justify-content:space-between;font-size:.78em;color:#6b7280;padding:0 2px;">
+                            <span>0</span><span>0,5</span><span>1</span><span>1,5</span><span>2</span>
+                        </div>
+                        <div id="presentationHint" style="margin-top:8px;font-size:.82em;font-weight:600;color:#dc2626;">⚠️ À attribuer avant de valider la copie (même 0)</div>
+                    </div>
                     <div class="nr-grid-container" id="nrGridContainer">
                         <!-- Encart "Questions par exercice" généré par JS -->
                     </div>
@@ -1661,9 +1691,10 @@
     <script src="js/modules/uploadUI.js?v=20260417002"></script>
     <script src="js/modules/pdfExtract.js?v=20260417002"></script>
     <script src="js/modules/questionParser.js?v=20260417002"></script>
-    <script src="js/modules/baremeConfig.js?v=20260417002"></script>
-    <script src="js/modules/correctionManager.js?v=20260530001"></script>
+    <script src="js/modules/baremeConfig.js?v=20260630001"></script>
+    <script src="js/modules/correctionManager.js?v=20260630003"></script>
     <script src="js/modules/pdfSessionPersist.js?v=20260530001"></script>
-    <script src="js/app.js?v=20260530008"></script>
+    <script src="js/modules/exportPronote.js?v=20260611001"></script>
+    <script src="js/app.js?v=20260630014"></script>
 </body>
 </html>

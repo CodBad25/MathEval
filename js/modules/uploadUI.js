@@ -22,6 +22,25 @@ function initPdfImportPage() {
     // Charger la clé API Mistral si elle existe
     loadMistralApiKey();
 
+    // Réinitialisation via URL : app.html?source=upload&reset=1
+    // Efface la session sauvegardée pour repartir de zéro sur l'écran d'import
+    var resetParam = (new URLSearchParams(window.location.search)).get('reset');
+    if (resetParam === '1' && typeof clearPdfSession === 'function') {
+        // Demander confirmation : un simple rechargement de l'URL avec &reset=1
+        // ne doit JAMAIS effacer silencieusement une session de correction.
+        if (confirm('⚠️ Effacer la session sauvegardée (exercices, élèves, notes saisies) ?')) {
+            clearPdfSession();
+            console.log('🗑️ Session effacée via ?reset=1 — démarrage sur l\'écran d\'import');
+        }
+        // Retirer reset=1 de l'URL pour que les prochains rechargements soient inoffensifs
+        try {
+            var cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('reset');
+            history.replaceState(null, '', cleanUrl.toString());
+        } catch (e) { /* ignore */ }
+        return;
+    }
+
     // Restaurer la session précédente (silencieux) — exos détectés, élèves, scores, etc.
     if (typeof restorePdfSession === 'function') {
         var restored = restorePdfSession();

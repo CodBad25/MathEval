@@ -217,6 +217,9 @@ function parseJsonCorrection() {
                     q.answer = item.correction || item.answer || '';
                     if (item.points) q.points = item.points;
                     if (item.competences) q.competences = item.competences;
+                    if (item.images && item.images.length) q.images = item.images; // figures (PNG) rattachées à la question
+                    q.qcm = !!item.qcm; // réinitialisé à chaque import (évite un résidu de cases d'un ancien import)
+                    q.options = item.options || []; // [{label, correct}]
                     if (item.numero) q.numero = String(item.numero); // vrai numéro du sujet (1a, 2a, a, b...) pour l'affichage
                     appState.pdfImport.corrections[q.id] = { text: q.answer };
                     newEx.questions.push(q);
@@ -246,11 +249,12 @@ function parseJsonCorrection() {
             });
         }
 
+        var preview = document.getElementById('jsonPreview'); // absent si réimport hors étape 4
         if (imported === 0) {
-            document.getElementById('jsonPreview').innerHTML =
+            if (preview) preview.innerHTML =
                 '<p style="color:#ef4444;font-weight:600;">Aucune correction importée. Vérifiez que le JSON correspond aux exercices détectés (' + exercises.length + ' exercices attendus).</p>';
         } else {
-            document.getElementById('jsonPreview').innerHTML =
+            if (preview) preview.innerHTML =
                 '<p style="color:#10b981;font-weight:600;">✅ ' + imported + ' corrections importées avec succès !</p>';
             // Activer le bouton "Lancer la correction"
             var btn = document.getElementById('btnFinalizePdfImport');
@@ -315,6 +319,8 @@ function regenerateExercisesDataFromPdfImport() {
                     statement: q.text || q.label || '',
                     answer: corr.text || q.answer || '',
                     images: q.images || [],
+                    qcm: q.qcm || false,
+                    options: q.options || [],
                     competences: distrib.names.map(function (cName, ci) {
                         var found = allComps.find(function (c) { return c.name === cName; });
                         return {
@@ -387,6 +393,8 @@ function finalizePdfImport() {
                     statement: q.text || q.label || '',
                     answer: corr.text || q.answer || '',
                     images: q.images || [],
+                    qcm: q.qcm || false,
+                    options: q.options || [],
                     competences: distrib.names.map(function (cName, ci) {
                         var found = allComps.find(function (c) { return c.name === cName; });
                         return {
