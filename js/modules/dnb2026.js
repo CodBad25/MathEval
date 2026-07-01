@@ -24,6 +24,14 @@ function initDnb2026LaunchPage() {
     var adminBtn = document.getElementById('adminToggleBtnHeader');
     if (adminBtn) adminBtn.style.display = 'none';
 
+    // Mode clé en main : marquer l'état + masquer les contrôles hérités du flux
+    // Import PDF générique, inutiles ou risqués ici (le barème est déjà figé).
+    if (typeof appState !== 'undefined' && appState) appState.isDnb2026Mode = true;
+    var paramBtn = document.getElementById('parametresBtnHeader');
+    if (paramBtn) paramBtn.style.display = 'none';          // config barème Mode A/B/C
+    var restaurerBtn = document.getElementById('btnRestaurerSauvegarde');
+    if (restaurerBtn) restaurerBtn.style.display = 'none';  // restaurer un JSON (écraserait le barème)
+
     // Charger le sujet pré-configuré.
     fetch('import-pdf/correction-dnb-2026-metropole.json')
         .then(function (r) { return r.json(); })
@@ -85,6 +93,9 @@ function startDnb2026Correction() {
             if (preview) preview.textContent = 'Sujet en cours de chargement, réessayez dans un instant.';
             return;
         }
+
+        // Marqueur de mode (garde-fou : masque les contrôles hérités hors-sujet).
+        appState.isDnb2026Mode = true;
 
         // 1. Préparer le conteneur pdfImport.
         appState.pdfImport = appState.pdfImport || {};

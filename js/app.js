@@ -51,7 +51,7 @@ function showPage(pageId) {
         } else if (pageId === 'candidatesOverviewPage') {
             // Bouton "Réimporter corrections" : visible uniquement en mode Import PDF
             const reimportBtn = document.getElementById('btnReimportCorrections');
-            if (reimportBtn) reimportBtn.style.display = (appState && appState.pdfImport) ? 'flex' : 'none';
+            if (reimportBtn) reimportBtn.style.display = (appState && appState.pdfImport && !appState.isDnb2026Mode) ? 'flex' : 'none';
             // Repartir d'une recherche vierge + curseur prêt pour enchaîner directement l'élève suivant
             const si = document.getElementById('candidateSearchInput');
             if (si) {
@@ -6304,7 +6304,7 @@ function renderCandidatesOverview() {
 
     // Bouton "Réimporter corrections" : visible uniquement en mode Import PDF
     const reimportBtn = document.getElementById('btnReimportCorrections');
-    if (reimportBtn) reimportBtn.style.display = (appState && appState.pdfImport) ? 'flex' : 'none';
+    if (reimportBtn) reimportBtn.style.display = (appState && appState.pdfImport && !appState.isDnb2026Mode) ? 'flex' : 'none';
 
     // Si un mode est déjà actif (ex: session de correction restaurée), synchroniser le
     // sélecteur visuel pour éviter le faux avertissement "choisir un mode de correction".
