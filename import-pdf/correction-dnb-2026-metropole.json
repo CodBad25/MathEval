@@ -115,7 +115,7 @@
           "enonce": "D'après le tableau des médailles des Jeux Paralympiques de Paris 2024, combien de médailles d'or ont été obtenues par les Pays-Bas ?",
           "correction": "Les Pays-Bas ont obtenu 27 médailles d'or.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": ["Représenter"]
         },
         {
           "numero": "2",
@@ -129,7 +129,7 @@
           "enonce": "Montrer que l'affirmation suivante est vraie : « Plus de 20 % des médailles obtenues par la Grande-Bretagne sont en bronze » (31 médailles de bronze sur un total de 124).",
           "correction": "$\\dfrac{31 \\times 100}{124} = 25$, soit 25 % des médailles en bronze. Comme $25\\,\\% > 20\\,\\%$, l'affirmation est vraie.",
           "points": 0.5,
-          "competences": ["Raisonner"]
+          "competences": ["Calculer"]
         },
         {
           "numero": "4a",

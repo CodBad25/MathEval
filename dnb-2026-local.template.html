@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Correction DNB 2026 — Métropole (version locale)</title>
+<!-- Fichier 100% autonome et hors-ligne. Aucune ressource externe.
+     KaTeX (JS + CSS + polices woff2) inliné, sujet JSON inliné, figures PNG en base64. -->
+<style>
+/* ===== KaTeX (CSS inliné, polices en data-URI) ===== */
+__KATEX_CSS__
+</style>
+<style>
+/* ===== CSS applicatif ===== */
+:root{
+  --bg:#f4f5f9;
+  --card:#ffffff;
+  --accent:#4F46E5;
+  --accent2:#667eea;
+  --accent3:#764ba2;
+  --text:#1f2430;
+  --muted:#6b7280;
+  --line:#e6e8f0;
+  --green:#16a34a;
+  --red:#dc2626;
+  --blue:#2563eb;
+  --orange:#ea580c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px;margin:0 auto;padding:24px 18px 80px}
+.gradient{background:linear-gradient(135deg,var(--accent2),var(--accent3));}
+h1,h2,h3{margin:0 0 .4em}
+.card{background:var(--card);border-radius:16px;padding:22px;box-shadow:0 4px 18px rgba(30,36,60,.06);border:1px solid var(--line);margin-bottom:18px}
+.hero{color:#fff;border-radius:20px;padding:30px 26px;margin-bottom:22px;box-shadow:0 10px 30px rgba(102,126,234,.28)}
+.hero h1{font-size:1.7rem;line-height:1.25}
+.hero p{margin:.3em 0 0;opacity:.95}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.75rem;font-weight:600;background:#eef0fb;color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;border:1.5px solid var(--line);background:#fff;color:var(--text);padding:8px 14px;border-radius:999px;font-size:.92rem;font-weight:600;transition:all .12s ease}
+.chip:hover{border-color:var(--accent2)}
+.chip.active{background:linear-gradient(135deg,var(--accent2),var(--accent3));color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(102,126,234,.35)}
+.btn{cursor:pointer;border:none;border-radius:12px;padding:12px 20px;font-size:1rem;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent2),var(--accent3));box-shadow:0 6px 16px rgba(102,126,234,.3);transition:transform .1s ease,box-shadow .1s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(102,126,234,.4)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:var(--accent2)}
+.btn.danger{background:#fff;color:var(--red);border:1.5px solid #f3c4c4;box-shadow:none}
+.btn.small{padding:8px 14px;font-size:.9rem;border-radius:10px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.between{justify-content:space-between}
+label.fld{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:.9rem}
+input[type=number]{width:120px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:1.05rem;font-weight:700;color:var(--text)}
+input[type=number]:focus{outline:none;border-color:var(--accent2)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.q{border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;background:#fff}
+.q .qhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.qnum{font-weight:800;color:var(--accent);background:#eef0fb;border-radius:8px;padding:2px 10px}
+.enonce{font-weight:600;margin:6px 0}
+.corr{background:#f8f9fe;border-left:3px solid var(--accent2);border-radius:0 10px 10px 0;padding:10px 14px;margin:10px 0}
+.corr .lbl{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:4px}
+mark{background:#fff3bf;padding:0 3px;border-radius:3px}
+.figs img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px;background:#fff}
+.comp{font-size:.72rem;background:#f1f5f9;color:#475569;border-radius:6px;padding:2px 8px;font-weight:600}
+.opts{list-style:none;padding:0;margin:8px 0}
+.opts li{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.opts li.good{border-color:var(--green);background:#f0fdf4}
+.opts li.good::after{content:"Bonne réponse";margin-left:auto;font-size:.72rem;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.04em}
+.scorebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.scorebar .sc{cursor:pointer;border:1.5px solid var(--line);background:#fff;border-radius:9px;min-width:44px;padding:7px 10px;text-align:center;font-weight:700;font-size:.9rem;transition:all .1s}
+.scorebar .sc:hover{border-color:var(--accent2)}
+.scorebar .sc.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.verdict .sc.juste.on{background:var(--green);border-color:var(--green)}
+.verdict .sc.faux.on{background:var(--red);border-color:var(--red)}
+.notebar{position:sticky;bottom:0;z-index:20;margin-top:18px}
+.notecard{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 -6px 24px rgba(30,36,60,.10);padding:16px 20px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+.notebig{font-size:1.9rem;font-weight:900;background:linear-gradient(135deg,var(--accent2),var(--accent3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hidden{display:none!important}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#1f2430;color:#fff;padding:12px 20px;border-radius:12px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:all .25s ease;z-index:100;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.recap{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:6px}
+.recap .ri{background:#f8f9fe;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.recap .ri b{display:block;font-size:1.15rem;color:var(--accent)}
+.navtop{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.copybadge{font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--accent3));color:#fff;padding:6px 14px;border-radius:999px}
+@media(max-width:560px){.hero h1{font-size:1.35rem}.notebig{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ======================= ÉCRAN D'ACCUEIL ======================= -->
+  <section id="home">
+    <div class="hero gradient">
+      <h1>Correction DNB 2026 — Métropole (version locale)</h1>
+      <p id="homeSub">Chargement…</p>
+    </div>
+
+    <div class="card">
+      <h2>Structure &amp; barème</h2>
+      <div class="recap" id="structRecap"></div>
+      <p class="small muted" style="margin-top:14px">Note finale = total des points obtenus <b>/18</b> + présentation <b>/2</b>, plafonnée à <b>20</b>.</p>
+    </div>
+
+    <div class="card">
+      <h2>Plage de copies à corriger</h2>
+      <p class="muted small">Indiquez le numéro de la première et de la dernière copie (numérotation libre, par exemple 1 à 28).</p>
+      <div class="row" style="margin:12px 0 18px">
+        <label class="fld">Du n°
+          <input type="number" id="fromInput" min="1" value="1">
+        </label>
+        <label class="fld">Au n°
+          <input type="number" id="toInput" min="1" value="28">
+        </label>
+      </div>
+      <div class="row between">
+        <button class="btn" id="startBtn">Démarrer la correction</button>
+        <span id="resumeInfo" class="small muted"></span>
+      </div>
+    </div>
+
+    <p class="small muted" style="text-align:center">100&nbsp;% hors-ligne &middot; aucune donnée ne quitte votre ordinateur &middot; conforme RGPD</p>
+  </section>
+
+  <!-- ======================= ÉCRAN DE CORRECTION ======================= -->
+  <section id="app" class="hidden">
+    <div class="card">
+      <div class="navtop between">
+        <div class="navtop">
+          <button class="btn ghost small" id="homeBtn">&larr; Accueil</button>
+          <button class="btn ghost small" id="prevBtn">Précédent</button>
+          <span class="copybadge" id="copyBadge">Copie 1 / 1</span>
+          <button class="btn ghost small" id="nextBtn">Suivant</button>
+        </div>
+        <div class="row">
+          <button class="btn ghost small" id="exportBtn">Exporter (JSON)</button>
+          <button class="btn danger small" id="resetBtn">Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="questions"></div>
+
+    <div class="card">
+      <h3 style="margin-bottom:4px">Présentation, soin, rédaction — <span class="muted">/2</span></h3>
+      <div class="scorebar" id="presBar"></div>
+    </div>
+
+    <div class="notebar">
+      <div class="notecard">
+        <div>
+          <div class="small muted">Total points obtenus</div>
+          <div><b id="totPoints">0</b> <span class="muted">/ 18</span> &nbsp;+&nbsp; présentation <b id="presVal">0</b> <span class="muted">/ 2</span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="small muted">Note finale</div>
+          <div class="notebig"><span id="noteVal">0</span> <span style="font-size:1rem;color:var(--muted)">/ 20</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== KaTeX (JS inliné) ===== */
+__KATEX_JS__
+</script>
+
+<script>
+/* ===== Données inlinées ===== */
+const SUBJECT = __SUBJECT_JSON__;
+const IMAGES = __IMAGES_JSON__;
+</script>
+
+<script>
+/* ===== Application de correction ===== */
+(function(){
+  "use strict";
+  const LS_KEY = "dnb2026-local-v1";
+  const PRES_STEPS = [0,0.5,1,1.5,2];
+
+  // --- état ---
+  let state = loadState() || { from:1, to:28, current:0, copies:{} };
+  let activeTab = 0;
+
+  // --- helpers ---
+  const $ = (id)=>document.getElementById(id);
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function renderTeX(str){
+    const parts = String(str).split("$");
+    let out = "";
+    for(let i=0;i<parts.length;i++){
+      if(i%2===0){
+        out += esc(parts[i]).replace(/==([^=]+)==/g,'<mark>$1</mark>');
+      }else{
+        try{ out += katex.renderToString(parts[i],{throwOnError:false,displayMode:false}); }
+        catch(e){ out += esc(parts[i]); }
+      }
+    }
+    return out;
+  }
+  function fmt(n){ return Number.isInteger(n) ? String(n) : String(n).replace(".",","); }
+
+  let toastTimer=null;
+  function toast(msg){
+    const t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2600);
+  }
+
+  function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+  function loadState(){ try{ const r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+
+  // clé unique par question
+  function qKey(ei,qi){ return ei+"."+qi; }
+  function copyNumbers(){ const a=[]; for(let n=state.from;n<=state.to;n++) a.push(n); return a; }
+  function currentCopyNum(){ return copyNumbers()[state.current]; }
+  function copyData(num){
+    if(!state.copies[num]) state.copies[num] = { scores:{}, verdicts:{}, pres:0 };
+    return state.copies[num];
+  }
+
+  // --- calcul note ---
+  function totals(num){
+    const cd = copyData(num);
+    let pts=0;
+    SUBJECT.exercises.forEach((ex,ei)=>ex.questions.forEach((q,qi)=>{
+      const k=qKey(ei,qi);
+      if(typeof cd.scores[k]==="number") pts+=cd.scores[k];
+    }));
+    const pres = cd.pres||0;
+    const note = Math.min(20, pts+pres);
+    return { pts, pres, note };
+  }
+
+  // ================= ACCUEIL =================
+  function renderHome(){
+    $("homeSub").textContent = SUBJECT.title + " · " + SUBJECT.niveau + " · noté sur " + SUBJECT.noteSur;
+    let totQ=0, totP=0;
+    const recap = SUBJECT.exercises.map(ex=>{
+      const p = ex.questions.reduce((s,q)=>s+q.points,0);
+      totQ += ex.questions.length; totP += p;
+      return '<div class="ri"><b>'+ex.questions.length+' quest.</b>'+esc(ex.title)+'<div class="small muted">'+fmt(p)+' pts</div></div>';
+    }).join("");
+    $("structRecap").innerHTML = recap +
+      '<div class="ri"><b>'+totQ+' questions</b>Total sujet<div class="small muted">'+fmt(totP)+' pts</div></div>';
+    // reprise
+    const nbFilled = Object.keys(state.copies).length;
+    $("resumeInfo").textContent = nbFilled ? ("Sauvegarde trouvée : "+nbFilled+" copie(s) déjà saisie(s).") : "";
+    $("fromInput").value = state.from;
+    $("toInput").value = state.to;
+  }
+
+  // ================= CORRECTION =================
+  function renderTabs(){
+    activeTab = Math.min(activeTab, SUBJECT.exercises.length-1);
+    $("tabs").innerHTML = SUBJECT.exercises.map((ex,ei)=>{
+      const short = ei===0 ? "Automatismes" : ("Ex "+ei);
+      return '<span class="chip'+(ei===activeTab?" active":"")+'" data-tab="'+ei+'">'+short+'</span>';
+    }).join("");
+    $("tabs").querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+      activeTab=+c.dataset.tab; renderTabs(); renderQuestions();
+    }));
+  }
+
+  function renderQuestions(){
+    const num = currentCopyNum();
+    const cd = copyData(num);
+    const ex = SUBJECT.exercises[activeTab];
+    let html = '<div class="card"><h2>'+esc(ex.title)+'</h2></div>';
+    ex.questions.forEach((q,qi)=>{
+      const k = qKey(activeTab,qi);
+      const comps = (q.competences||[]).map(c=>'<span class="comp">'+esc(c)+'</span>').join(" ");
+      let scoreHtml="";
+      if(q.qcm){
+        const opts = (q.options||[]).map(o=>'<li class="'+(o.correct?"good":"")+'">'+renderTeX(o.label)+'</li>').join("");
+        const v = cd.verdicts[k]||null;
+        scoreHtml =
+          '<ul class="opts">'+opts+'</ul>'+
+          '<div class="scorebar verdict" data-k="'+k+'" data-pts="'+q.points+'" data-qcm="1">'+
+            '<span class="small muted" style="margin-right:4px">Copie de l\'élève :</span>'+
+            '<span class="sc juste'+(v==="juste"?" on":"")+'" data-v="juste">Juste (+'+fmt(q.points)+')</span>'+
+            '<span class="sc faux'+(v==="faux"?" on":"")+'" data-v="faux">Faux (0)</span>'+
+          '</div>';
+      }else{
+        let btns="";
+        for(let s=0;s<=q.points+1e-9;s+=0.5){
+          const val=Math.round(s*2)/2;
+          const on = (cd.scores[k]===val)?" on":"";
+          btns += '<span class="sc'+on+'" data-val="'+val+'">'+fmt(val)+'</span>';
+        }
+        scoreHtml = '<div class="scorebar" data-k="'+k+'" data-qcm="0">'+
+          '<span class="small muted" style="margin-right:4px">Points :</span>'+btns+'</div>';
+      }
+      let figs="";
+      if(q.images && q.images.length){
+        figs = '<div class="figs">'+q.images.map(p=>{
+          const src = IMAGES[p];
+          return src ? '<img alt="figure" src="'+src+'">' : '<div class="small muted">[figure manquante : '+esc(p)+']</div>';
+        }).join("")+'</div>';
+      }
+      html +=
+        '<div class="q">'+
+          '<div class="qhead"><span class="qnum">'+esc(q.numero)+'</span>'+
+            '<span class="badge">'+fmt(q.points)+' pt'+(q.points>1?"s":"")+'</span>'+comps+'</div>'+
+          '<div class="enonce">'+renderTeX(q.enonce)+'</div>'+
+          figs+
+          '<div class="corr"><span class="lbl">Corrigé</span>'+renderTeX(q.correction)+'</div>'+
+          scoreHtml+
+        '</div>';
+    });
+    $("questions").innerHTML = html;
+
+    // écouteurs de score
+    $("questions").querySelectorAll(".scorebar").forEach(bar=>{
+      const k=bar.dataset.k;
+      if(bar.dataset.qcm==="1"){
+        const pts=parseFloat(bar.dataset.pts);
+        bar.querySelectorAll(".sc").forEach(sc=>sc.addEventListener("click",()=>{
+          const v=sc.dataset.v;
+          cd.verdicts[k]=v;
+          cd.scores[k]= v==="juste"?pts:0;
+          persistAndRefresh();
+        }));
+      }else{
+        bar.querySelectorAll(".sc").forEach(sc=>sc.addEventListener("click",()=>{
+          const val=parseFloat(sc.dataset.val);
+          if(cd.scores[k]===val){ delete cd.scores[k]; } // re-clic = annule
+          else { cd.scores[k]=val; }
+          persistAndRefresh();
+        }));
+      }
+    });
+  }
+
+  function renderPres(){
+    const cd = copyData(currentCopyNum());
+    $("presBar").innerHTML = PRES_STEPS.map(s=>
+      '<span class="sc'+(cd.pres===s?" on":"")+'" data-p="'+s+'">'+fmt(s)+'</span>'
+    ).join("");
+    $("presBar").querySelectorAll(".sc").forEach(sc=>sc.addEventListener("click",()=>{
+      cd.pres=parseFloat(sc.dataset.p); persistAndRefresh();
+    }));
+  }
+
+  function renderNote(){
+    const num=currentCopyNum();
+    const t=totals(num);
+    $("totPoints").textContent=fmt(t.pts);
+    $("presVal").textContent=fmt(t.pres);
+    $("noteVal").textContent=fmt(Math.round(t.note*2)/2);
+    const nums=copyNumbers();
+    $("copyBadge").textContent="Copie "+num+"  ("+(state.current+1)+" / "+nums.length+")";
+    $("prevBtn").disabled = state.current<=0;
+    $("nextBtn").disabled = state.current>=nums.length-1;
+    $("prevBtn").style.opacity=$("prevBtn").disabled?.4:1;
+    $("nextBtn").style.opacity=$("nextBtn").disabled?.4:1;
+  }
+
+  function persistAndRefresh(){
+    saveState();
+    // maj légère : re-render questions/pres pour l'état actif + note
+    renderQuestions(); renderPres(); renderNote();
+  }
+
+  function renderApp(){ renderTabs(); renderQuestions(); renderPres(); renderNote(); }
+
+  // ================= NAVIGATION =================
+  function showHome(){ $("home").classList.remove("hidden"); $("app").classList.add("hidden"); renderHome(); }
+  function showApp(){ $("home").classList.add("hidden"); $("app").classList.remove("hidden"); activeTab=0; renderApp(); window.scrollTo(0,0); }
+
+  // ================= EXPORT =================
+  function buildExport(){
+    return {
+      generatedAt: new Date().toISOString(),
+      sujet: SUBJECT.title,
+      noteSur: 20,
+      copies: copyNumbers().map(num=>{
+        const t=totals(num);
+        const cd=copyData(num);
+        const details=[];
+        SUBJECT.exercises.forEach((ex,ei)=>ex.questions.forEach((q,qi)=>{
+          const k=qKey(ei,qi);
+          details.push({
+            exercice: ex.title,
+            question: q.numero,
+            pointsMax: q.points,
+            score: (typeof cd.scores[k]==="number")?cd.scores[k]:null
+          });
+        }));
+        return { numero:num, totalSur18:t.pts, presentationSur2:t.pres, noteSur20:Math.round(t.note*2)/2, details };
+      })
+    };
+  }
+  function exportJSON(){
+    const data=buildExport();
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="dnb-2026-notes.json";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast("Fichier JSON téléchargé");
+  }
+
+  // ================= RESET (confirmation en 2 temps) =================
+  let resetArmed=false, resetTimer=null;
+  function handleReset(btn){
+    if(!resetArmed){
+      resetArmed=true; btn.textContent="Confirmer ?";
+      resetTimer=setTimeout(()=>{ resetArmed=false; btn.textContent="Réinitialiser"; },3500);
+      toast("Cliquez à nouveau pour tout effacer");
+      return;
+    }
+    clearTimeout(resetTimer); resetArmed=false; btn.textContent="Réinitialiser";
+    state={ from:state.from, to:state.to, current:0, copies:{} };
+    saveState(); showHome(); toast("Correction réinitialisée");
+  }
+
+  // ================= INIT / ÉCOUTEURS =================
+  $("startBtn").addEventListener("click",()=>{
+    let f=parseInt($("fromInput").value,10), t=parseInt($("toInput").value,10);
+    if(isNaN(f)||f<1) f=1;
+    if(isNaN(t)||t<f) t=f;
+    state.from=f; state.to=t; state.current=0;
+    saveState(); showApp();
+  });
+  $("homeBtn").addEventListener("click",showHome);
+  $("prevBtn").addEventListener("click",()=>{ if(state.current>0){ state.current--; saveState(); renderApp(); window.scrollTo(0,0); } });
+  $("nextBtn").addEventListener("click",()=>{ if(state.current<copyNumbers().length-1){ state.current++; saveState(); renderApp(); window.scrollTo(0,0); } });
+  $("exportBtn").addEventListener("click",exportJSON);
+  $("resetBtn").addEventListener("click",function(){ handleReset(this); });
+
+  renderHome();
+})();
+</script>
+</body>
+</html>

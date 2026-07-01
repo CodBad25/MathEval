@@ -367,7 +367,8 @@
         /* === ONGLETS PRINCIPAUX === */
         .main-tabs {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;        /* onglets d'exercices sur une seule ligne */
+            overflow-x: auto;         /* défilement horizontal si trop large (jamais de 2e ligne) */
             background: white;
             border-radius: 12px;
             padding: 8px;
@@ -384,6 +385,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             white-space: nowrap;
+            flex-shrink: 0;          /* garde sa taille : pas d'écrasement, on scrolle plutôt */
             font-weight: 500;
             color: #6c757d;
             font-size: 0.9em;

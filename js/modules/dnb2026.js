@@ -132,9 +132,12 @@ function startDnb2026Correction() {
         var tc = document.getElementById('tabCsv');
         if (tc) tc.classList.remove('active');
 
-        // 6. Générer la liste des candidats puis démarrer la correction.
+        // 6. Générer la liste des candidats et s'ARRÊTER sur l'écran de validation
+        //    (candidatesPage) : l'utilisateur peut y éliminer les copies absentes,
+        //    puis lance lui-même la correction via « Commencer la correction ».
+        //    (Ne PAS appeler startCorrection() ici, sinon la page d'élimination
+        //    des absents est écrasée immédiatement.)
         generateCandidates();
-        startCorrection();
     } catch (e) {
         console.error('❌ Erreur lors du démarrage de la correction DNB 2026 :', e);
         if (preview) preview.textContent = 'Le démarrage a échoué. Rechargez la page et réessayez.';
