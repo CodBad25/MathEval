@@ -17,8 +17,8 @@ function initDnb2026LaunchPage() {
 
     // Adapter le header (comme initPdfImportPage).
     var title = document.getElementById('appTitle');
-    if (title) title.innerHTML = '🎯 Correction DNB 2026 — clé en main';
-    document.title = 'Correction DNB 2026 — clé en main';
+    if (title) title.innerHTML = '🎯 Correction DNB 2026 — Métropole';
+    document.title = 'Correction DNB 2026 — Métropole';
 
     // Masquer le bouton Admin global (non pertinent pour ce flow).
     var adminBtn = document.getElementById('adminToggleBtnHeader');

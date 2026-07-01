@@ -12994,7 +12994,7 @@ window.RPC = window.RPC || function RPC() {
     <div class="top-bar">
         <h1 id="appTitle">📚 Correcteur Universel - DNB</h1>
         <div class="top-bar-buttons">
-            <button onclick="window.location.href='index.html'">← Retour à l'accueil</button>
+            <!-- retiré (inutile pour un correcteur DNB) : Retour à l'accueil -->
             <button onclick="toggleParametresPanel()" id="parametresBtnHeader">🎛️ Paramètres</button>
             <button onclick="toggleAdminPanel()" id="adminToggleBtnHeader">⚙️ Admin</button>
         </div>
@@ -13690,7 +13690,7 @@ window.RPC = window.RPC || function RPC() {
                 <div class="dnb2026-card">
                     <div class="dnb2026-head">
                         <div class="dnb2026-badge">🏆 DNB National — Métropole 2026</div>
-                        <h2>Correction clé en main</h2>
+                        <h2>Correction des copies</h2>
                         <p>Le barème est pré-configuré. Saisissez votre paquet de copies et corrigez directement.</p>
                     </div>
 
@@ -19969,8 +19969,8 @@ function initDnb2026LaunchPage() {
 
     // Adapter le header (comme initPdfImportPage).
     var title = document.getElementById('appTitle');
-    if (title) title.innerHTML = '🎯 Correction DNB 2026 — clé en main';
-    document.title = 'Correction DNB 2026 — clé en main';
+    if (title) title.innerHTML = '🎯 Correction DNB 2026 — Métropole';
+    document.title = 'Correction DNB 2026 — Métropole';
 
     // Masquer le bouton Admin global (non pertinent pour ce flow).
     var adminBtn = document.getElementById('adminToggleBtnHeader');

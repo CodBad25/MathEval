@@ -286,6 +286,7 @@ window.RPC = window.RPC || function RPC() {
   const BOUTONS_A_RETIRER = [
     { onclick: "exportBilansPdfJson()", label: "Export bilans PDF" },
     { onclick: "showPronoteExportModal()", label: "Export Pronote" },
+    { onclick: "window.location.href='index.html'", label: "Retour à l'accueil" },
   ];
   for (const b of BOUTONS_A_RETIRER) {
     const re = new RegExp(`<button[^>]*onclick="${esc(b.onclick)}"[\\s\\S]*?</button>`);
