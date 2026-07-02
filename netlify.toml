@@ -8,6 +8,11 @@
   status = 200
 
 [[redirects]]
+  from = "/dnb2026"
+  to = "/app.html?source=upload&subject=dnb-2026"
+  status = 302
+
+[[redirects]]
   from = "/MathEval/*"
   to = "/:splat"
   status = 200

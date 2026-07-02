@@ -55,6 +55,86 @@ function initDnb2026LaunchPage() {
     if (endInput) endInput.addEventListener('input', updateDnb2026Preview);
 
     updateDnb2026Preview();
+
+    // ♻️ Reprise de session : un rechargement de la page ne doit JAMAIS faire
+    // perdre les saisies (l'auto-save tourne toutes les 3 s, mais sans cette
+    // étape le parcours clé en main repartait de zéro à chaque refresh).
+    _dnb2026OfferResume();
+}
+
+// Lit la sauvegarde automatique et la résume (nb de copies, validées, date).
+function _dnb2026SessionInfo() {
+    try {
+        var raw = localStorage.getItem('matheval_pdfImport_session');
+        if (!raw) return null;
+        var s = JSON.parse(raw);
+        if (!s.candidates || !s.candidates.length) return null;
+        var validated = 0;
+        Object.keys(s.validatedCandidates || {}).forEach(function (k) {
+            if (s.validatedCandidates[k] && s.validatedCandidates[k].validated) validated++;
+        });
+        var touched = Object.keys(s.scores || {}).length;
+        return { nb: s.candidates.length, validated: validated, touched: touched, date: new Date(s.t) };
+    } catch (e) { return null; }
+}
+
+// Affiche la bannière « Reprendre la correction en cours » sur l'écran de lancement.
+function _dnb2026OfferResume() {
+    var info = _dnb2026SessionInfo();
+    if (!info || (info.touched === 0 && info.validated === 0)) return;
+    var card = document.querySelector('#dnb2026LaunchPage .dnb2026-card');
+    if (!card || document.getElementById('dnb2026ResumeBanner')) return;
+
+    var quand = info.date.toLocaleDateString('fr-FR') + ' à ' +
+        info.date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    var banner = document.createElement('div');
+    banner.id = 'dnb2026ResumeBanner';
+    banner.style.cssText = 'margin-bottom:18px;padding:14px 16px;border:2px solid #86efac;' +
+        'border-radius:12px;background:#f0fdf4;';
+    banner.innerHTML =
+        '<div style="font-weight:700;color:#166534;margin-bottom:4px;">♻️ Correction en cours détectée</div>' +
+        '<div style="font-size:.9em;color:#374151;margin-bottom:10px;">' +
+            info.nb + ' copie' + (info.nb > 1 ? 's' : '') +
+            ' — ' + info.validated + ' validée' + (info.validated > 1 ? 's' : '') +
+            ' — dernière sauvegarde le ' + quand + '.' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+            '<button onclick="dnb2026ResumeSession()" style="flex:1;min-width:190px;padding:10px 16px;' +
+                'border:none;border-radius:10px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer;font-size:1em;">' +
+                '▶ Reprendre la correction</button>' +
+            '<button onclick="dnb2026DiscardSession()" style="padding:10px 16px;border:2px solid #d1d5db;' +
+                'border-radius:10px;background:#fff;color:#6b7280;font-weight:600;cursor:pointer;">' +
+                'Repartir de zéro</button>' +
+        '</div>';
+    card.insertBefore(banner, card.firstChild);
+}
+
+// Restaure la session sauvegardée et reprend sur la vue d'ensemble des candidats.
+function dnb2026ResumeSession() {
+    if (typeof restorePdfSession !== 'function' || !restorePdfSession()) {
+        alert('Impossible de restaurer la session sauvegardée.');
+        return;
+    }
+    appState.isDnb2026Mode = true;
+    appState.modeSelected = true;
+    if (!appState.correctionMode) appState.correctionMode = 'candidate';
+    showPage('candidatesOverviewPage');
+    if (typeof renderCandidatesOverview === 'function') renderCandidatesOverview();
+    console.log('♻️ Correction DNB 2026 reprise (' + (appState.candidates || []).length + ' copies)');
+}
+
+// Efface la session sauvegardée (confirmation obligatoire) et reste sur le lancement.
+function dnb2026DiscardSession() {
+    if (!confirm('⚠️ Repartir de zéro effacera définitivement les notes déjà saisies.\n\nContinuer ?')) return;
+    if (typeof clearPdfSession === 'function') clearPdfSession();
+    appState.scores = {};
+    appState.quickButtonStates = {};
+    appState.validatedCandidates = {};
+    appState.candidateComments = {};
+    appState.candidates = [];
+    appState.activeCandidates = [];
+    var banner = document.getElementById('dnb2026ResumeBanner');
+    if (banner) banner.remove();
 }
 
 // Met à jour le bandeau d'aperçu « X candidats — numéros A à B ».
@@ -92,6 +172,18 @@ function startDnb2026Correction() {
         if (!window.__dnb2026Json) {
             if (preview) preview.textContent = 'Sujet en cours de chargement, réessayez dans un instant.';
             return;
+        }
+
+        // Garde-fou : ne JAMAIS écraser silencieusement une correction en cours.
+        var existing = _dnb2026SessionInfo();
+        if (existing && (existing.touched > 0 || existing.validated > 0)) {
+            if (!confirm('⚠️ Une correction est déjà en cours (' + existing.nb + ' copies, ' +
+                existing.validated + ' validées).\n\nDémarrer une NOUVELLE correction ' +
+                'effacera définitivement ces saisies.\n\nPour les conserver, annulez et ' +
+                'cliquez sur « Reprendre la correction ».\n\nÉcraser et recommencer ?')) {
+                return;
+            }
+            if (typeof clearPdfSession === 'function') clearPdfSession();
         }
 
         // Marqueur de mode (garde-fou : masque les contrôles hérités hors-sujet).
@@ -149,3 +241,5 @@ function startDnb2026Correction() {
 window.initDnb2026LaunchPage = initDnb2026LaunchPage;
 window.updateDnb2026Preview = updateDnb2026Preview;
 window.startDnb2026Correction = startDnb2026Correction;
+window.dnb2026ResumeSession = dnb2026ResumeSession;
+window.dnb2026DiscardSession = dnb2026DiscardSession;

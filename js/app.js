@@ -2842,7 +2842,7 @@ function updateExerciseCompetencesSummary(exerciseNum) {
                     border-radius: 12px;
                     font-size: 12px;
                     font-weight: bold;
-                ">${points.toFixed(1)}pt${points > 1 ? 's' : ''}</span>
+                ">${formatPoints(points)}pt${points > 1 ? 's' : ''}</span>
             </div>
         `;
     }).join('');
@@ -4861,8 +4861,8 @@ function toggleCompetenceScore(exerciseNumber, questionId, competenceName, maxPo
         const ratio = question.points / totalScore;
         question.competences.forEach(comp => {
             const compScore = appState.scores[candidate.number][exerciseNumber][questionId].competences[comp.name] || 0;
-            appState.scores[candidate.number][exerciseNumber][questionId].competences[comp.name] = 
-                Math.round(compScore * ratio * 2) / 2; // Arrondi à 0.5
+            appState.scores[candidate.number][exerciseNumber][questionId].competences[comp.name] =
+                Math.round(compScore * ratio * 4) / 4; // Arrondi à 0.25 (barèmes au quart de point)
         });
         totalScore = question.points;
     }
@@ -5757,7 +5757,7 @@ function renderExerciseContent(exerciseNumber) {
                             <span>${icon}</span>
                             <span>${compName}</span>
                             <span style="background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 12px; font-size: 0.85em;">
-                                ${compData.totalPoints.toFixed(1)} pt${compData.totalPoints > 1 ? 's' : ''}
+                                ${formatPoints(compData.totalPoints)} pt${compData.totalPoints > 1 ? 's' : ''}
                             </span>
                         </div>
                     `;
@@ -5815,13 +5815,16 @@ function renderExerciseContent(exerciseNumber) {
                             const icon = defaultComp ? defaultComp.icon : '📋';
                             const description = competence.description || '';
                             const tooltip = competence.tooltip || '';
+                            // Au survol : le commentaire officiel du barème s'il existe,
+                            // sinon la description générique de la compétence.
+                            const hoverText = tooltip || description;
                             const tooltipId = `tooltip_${exerciseNumber}_${question.id}_${competence.name.replace(/\s/g, '_')}`;
                             const competenceProgressState = getCompetenceProgressState(candidate.number, exerciseNumber, question.id, competence.name);
                             const buttonId = `comp_${exerciseNumber}_${question.id}_${competence.name.replace(/\s/g, '_')}`;
                             return `
                                 <button id="${buttonId}" class="competence-btn ${isActive ? 'active' : ''}"
                                         style="border-color: ${competence.color}; color: ${isActive ? competence.color : competence.color}; background: ${isActive ? competence.color : 'white'}; opacity: 1;"
-                                        onmouseenter="showDescriptionTooltip(event, '${description.replace(/'/g, "\\'")}', '${tooltipId}')"
+                                        onmouseenter="showDescriptionTooltip(event, '${hoverText.replace(/'/g, "\\'")}', '${tooltipId}')"
                                         onmouseleave="hideDescriptionTooltip('${tooltipId}'); handleCompetenceButtonPress(${exerciseNumber}, '${question.id}', '${competence.name}', ${question.points}, event, 'cancel');"
                                         onmousedown="handleCompetenceButtonPress(${exerciseNumber}, '${question.id}', '${competence.name}', ${question.points}, event, 'start'); event.preventDefault();"
                                         onmouseup="handleCompetenceButtonPress(${exerciseNumber}, '${question.id}', '${competence.name}', ${question.points}, event, 'end')"
@@ -5833,7 +5836,7 @@ function renderExerciseContent(exerciseNumber) {
                                     <span class="competence-points-display" style="background: ${isActive ? 'rgba(255,255,255,0.9)' : competence.color}; color: ${isActive ? competence.color : 'white'};">${compScore}/${competence.points}pt${competence.points > 1 ? 's' : ''}</span>
                                     <div class="progress-indicator ${competenceProgressState}"></div>
                                     ${tooltip ? `<span class="competence-info-i" onclick="event.stopPropagation(); toggleOptionalTooltip('${tooltipId}')">i</span>` : ''}
-                                    <div class="description-tooltip" id="desc_${tooltipId}" style="display:none;">${description}</div>
+                                    <div class="description-tooltip" id="desc_${tooltipId}" style="display:none;">${hoverText}</div>
                                     ${tooltip ? `<div class="tooltip-optional-new" id="${tooltipId}" style="display:none;">${tooltip}</div>` : ''}
                                 </button>
                             `;
@@ -6642,10 +6645,17 @@ function calculateCandidateDetails(candidateNumber) {
     });
     // Mode Import PDF (option 3) : barème officiel = exercices (sur baseMax, = 18) +
     // points de présentation / maîtrise de la langue (sur 2), SANS règle de trois.
-    // Hors ce mode (DNB blanc) : on conserve la mise à l'échelle /20 d'origine.
+    // Mode DNB 2026 clé en main : le barème officiel totalise 20 pts, communication
+    // incluse dans les exercices — AUCUN point de présentation séparé.
+    // Hors ces modes (DNB blanc) : on conserve la mise à l'échelle /20 d'origine.
     const isPdfImport = !!(appState && appState.pdfImport);
     let presentationScore = 0, presentationAttributed = false;
-    if (isPdfImport) {
+    if (appState && appState.isDnb2026Mode) {
+        presentationAttributed = true; // rien à attribuer : ne doit pas bloquer la validation
+        // Note EXACTE au quart de point près (14,75 et non 14,8) : les scores sont
+        // des multiples de 0,25, leur somme est exacte en binaire — aucun arrondi.
+        noteOn20 = Math.min(20, baseScore + bonusScore);
+    } else if (isPdfImport) {
         const ps = (appState.presentationScores || {})[candidateNumber];
         presentationAttributed = (typeof ps === 'number');
         presentationScore = presentationAttributed ? ps : 0;
@@ -7059,7 +7069,7 @@ function validateCorrection() {
     
     // Remplir la modale avec les informations du candidat (nom Pronote ou numéro)
     document.getElementById('validationCandidateNumber').textContent =
-        candidate.name || (window.candidateNamesMap || {})[candidate.number] || ('n°' + candidate.number);
+        candidate.name || (window.candidateNamesMap || {})[candidate.number] || candidate.number;
     document.getElementById('validationMainScore').textContent = `${details.noteOn20}/20`;
 
     // Appliquer la couleur selon le niveau de maîtrise (barème DNB 2025)
@@ -7139,6 +7149,13 @@ function closeValidationModal() {
 // === Points de présentation / maîtrise de la langue (sur 2) — mode Import PDF ===
 function setupPresentationControl(candidateNumber) {
     const box = document.getElementById('presentationBox');
+    // Mode DNB 2026 : pas de points de présentation (barème officiel /20, communication
+    // incluse dans les exercices) → l'encart met en évidence les points Communication.
+    if (appState && appState.isDnb2026Mode) {
+        if (box) renderDnb2026CommunicationRecap(box, candidateNumber);
+        updatePresentationUI();
+        return;
+    }
     const slider = document.getElementById('presentationSlider');
     const isPdfImport = !!(appState && appState.pdfImport);
     if (box) box.style.display = isPdfImport ? 'block' : 'none';
@@ -7147,6 +7164,51 @@ function setupPresentationControl(candidateNumber) {
     const ps = appState.presentationScores[candidateNumber];
     slider.value = (typeof ps === 'number') ? ps : 0;
     updatePresentationUI();
+}
+
+// Récapitulatif des questions « Communication » du barème officiel DNB 2026
+// (Ex1 Q4a et Ex2 Q3, 1 pt chacune) affiché dans la modale de validation.
+function renderDnb2026CommunicationRecap(box, candidateNumber) {
+    const items = [];
+    Object.keys(exercisesData).forEach(exNum => {
+        (exercisesData[exNum].questions || []).forEach(q => {
+            if (!/Communication/i.test(q.title)) return;
+            const s = appState.scores?.[candidateNumber]?.[exNum]?.[q.id];
+            items.push({
+                exLabel: (exercisesData[exNum].title || ('Exercice ' + exNum)).split('—')[0].trim(),
+                qLabel: q.title.replace('Question ', 'Q').replace(/\s*—\s*Communication/i, ''),
+                score: (s && typeof s.score === 'number') ? s.score : null,
+                max: q.points
+            });
+        });
+    });
+    if (!items.length) { box.style.display = 'none'; return; }
+    const totalMax = items.reduce((a, i) => a + i.max, 0);
+    const allDone = items.every(i => i.score !== null);
+    const totalTxt = allDone
+        ? formatPoints(items.reduce((a, i) => a + i.score, 0)).replace('.', ',')
+        : '—';
+    // Une seule ligne compacte : la modale doit rester visible sans scroll.
+    box.style.display = 'block';
+    box.style.marginTop = '8px';
+    box.style.padding = '8px 12px';
+    box.style.borderColor = allDone ? '#86efac' : '#fcd34d';
+    box.style.background = allDone ? '#f0fdf4' : '#fffbeb';
+    box.title = 'Points attribués via le badge Communiquer des questions concernées (déjà comptés dans la note).';
+    box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <span style="font-weight:700;color:#374151;font-size:.88em;white-space:nowrap;">✍️ Communication</span>
+            <span style="padding:2px 10px;border-radius:10px;background:#f59e0b;color:#fff;font-weight:700;font-size:.88em;white-space:nowrap;">${totalTxt} / ${formatPoints(totalMax)}</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+            ${items.map(i => `
+                <span style="flex:1;display:flex;justify-content:space-between;align-items:center;gap:5px;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.7);border:1px solid #e5e7eb;font-size:.8em;white-space:nowrap;">
+                    <span style="color:#6b7280;font-weight:600;">${i.exLabel.replace('Exercice', 'Ex')} · ${i.qLabel}</span>
+                    <span style="font-weight:700;color:${i.score === null ? '#9ca3af' : (i.score >= i.max ? '#16a34a' : (i.score > 0 ? '#d97706' : '#dc2626'))};">
+                        ${i.score === null ? '—' : formatPoints(i.score).replace('.', ',')}/${formatPoints(i.max)}
+                    </span>
+                </span>`).join('')}
+        </div>`;
 }
 
 function markPresentationTouched() {
@@ -7176,16 +7238,20 @@ function updatePresentationUI() {
     const ps = (appState.presentationScores || {})[candidate.number];
     const attributed = (typeof ps === 'number');
 
-    const valEl = document.getElementById('presentationValue');
-    if (valEl) valEl.textContent = attributed ? (ps.toString().replace('.', ',') + ' / 2') : '— / 2';
+    // Mode DNB 2026 : l'encart affiche le récap Communication (géré par
+    // renderDnb2026CommunicationRecap), pas le slider présentation.
+    if (!appState.isDnb2026Mode) {
+        const valEl = document.getElementById('presentationValue');
+        if (valEl) valEl.textContent = attributed ? (ps.toString().replace('.', ',') + ' / 2') : '— / 2';
 
-    const hintEl = document.getElementById('presentationHint');
-    if (hintEl) hintEl.style.display = attributed ? 'none' : 'block';
+        const hintEl = document.getElementById('presentationHint');
+        if (hintEl) hintEl.style.display = attributed ? 'none' : 'block';
 
-    const boxEl = document.getElementById('presentationBox');
-    if (boxEl) {
-        boxEl.style.borderColor = attributed ? '#86efac' : '#fca5a5';
-        boxEl.style.background = attributed ? '#f0fdf4' : '#fef2f2';
+        const boxEl = document.getElementById('presentationBox');
+        if (boxEl) {
+            boxEl.style.borderColor = attributed ? '#86efac' : '#fca5a5';
+            boxEl.style.background = attributed ? '#f0fdf4' : '#fef2f2';
+        }
     }
 
     const mainScoreElement = document.getElementById('validationMainScore');
@@ -7273,6 +7339,7 @@ function reimportCorrectionsFromClipboard() {
 }
 
 function ensurePresentationAttributed() {
+    if (appState && appState.isDnb2026Mode) return true; // pas de présentation en mode DNB 2026
     if (!(appState && appState.pdfImport)) return true;
     const candidate = appState.activeCandidates[appState.currentCandidateIndex];
     const ps = (appState.presentationScores || {})[candidate && candidate.number];
@@ -9213,3 +9280,9 @@ document.addEventListener('DOMContentLoaded', () => {
         initMathaleaPage();
     }
 });
+
+// Affiche une valeur de points sans zéros superflus, en respectant les quarts
+// de point des barèmes officiels (0.25 → "0.25", 2.5 → "2.5", 1 → "1").
+function formatPoints(points) {
+    return String(parseFloat((points || 0).toFixed(2)));
+}

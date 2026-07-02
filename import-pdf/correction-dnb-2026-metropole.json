@@ -11,99 +11,188 @@
           "enonce": "Donner une écriture du nombre 0,75 sous la forme d'une fraction.",
           "correction": "$0,75 = \\dfrac{3}{4}$ (on peut aussi écrire $\\dfrac{75}{100}$ : la fraction n'a pas besoin d'être irréductible).",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ]
         },
         {
           "numero": "2",
           "enonce": "Calculer la somme $-4,7 + 3,5$.",
           "correction": "$-4,7 + 3,5 = -1,2$.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ]
         },
         {
           "numero": "3",
           "enonce": "On considère le tableau de proportionnalité (1re colonne : 6 et 12 ; 2e colonne : 18 et $a$). Combien vaut $a$ ?",
           "correction": "$a = \\dfrac{12 \\times 18}{6} = 36$ (dans la 1re colonne, 12 est le double de 6, donc $a$ est le double de 18).",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour un calcul qui donne la bonne réponse (par exemple 18 × 12 ÷ 6 ou 216 ÷ 6), sans donner 36."
         },
         {
           "numero": "4",
           "enonce": "Un sac contient 10 boules rouges, 4 bleues et 6 vertes. On tire une boule au hasard. Quelle est la probabilité d'obtenir une boule bleue ?",
           "qcm": true,
           "options": [
-            {"label": "A. $\\dfrac{1}{4}$", "correct": false},
-            {"label": "B. $\\dfrac{4}{20}$", "correct": true},
-            {"label": "C. $\\dfrac{4}{16}$", "correct": false},
-            {"label": "D. $\\dfrac{1}{3}$", "correct": false}
+            {
+              "label": "A. $\\dfrac{1}{4}$",
+              "correct": false
+            },
+            {
+              "label": "B. $\\dfrac{4}{20}$",
+              "correct": true
+            },
+            {
+              "label": "C. $\\dfrac{4}{16}$",
+              "correct": false
+            },
+            {
+              "label": "D. $\\dfrac{1}{3}$",
+              "correct": false
+            }
           ],
           "correction": "Il y a $10 + 4 + 6 = 20$ boules, dont 4 bleues. La probabilité est $\\dfrac{4}{20}$ : ==réponse B==.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "Si une lettre et une réponse sont données, la question est corrigée en tenant compte uniquement de la réponse. La réponse 1/5 rapporte 0,5 pt."
         },
         {
           "numero": "5",
           "enonce": "Quelle est la solution de l'équation $10x + 16 = -64$ ?",
           "qcm": true,
           "options": [
-            {"label": "A. $8$", "correct": false},
-            {"label": "B. $-4,8$", "correct": false},
-            {"label": "C. $-8$", "correct": true},
-            {"label": "D. $-14$", "correct": false}
+            {
+              "label": "A. $8$",
+              "correct": false
+            },
+            {
+              "label": "B. $-4,8$",
+              "correct": false
+            },
+            {
+              "label": "C. $-8$",
+              "correct": true
+            },
+            {
+              "label": "D. $-14$",
+              "correct": false
+            }
           ],
           "correction": "$10x = -64 - 16 = -80$, donc $x = \\dfrac{-80}{10} = -8$ : ==réponse C==.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "Si une lettre et une réponse sont données, la question est corrigée en tenant compte uniquement de la réponse."
         },
         {
           "numero": "6",
           "enonce": "Quelle est la notation scientifique du nombre 0,00458 ?",
           "qcm": true,
           "options": [
-            {"label": "A. $458 \\times 10^{-3}$", "correct": false},
-            {"label": "B. $4,58 \\times 10^{3}$", "correct": false},
-            {"label": "C. $4,58 \\times 10^{-3}$", "correct": true},
-            {"label": "D. $458 \\times 10^{-5}$", "correct": false}
+            {
+              "label": "A. $458 \\times 10^{-3}$",
+              "correct": false
+            },
+            {
+              "label": "B. $4,58 \\times 10^{3}$",
+              "correct": false
+            },
+            {
+              "label": "C. $4,58 \\times 10^{-3}$",
+              "correct": true
+            },
+            {
+              "label": "D. $458 \\times 10^{-5}$",
+              "correct": false
+            }
           ],
           "correction": "$0,00458 = 4,58 \\times 10^{-3}$ : ==réponse C==.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "Si une lettre et une réponse sont données, la question est corrigée en tenant compte uniquement de la réponse."
         },
         {
           "numero": "7",
           "enonce": "Le diagramme circulaire ci-dessous donne la répartition des réponses de 24 élèves à une question à choix multiple. Quel est le nombre d'élèves ayant choisi la réponse B ?",
           "correction": "La part de la réponse B correspond à un angle droit, soit un quart du disque : $\\dfrac{1}{4} \\times 24 = 6$. Six élèves ont choisi la réponse B.",
           "points": 1,
-          "competences": ["Représenter", "Calculer"],
-          "images": ["dnb/2026/tex/png/dnb_2026_06_metropole_q7_diagramme.png"]
+          "competences": [
+            "Représenter",
+            "Calculer"
+          ],
+          "images": [
+            "dnb/2026/tex/png/dnb_2026_06_metropole_q7_diagramme.png"
+          ],
+          "commentaire": "0,5 pt pour la réponse ¼ et 1 pt pour le ¼ de 24."
         },
         {
           "numero": "8",
           "enonce": "Quel est le périmètre de la figure ci-contre (rectangle de longueur 10 mm et de largeur 5 mm, voir figure du sujet) ?",
           "qcm": true,
           "options": [
-            {"label": "A. 30 mm", "correct": true},
-            {"label": "B. 30 mm²", "correct": false},
-            {"label": "C. 50 mm", "correct": false},
-            {"label": "D. 50 mm²", "correct": false}
+            {
+              "label": "A. 30 mm",
+              "correct": true
+            },
+            {
+              "label": "B. 30 mm²",
+              "correct": false
+            },
+            {
+              "label": "C. 50 mm",
+              "correct": false
+            },
+            {
+              "label": "D. 50 mm²",
+              "correct": false
+            }
           ],
           "correction": "Périmètre du rectangle $= 10 \\times 2 + 5 \\times 2 = 30$ mm : ==réponse A==.",
           "points": 1,
-          "competences": ["Calculer", "Représenter"]
+          "competences": [
+            "Calculer",
+            "Représenter"
+          ],
+          "commentaire": "Si une lettre et une réponse sont données, la question est corrigée en tenant compte uniquement de la réponse."
         },
         {
           "numero": "9",
           "enonce": "Donner le cosinus de l'angle $\\widehat{EDF}$ dans le triangle EDF rectangle en E (voir figure : DE = 6 cm, DF = 10 cm, EF = 8 cm).",
           "qcm": true,
           "options": [
-            {"label": "A. $\\dfrac{4}{5}$", "correct": false},
-            {"label": "B. $\\dfrac{3}{5}$", "correct": true},
-            {"label": "C. $\\dfrac{5}{3}$", "correct": false},
-            {"label": "D. $\\dfrac{4}{3}$", "correct": false}
+            {
+              "label": "A. $\\dfrac{4}{5}$",
+              "correct": false
+            },
+            {
+              "label": "B. $\\dfrac{3}{5}$",
+              "correct": true
+            },
+            {
+              "label": "C. $\\dfrac{5}{3}$",
+              "correct": false
+            },
+            {
+              "label": "D. $\\dfrac{4}{3}$",
+              "correct": false
+            }
           ],
           "correction": "$\\cos(\\widehat{EDF}) = \\dfrac{\\text{adjacent}}{\\text{hypoténuse}} = \\dfrac{DE}{DF} = \\dfrac{6}{10} = \\dfrac{3}{5}$ : ==réponse B==.",
           "points": 1,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour la réponse 6/10 sans faire référence à la réponse B. Si une lettre et une réponse sont données, la question est corrigée en tenant compte uniquement de la réponse."
         }
       ]
     },
@@ -114,43 +203,70 @@
           "numero": "1",
           "enonce": "D'après le tableau des médailles des Jeux Paralympiques de Paris 2024, combien de médailles d'or ont été obtenues par les Pays-Bas ?",
           "correction": "Les Pays-Bas ont obtenu 27 médailles d'or.",
-          "points": 0.5,
-          "competences": ["Représenter"]
+          "points": 0.25,
+          "competences": [
+            "Représenter"
+          ]
         },
         {
           "numero": "2",
           "enonce": "Calculer le nombre de médailles d'or obtenues par l'Australie (total : 63, dont 17 en argent et 28 en bronze).",
           "correction": "$63 - 17 - 28 = 18$. L'Australie a obtenu 18 médailles d'or.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,25 pt pour le calcul, 0,25 pt pour le résultat."
         },
         {
           "numero": "3",
           "enonce": "Montrer que l'affirmation suivante est vraie : « Plus de 20 % des médailles obtenues par la Grande-Bretagne sont en bronze » (31 médailles de bronze sur un total de 124).",
           "correction": "$\\dfrac{31 \\times 100}{124} = 25$, soit 25 % des médailles en bronze. Comme $25\\,\\% > 20\\,\\%$, l'affirmation est vraie.",
-          "points": 0.5,
-          "competences": ["Calculer"]
+          "points": 0.75,
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour calculer le pourcentage de médailles de bronze de la Grande-Bretagne (ou les 20 % de son total), 0,25 pt pour la comparaison permettant de conclure. Une affirmation vraie reposant sur des calculs faux ne rapporte pas de point."
         },
         {
           "numero": "4a",
           "enonce": "Déterminer la médiane de la série des totaux de médailles des 9 pays (colonne « Total »), en détaillant la démarche.",
           "correction": "On range les 9 totaux par ordre croissant : $56 < 63 < 71 < 75 < \\mathbf{82} < 89 < 105 < 124 < 220$. La médiane est la valeur centrale, c'est-à-dire la 5e : ==82 médailles==.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour la valeur 82. 0,25 pt pour la valeur 89 (5e valeur du tableau sans avoir établi l'ordre croissant)."
+        },
+        {
+          "numero": "4a — Communication",
+          "enonce": "Qualité de la rédaction de la question 4.a : il s'agit de détailler la réponse en précisant la démarche.",
+          "correction": "Il s'agit de détailler la réponse en précisant la démarche.",
+          "points": 1,
+          "competences": [
+            "Communiquer"
+          ],
+          "commentaire": "0,5 pt pour montrer qu'il faut ranger les valeurs dans l'ordre croissant, 0,5 pt pour expliquer que la médiane est la 5e valeur."
         },
         {
           "numero": "4b",
           "enonce": "Interpréter ce résultat dans le contexte de l'exercice.",
           "correction": "Au moins la moitié de ces 9 pays ont obtenu 82 médailles ou moins, et au moins la moitié en ont obtenu 82 ou plus.",
-          "points": 0.5,
-          "competences": ["Communiquer"]
+          "points": 0.25,
+          "competences": [
+            "Communiquer"
+          ],
+          "commentaire": "Toute autre formulation correcte rapporte 0,25 pt."
         },
         {
           "numero": "5",
           "enonce": "Aux Jeux de Tokyo (2021), le Brésil avait obtenu 20 médailles d'argent ; à Paris (2024), il en a obtenu 26. Quel est le pourcentage d'augmentation ?",
           "correction": "$\\dfrac{26 \\times 100}{20} = 130$, puis $130 - 100 = 30$. Le nombre de médailles d'argent a augmenté de 30 %.",
-          "points": 0.5,
-          "competences": ["Calculer"]
+          "points": 0.75,
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour une réponse sèche. On valorise à hauteur de 0,5 pt une démarche et des calculs conduisant à une réponse erronée, et à hauteur de 0,25 pt un début de raisonnement traduisant l'augmentation de 6 médailles."
         }
       ]
     },
@@ -162,35 +278,63 @@
           "enonce": "Sur la figure (AB = 6,4 cm, AC = 4,8 cm, BC = 8 cm), montrer que le triangle ABC est rectangle en A.",
           "correction": "Le plus grand côté est [BC] : $BC^2 = 8^2 = 64$. D'autre part $AC^2 + AB^2 = 4,8^2 + 6,4^2 = 23,04 + 40,96 = 64$. Donc $BC^2 = AC^2 + AB^2$ : d'après la réciproque du théorème de Pythagore, le triangle ABC est rectangle en A.",
           "points": 1,
-          "competences": ["Raisonner", "Calculer"]
+          "competences": [
+            "Raisonner",
+            "Calculer"
+          ],
+          "commentaire": "0,25 pt pour reconnaître que l'on applique la réciproque du théorème de Pythagore. 0,5 pt pour montrer que AB² + AC² = BC² (0,25 pt pour AB² + AC² = 64 et 0,25 pt pour BC² = 64 ; on ne pénalise pas une égalité écrite dès le départ). 0,25 pt pour la conclusion. Pas de point pour une conclusion sèche."
         },
         {
           "numero": "2",
           "enonce": "Sachant que (BC) et (DE) sont parallèles et que AD = 4,8 cm, montrer que DE = 6 cm et AE = 3,6 cm.",
           "correction": "Les points C, A, E d'une part et B, A, D d'autre part sont alignés, et (BC) // (DE). D'après le théorème de Thalès : $\\dfrac{CA}{AE} = \\dfrac{BA}{AD} = \\dfrac{BC}{DE}$, soit $\\dfrac{4,8}{AE} = \\dfrac{6,4}{4,8} = \\dfrac{8}{DE}$. Donc $DE = \\dfrac{8 \\times 4,8}{6,4} = 6$ cm et $AE = \\dfrac{4,8 \\times 4,8}{6,4} = 3,6$ cm.",
           "points": 1,
-          "competences": ["Calculer", "Raisonner"]
+          "competences": [
+            "Calculer",
+            "Raisonner"
+          ],
+          "commentaire": "0,25 pt pour reconnaître que l'on applique le théorème de Thalès (on n'attend pas les conditions d'application, elles sont dans l'énoncé). 0,25 pt pour l'écriture correcte des rapports. 0,25 pt pour le calcul de AE. 0,25 pt pour le calcul de DE. On ne pénalise pas l'absence d'unité."
         },
         {
           "numero": "3",
           "enonce": "Montrer que les angles $\\widehat{ABC}$ et $\\widehat{ADE}$ sont égaux (détailler la démarche).",
           "correction": "Les droites (BC) et (DE) sont parallèles et coupées par la sécante (DB) : les angles alternes-internes ainsi formés sont égaux, donc $\\widehat{ABC} = \\widehat{ADE}$.",
           "points": 0.5,
-          "competences": ["Raisonner"]
+          "competences": [
+            "Raisonner"
+          ],
+          "commentaire": "D'autres solutions sont possibles en utilisant la trigonométrie. On valorise à hauteur de 0,25 pt une démarche non aboutie consistant à calculer les angles."
+        },
+        {
+          "numero": "3 — Communication",
+          "enonce": "Qualité de la rédaction de la question 3 : il s'agit de détailler la réponse en précisant la démarche.",
+          "correction": "Il s'agit de détailler la réponse en précisant la démarche.",
+          "points": 1,
+          "competences": [
+            "Communiquer"
+          ],
+          "commentaire": "0,5 pt pour exprimer la démarche en utilisant des définitions et/ou des théorèmes dans la mise en œuvre d'un raisonnement, 0,5 pt pour la rigueur des notations mathématiques : angles, droites…"
         },
         {
           "numero": "4",
           "enonce": "Montrer que les triangles ABC et ADE sont semblables.",
           "correction": "On sait que $\\widehat{ABC} = \\widehat{ADE}$ et que $\\widehat{BAC} = \\widehat{DAE}$ (ce sont des angles droits), donc $\\widehat{ACB} = \\widehat{AED}$. Les triangles ABC et ADE ont leurs angles deux à deux de même mesure : ils sont semblables.",
           "points": 0.5,
-          "competences": ["Raisonner"]
+          "competences": [
+            "Raisonner"
+          ],
+          "commentaire": "D'autres solutions sont possibles en utilisant les longueurs des côtés des triangles. On valorise à hauteur de 0,25 pt une démarche non aboutie."
         },
         {
           "numero": "5",
           "enonce": "Déterminer l'aire du quadrilatère BCDE.",
           "correction": "L'aire de BCDE est la somme des aires des quatre triangles rectangles : $\\mathcal{A}_{ABC} = \\dfrac{4,8 \\times 6,4}{2} = 15,36$ cm² ; $\\mathcal{A}_{ABE} = \\dfrac{3,6 \\times 6,4}{2} = 11,52$ cm² ; $\\mathcal{A}_{ADE} = \\dfrac{4,8 \\times 3,6}{2} = 8,64$ cm² ; $\\mathcal{A}_{ADC} = \\dfrac{4,8 \\times 4,8}{2} = 11,52$ cm². Total : $15,36 + 11,52 + 8,64 + 11,52 = 47,04$ cm².",
           "points": 1,
-          "competences": ["Calculer", "Raisonner"]
+          "competences": [
+            "Calculer",
+            "Raisonner"
+          ],
+          "commentaire": "Si la démarche n'est pas aboutie, on valorise à hauteur de 0,5 pt le calcul de l'aire d'un triangle et à hauteur de 0,5 pt un découpage correct de la figure. On ne pénalise pas l'absence d'unité."
         }
       ]
     },
@@ -200,39 +344,58 @@
         {
           "numero": "A.1",
           "enonce": "Partie A — Sur la courbe ci-dessous donnant le volume d'une boule (en cm³) en fonction de son rayon (en cm), déterminer graphiquement l'image de 3,6.",
-          "correction": "L'image de 3,6 cm par cette fonction est environ 200 cm³ (lecture graphique).",
+          "correction": "Par lecture graphique, l'image de 3,6 par cette fonction est 195 cm³.",
           "points": 0.5,
-          "competences": ["Représenter"],
-          "images": ["dnb/2026/tex/png/dnb_2026_06_metropole_ex3_graphique.png"]
+          "competences": [
+            "Représenter"
+          ],
+          "images": [
+            "dnb/2026/tex/png/dnb_2026_06_metropole_ex3_graphique.png"
+          ],
+          "commentaire": "Réponse officielle : 195 cm³. On ne pénalise pas une valeur appartenant à l'intervalle [180 ; 210]."
         },
         {
           "numero": "A.2",
           "enonce": "Partie A — Le volume d'une boule est égal à 660 cm³. Lire graphiquement son rayon (voir la courbe ci-dessous).",
           "correction": "L'antécédent de 660 cm³ par cette fonction est environ 5,4 cm (lecture graphique).",
           "points": 0.5,
-          "competences": ["Représenter"],
-          "images": ["dnb/2026/tex/png/dnb_2026_06_metropole_ex3_graphique.png"]
+          "competences": [
+            "Représenter"
+          ],
+          "images": [
+            "dnb/2026/tex/png/dnb_2026_06_metropole_ex3_graphique.png"
+          ],
+          "commentaire": "0,5 pt pour toute réponse dans l'intervalle [5,3 ; 5,5]. 0,25 pt si la réponse donnée est 5,2 cm (lecture de deux graduations après 5). On ne pénalise pas l'absence d'unité."
         },
         {
           "numero": "B.1",
           "enonce": "Partie B — On fabrique des boules pleines de rayon 2,5 cm. Montrer que le volume d'une boule, arrondi à l'unité, est égal à 65 cm³. (On rappelle $V = \\dfrac{4}{3} \\times \\pi \\times R^{3}$.)",
           "correction": "$V = \\dfrac{4}{3} \\times \\pi \\times 2,5^{3} \\approx 65,45$ cm³, soit environ 65 cm³ arrondi à l'unité.",
-          "points": 1,
-          "competences": ["Calculer", "Raisonner"]
+          "points": 0.5,
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "On ne pénalise pas l'absence d'unité ou une valeur approchée donnée par la calculatrice."
         },
         {
           "numero": "B.2",
           "enonce": "Partie B — On dispose d'une bobine de 1000 cm³ de plastique. Combien de boules peut-on fabriquer au maximum ?",
           "correction": "$\\dfrac{1000}{65} \\approx 15,4$. On peut donc fabriquer au maximum 15 boules.",
-          "points": 0.5,
-          "competences": ["Calculer"]
+          "points": 0.75,
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour le calcul, 0,25 pt pour le résultat."
         },
         {
           "numero": "B.3",
           "enonce": "Partie B — La masse volumique de ce plastique est égale à 0,9 g/cm³. Calculer la masse d'une boule.",
           "correction": "$0,9 \\times 65 = 58,5$ g, soit environ 59 g.",
-          "points": 0.5,
-          "competences": ["Calculer"]
+          "points": 0.75,
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour le calcul, 0,25 pt pour le résultat avec l'unité. On peut raisonner à partir du volume arrondi donné à la question B.1."
         }
       ]
     },
@@ -244,21 +407,31 @@
           "enonce": "On dispose de 112 bonbons à la fraise et de 140 au caramel, à répartir dans des sachets identiques en utilisant tous les bonbons. Peut-on constituer 16 sachets ?",
           "correction": "$112 \\div 16 = 7$ mais $140 \\div 16 = 8,75$. 140 n'est pas divisible par 16, donc on ne peut pas constituer 16 sachets.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "0,25 pt pour une justification, 0,25 pt pour la conclusion. 0,5 pt si l'élève écrit que 16 sachets peuvent être réalisés avec la précision que tous les bonbons au caramel ne sont pas utilisés. Pas de point pour une réponse sèche."
         },
         {
           "numero": "2",
           "enonce": "La décomposition en facteurs premiers de 112 est $2^{4} \\times 7$. Quelle est la décomposition en facteurs premiers de 140 ?",
           "correction": "$140 = 2 \\times 70 = 2 \\times 2 \\times 35 = 2^{2} \\times 5 \\times 7$.",
           "points": 0.5,
-          "competences": ["Calculer"]
+          "competences": [
+            "Calculer"
+          ],
+          "commentaire": "Une réponse sèche permet d'obtenir 0,5 pt."
         },
         {
           "numero": "3",
           "enonce": "Quel nombre maximal de sachets pourra-t-on constituer ? Quelle sera alors la composition de chaque sachet ?",
           "correction": "Le nombre maximal de sachets est le PGCD de 112 et 140. D'après les décompositions, $\\text{PGCD}(112\\,;140) = 2^{2} \\times 7 = 28$. On peut donc constituer 28 sachets. Comme $112 \\div 28 = 4$ et $140 \\div 28 = 5$, chaque sachet contiendra 4 bonbons à la fraise et 5 bonbons au caramel.",
           "points": 1,
-          "competences": ["Raisonner", "Calculer"]
+          "competences": [
+            "Raisonner",
+            "Calculer"
+          ],
+          "commentaire": "0,5 pt pour le nombre maximum de sachets (on valorise à hauteur de 0,25 pt la réponse 14 sachets). 0,5 pt pour la composition d'un sachet en cohérence avec le nombre de sachets trouvé."
         }
       ]
     }

@@ -7,6 +7,13 @@
       "excludeFiles": "{alea/**,dnb/**,alea.backup/**,test-enrichi/**,dnb-question-extractor/**,backups/**,extension/**,images/**,css/**,js/**}"
     }
   },
+  "redirects": [
+    {
+      "source": "/dnb2026",
+      "destination": "/app.html?source=upload&subject=dnb-2026",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/mathalea/:uuid",

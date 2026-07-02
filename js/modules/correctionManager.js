@@ -3,7 +3,9 @@
 // ============================================================================
 
 // Distribue les points d'une question entre ses compétences :
-//   - en multiples de 0.5 (compatible avec increment 0.5 des clics badges)
+//   - en multiples de 0.5 par défaut ; si le barème de la question est au
+//     quart de point (0,25 / 0,75 — ex. barème officiel DNB), on passe au
+//     pas de 0.25 (l'increment des clics badges suit via distrib.increment)
 //   - somme exacte = q.points
 //   - répartition aussi équitable que possible (reste va aux 1ères comp)
 //   - max 2 compétences par question : si le JSON en liste plus, on garde
@@ -19,14 +21,15 @@ function _distributeCompetencePoints(qPoints, competenceNames) {
         names = names.slice(0, 2);
     }
     var n = Math.max(names.length, 1);
-    var halves = Math.round((qPoints || 1) * 2);
-    var base = Math.floor(halves / n);
-    var rem = halves - base * n;
+    var unit = (Math.round((qPoints || 1) * 4) % 2 === 0) ? 0.5 : 0.25;
+    var units = Math.round((qPoints || 1) / unit);
+    var base = Math.floor(units / n);
+    var rem = units - base * n;
     var pts = [];
     for (var i = 0; i < n; i++) {
-        pts.push((base + (i < rem ? 1 : 0)) * 0.5);
+        pts.push((base + (i < rem ? 1 : 0)) * unit);
     }
-    return { names: names, pointsPerComp: pts };
+    return { names: names, pointsPerComp: pts, increment: unit };
 }
 
 function selectCorrectionPath(path) {
@@ -220,6 +223,7 @@ function parseJsonCorrection() {
                     if (item.images && item.images.length) q.images = item.images; // figures (PNG) rattachées à la question
                     q.qcm = !!item.qcm; // réinitialisé à chaque import (évite un résidu de cases d'un ancien import)
                     q.options = item.options || []; // [{label, correct}]
+                    q.commentaire = item.commentaire || ''; // commentaire officiel du barème (affiché via le ⓘ des badges)
                     if (item.numero) q.numero = String(item.numero); // vrai numéro du sujet (1a, 2a, a, b...) pour l'affichage
                     appState.pdfImport.corrections[q.id] = { text: q.answer };
                     newEx.questions.push(q);
@@ -244,6 +248,7 @@ function parseJsonCorrection() {
                 q.answer = item.correction || item.answer || '';
                 if (item.points) q.points = item.points;
                 if (item.competences) q.competences = item.competences;
+                q.commentaire = item.commentaire || '';
                 appState.pdfImport.corrections[q.id] = { text: q.answer };
                 imported++;
             });
@@ -327,9 +332,9 @@ function regenerateExercisesDataFromPdfImport() {
                             name: cName,
                             color: found ? found.color : '#666',
                             description: found ? found.description : '',
-                            tooltip: '',
+                            tooltip: q.commentaire || '',
                             points: distrib.pointsPerComp[ci],
-                            increment: 0.5
+                            increment: distrib.increment
                         };
                     })
                 };
@@ -401,9 +406,9 @@ function finalizePdfImport() {
                             name: cName,
                             color: found ? found.color : '#666',
                             description: found ? found.description : '',
-                            tooltip: '',
+                            tooltip: q.commentaire || '',
                             points: distrib.pointsPerComp[ci],
-                            increment: 0.5
+                            increment: distrib.increment
                         };
                     })
                 };
