@@ -31,6 +31,10 @@ function initDnb2026LaunchPage() {
     if (paramBtn) paramBtn.style.display = 'none';          // config barème Mode A/B/C
     var restaurerBtn = document.getElementById('btnRestaurerSauvegarde');
     if (restaurerBtn) restaurerBtn.style.display = 'none';  // restaurer un JSON (écraserait le barème)
+    var bilansBtn = document.getElementById('btnExportBilansPdf');
+    if (bilansBtn) bilansBtn.style.display = 'none';        // bilans élèves = usage classe, hors-sujet DNB
+    var pronoteBtn = document.getElementById('btnExportPronote');
+    if (pronoteBtn) pronoteBtn.style.display = 'none';      // pas de Pronote pour l'examen national
 
     // Charger le sujet pré-configuré.
     fetch('import-pdf/correction-dnb-2026-metropole.json')

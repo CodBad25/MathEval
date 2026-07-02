@@ -980,11 +980,11 @@
                                 </button>
                             </div>
                         </div>
-                        <button style="padding: 10px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;" onclick="exportBilansPdfJson()">
+                        <button id="btnExportBilansPdf" style="padding: 10px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;" onclick="exportBilansPdfJson()">
                             <span>📊</span>
                             <span>Export bilans PDF</span>
                         </button>
-                        <button style="padding: 10px 16px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;" onclick="showPronoteExportModal()" title="Copier les notes et compétences au format attendu par Pronote">
+                        <button id="btnExportPronote" style="padding: 10px 16px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95em; display: flex; align-items: center; gap: 6px;" onclick="showPronoteExportModal()" title="Copier les notes et compétences au format attendu par Pronote">
                             <span>📋</span>
                             <span>Export Pronote</span>
                         </button>
@@ -1835,7 +1835,7 @@
     <script src="js/modules/questionParser.js?v=20260417002"></script>
     <script src="js/modules/baremeConfig.js?v=20260630001"></script>
     <script src="js/modules/correctionManager.js?v=20260702001"></script>
-    <script src="js/modules/dnb2026.js?v=20260702001"></script>
+    <script src="js/modules/dnb2026.js?v=20260702002"></script>
     <script src="js/modules/pdfSessionPersist.js?v=20260530001"></script>
     <script src="js/modules/exportPronote.js?v=20260611001"></script>
     <script src="js/app.js?v=20260702001"></script>
